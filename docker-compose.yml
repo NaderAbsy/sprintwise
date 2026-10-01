@@ -1,0 +1,14 @@
+# Local Postgres for development and end-to-end tests. Production uses Neon or Supabase.
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: sprintwise
+      POSTGRES_PASSWORD: sprintwise
+      POSTGRES_DB: sprintwise
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:

@@ -1,0 +1,33 @@
+import "server-only";
+import { headers } from "next/headers";
+import { notFound, redirect } from "next/navigation";
+import { cache } from "react";
+import { auth } from "@/lib/server/auth";
+import { db } from "@/lib/server/db";
+
+/**
+ * Data access layer. Every page and server action goes through these, so each
+ * read and write checks sign-in and ownership (proxy.ts is only an optimistic redirect).
+ */
+export const getSession = cache(async () => auth.api.getSession({ headers: await headers() }));
+
+export const requireUser = cache(async () => {
+  const session = await getSession();
+  if (!session) redirect("/");
+  return { id: session.user.id, name: session.user.name, email: session.user.email };
+});
+
+/** The project if the signed-in user owns it; 404 otherwise, so ids can't be probed. */
+export const requireProject = cache(async (projectId: string) => {
+  const user = await requireUser();
+  const project = await db.project.findFirst({ where: { id: projectId, userId: user.id } });
+  if (!project) notFound();
+  return project;
+});
+
+export const requireSprint = cache(async (projectId: string, sprintId: string) => {
+  const project = await requireProject(projectId);
+  const sprint = await db.sprint.findFirst({ where: { id: sprintId, projectId: project.id } });
+  if (!sprint) notFound();
+  return { project, sprint };
+});

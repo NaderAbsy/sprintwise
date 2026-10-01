@@ -1,26 +1,96 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --background: #fafaf9;
+  --surface: #ffffff;
+  --foreground: #1c1917;
+  --muted: #57534e;
+  --border: #e7e5e4;
+  --accent: #4338ca;
+  --accent-foreground: #ffffff;
+  --ready: #166534;
+  --ready-bg: #dcfce7;
+  --needs-work: #854d0e;
+  --needs-work-bg: #fef9c3;
+  --not-ready: #991b1b;
+  --not-ready-bg: #fee2e2;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0c0a09;
+    --surface: #1c1917;
+    --foreground: #f5f5f4;
+    --muted: #a8a29e;
+    --border: #292524;
+    --accent: #a5b4fc;
+    --accent-foreground: #1e1b4b;
+    --ready: #86efac;
+    --ready-bg: #14532d;
+    --needs-work: #fde047;
+    --needs-work-bg: #422006;
+    --not-ready: #fca5a5;
+    --not-ready-bg: #450a0a;
   }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-ready: var(--ready);
+  --color-ready-bg: var(--ready-bg);
+  --color-needs-work: var(--needs-work);
+  --color-needs-work-bg: var(--needs-work-bg);
+  --color-not-ready: var(--not-ready);
+  --color-not-ready-bg: var(--not-ready-bg);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60;
+}
+@utility btn-primary {
+  @apply btn bg-accent text-accent-foreground hover:opacity-90;
+}
+@utility btn-secondary {
+  @apply btn border border-border bg-surface text-foreground hover:bg-background;
+}
+@utility btn-danger {
+  @apply btn border border-not-ready/40 bg-surface text-not-ready hover:bg-not-ready-bg;
+}
+@utility field {
+  @apply block w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted;
+}
+@utility label {
+  @apply block text-sm font-medium;
+}
+@utility card {
+  @apply rounded-lg border border-border bg-surface;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white;
+    color: black;
+  }
 }

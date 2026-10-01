@@ -1,0 +1,223 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Sign-in tables, in the shape Better Auth expects. Deleting a user cascades
+// to everything they own (story F-5).
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  projects      Project[]
+  aiUsage       AiUsage[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verifications")
+}
+
+// ---------------------------------------------------------------------------
+// Sprintwise data, as in the requirements doc's data model.
+// ---------------------------------------------------------------------------
+
+model Project {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  /// Rule settings (story R-6).
+  maxPoints  Int      @default(8)
+  vagueWords String[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  stories    Story[]
+  sprints    Sprint[]
+
+  @@index([userId])
+  @@map("projects")
+}
+
+model Story {
+  id                 String           @id @default(cuid())
+  projectId          String
+  project            Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  key                String
+  title              String
+  description        String           @default("")
+  acceptanceCriteria String           @default("")
+  storyPoints        Float?
+  status             String           @default("")
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  readiness          ReadinessResult?
+
+  @@unique([projectId, key])
+  @@map("stories")
+}
+
+/// The current score of a story; recalculated when the story or the project's settings change.
+model ReadinessResult {
+  id           String   @id @default(cuid())
+  storyId      String   @unique
+  story        Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  score        Int
+  band         String
+  /// RuleResult[] for the failed rules: id, check, reason.
+  failedRules  Json
+  /// The last AI suggestion (rewrite + scenarios), if one was asked for.
+  aiSuggestion Json?
+  rulesVersion Int
+  /// The max points and vague words the score was calculated with.
+  settingsUsed Json
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("readiness_results")
+}
+
+model Sprint {
+  id        String     @id @default(cuid())
+  projectId String
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  startDate DateTime   @db.Date
+  endDate   DateTime   @db.Date
+  createdAt DateTime   @default(now())
+  snapshots Snapshot[]
+  changes   Change[]
+
+  @@index([projectId])
+  @@map("sprints")
+}
+
+/// A locked baseline is never edited. A partial unique index (see the
+/// migration) allows only one baseline per sprint.
+model Snapshot {
+  id          String         @id @default(cuid())
+  sprintId    String
+  sprint      Sprint         @relation(fields: [sprintId], references: [id], onDelete: Cascade)
+  asOfDate    DateTime       @db.Date
+  uploadedAt  DateTime       @default(now())
+  isBaseline  Boolean        @default(false)
+  locked      Boolean        @default(false)
+  items       SnapshotItem[]
+  changesFrom Change[]       @relation("fromSnapshot")
+  changesTo   Change[]       @relation("toSnapshot")
+
+  @@index([sprintId, asOfDate])
+  @@map("snapshots")
+}
+
+/// A frozen copy of each story at that moment; the description lets baseline readiness be scored.
+model SnapshotItem {
+  id                 String   @id @default(cuid())
+  snapshotId         String
+  snapshot           Snapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  key                String
+  title              String
+  description        String   @default("")
+  acceptanceCriteria String   @default("")
+  storyPoints        Float?
+  status             String   @default("")
+
+  @@unique([snapshotId, key])
+  @@map("snapshot_items")
+}
+
+/// Can be recalculated from snapshots; stored for the report.
+model Change {
+  id             String   @id @default(cuid())
+  sprintId       String
+  sprint         Sprint   @relation(fields: [sprintId], references: [id], onDelete: Cascade)
+  fromSnapshotId String
+  fromSnapshot   Snapshot @relation("fromSnapshot", fields: [fromSnapshotId], references: [id], onDelete: Cascade)
+  toSnapshotId   String
+  toSnapshot     Snapshot @relation("toSnapshot", fields: [toSnapshotId], references: [id], onDelete: Cascade)
+  key            String
+  changeType     String
+  oldValue       String?
+  newValue       String?
+  pointsDelta    Float
+
+  @@index([sprintId])
+  @@map("changes")
+}
+
+/// Anonymous counts for the case study (story L-3). No user id, no story text.
+model UsageEvent {
+  id        String   @id @default(cuid())
+  eventType String
+  createdAt DateTime @default(now())
+
+  @@map("usage_events")
+}
+
+/// Enforces the daily AI cap; kept apart from usage_events, which stays anonymous.
+model AiUsage {
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  day    DateTime @db.Date
+  count  Int      @default(0)
+
+  @@id([userId, day])
+  @@map("ai_usage")
+}
