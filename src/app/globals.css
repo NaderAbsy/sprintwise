@@ -89,11 +89,38 @@ body {
 }
 
 @media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+  /* Always print in the light palette, whatever the screen theme. */
+  :root {
+    color-scheme: light;
+    --background: #ffffff;
+    --surface: #ffffff;
+    --foreground: #1c1917;
+    --muted: #57534e;
+    --border: #d6d3d1;
+    --accent: #4338ca;
+    --accent-foreground: #ffffff;
+  }
   .no-print {
     display: none !important;
   }
   body {
     background: white;
     color: black;
+  }
+  main {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  /* Smaller type in print so the report fits one A4 page (story S-5). */
+  html {
+    font-size: 11px;
+  }
+  .report dl .card,
+  .report tr {
+    break-inside: avoid;
   }
 }

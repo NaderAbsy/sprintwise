@@ -17,7 +17,7 @@ Version 1 is in progress. See the requirements doc for the backlog and the build
 | 2 · Readiness rules | R-1 paste a story, R-2 CSV import, R-3 sorted backlog | Built and tested |
 | 3 · AI layer | R-4 rewrites, R-5 test scenarios | Not started |
 | 4 · Scope tracking | S-1 to S-4, S-6 | Built and tested |
-| 5 · Report and polish | S-5, F-2 demo, L-2 accessibility, F-5 privacy | Backlog demo, privacy page and account deletion built; sprint report not started |
+| 5 · Report and polish | S-5, F-2 demo, L-2 accessibility, F-5 privacy | Sprint report, backlog demo, privacy page and account deletion built; sample sprint in the demo not started |
 | 6 · Launch | L-1, L-3 | Not started |
 
 ## Tech stack
