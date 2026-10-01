@@ -2,12 +2,33 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
-## 2026-10-01 — Unestimated stories can still score Ready (flagged, not changed)
+## 2026-10-01 — Rules v2: unestimated or oversized stories can't be Ready
 
-- **Decision:** Keep the rule weights from the requirements doc for now.
-- **Observation:** C6 (estimated) and C7 (small enough) together are worth 20 points, so a story that is perfect except for its estimate scores exactly 80, which is Ready. A 13-point story with two "I want" parts scores 85 and is also Ready.
-- **Options:** (a) keep the weights; (b) make "not estimated" cap the band at Needs work; (c) reweight C6/C7.
-- **Reason:** The rules were frozen in week 1, and changes go through the backlog. Raise it as a backlog item before Gate 2 if it should change. Any change bumps `RULES_VERSION`.
+- **Decision:** A story that fails C6 (not estimated) or C7 (above the max points) has its band capped at Needs work. Its score is unchanged, and the screen says why it's capped. `RULES_VERSION` is now 2.
+- **Why:** Under v1, C6 and C7 were worth only 20 points between them. So a story with no estimate scored exactly 80 (Ready), and a 13-point story with two "I want" parts scored 85 (Ready). A team can't commit to a story it hasn't sized, or to one that needs splitting.
+- **Options:**
+  - (a) Keep the v1 weights.
+  - (b) Reweight C6 and C7, which shifts every other score.
+  - (c) Cap the band and leave the score alone.
+- **Reason for (c):** Every point lost still has exactly one reason, and the 100-point table in the requirements doc stays valid.
+
+## 2026-10-01 — GitHub-only sign-in for v1
+
+- **Decision:** Keep GitHub as the only sign-in provider in v1. Google goes on the v2 list.
+- **Reason:**
+  - Demo mode already covers visitors who won't sign up.
+  - Adding a second provider is new scope, and v1 scope is frozen.
+  - Better Auth makes adding Google later a configuration change, not a rewrite.
+
+## 2026-10-01 — Baseline is uploaded and locked in one step
+
+- **Decision:** The baseline CSV is previewed in the browser (story count and total points). It is then locked through a confirmation dialog in the same step, so there's no unlocked draft baseline.
+- **Reason:** The preview does the job a draft would. Fewer states means nothing to forget to lock. To redo a wrong baseline, delete the sprint (S-6).
+
+## 2026-10-01 — A snapshot's date may equal the previous one's
+
+- **Decision:** A later snapshot's "as of" date must be within the sprint and not *before* the previous snapshot. The same day is allowed.
+- **Reason:** A team may re-plan twice in one day. Snapshots on the same date are ordered by upload time.
 
 ## 2026-10-01 — Demo visitors can score their own story (rules only)
 

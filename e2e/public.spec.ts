@@ -5,7 +5,7 @@ test("the demo opens without signing in and saves nothing", async ({ page }) => 
   await page.goto("/");
   await page.getByRole("link", { name: "Try the demo" }).click();
   await expect(page).toHaveURL(/\/demo$/);
-  await expect(page.getByText("7 of 12 stories ready")).toBeVisible();
+  await expect(page.getByText("5 of 12 stories ready")).toBeVisible();
   await expect(page.getByText("Demo: invented sample data, nothing is saved")).toBeVisible();
 
   // The weakest story is listed first and open by default.
