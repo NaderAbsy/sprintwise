@@ -22,6 +22,7 @@ describe("worked example from the requirements doc", () => {
     expect(formatPercent(m.netChange, { signed: true })).toBe("+16.7%");
     expect(formatPercent(m.churn)).toBe("36.7%");
     expect(formatPercent(m.completion)).toBe("70.0%");
+    expect(formatPercent(-0.8333, { signed: true })).toBe("−83.3%");
   });
 
   it("lists the changes behind them", () => {

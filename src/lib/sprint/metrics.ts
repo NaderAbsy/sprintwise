@@ -68,6 +68,7 @@ export function computeMetrics(baseline: Story[], latest: Story[]): SprintMetric
 /** 0.16667 → "+16.7%"; null → "—". */
 export function formatPercent(value: number | null, { signed = false } = {}): string {
   if (value === null) return "—";
-  const text = `${(value * 100).toFixed(1)}%`;
+  const text = `${Math.abs(value * 100).toFixed(1)}%`;
+  if (value < 0) return `−${text}`;
   return signed && value > 0 ? `+${text}` : text;
 }

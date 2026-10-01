@@ -2,6 +2,20 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-01 — What the sprint report counts as a change
+
+- **Decision:**
+  - The report's change log lists only scope changes: added, removed, re-estimated, and criteria changed.
+  - Status changes and renames are counted in a note but not listed. Status changes are normal progress, and a rename doesn't change the work.
+  - The full log stays on the sprint page.
+- **Readiness comparison:**
+  - A baseline story "changed scope" if it was removed, re-estimated or had its criteria edited between the baseline and the latest snapshot.
+  - Each story is scored as it stood in the baseline.
+  - Stories added later are in neither group.
+- **One page:** the report shows at most the 18 most recent scope changes and prints in smaller type. An end-to-end test prints it to PDF and checks that it has one page, including with 25 changes.
+- **Options:** (a) list every change; (b) cap and summarise; (c) shrink type until it fits.
+- **Reason:** S-5 requires one A4 page. A long list of status changes would push out the numbers a stakeholder actually reads.
+
 ## 2026-10-01 — Rules v2: unestimated or oversized stories can't be Ready
 
 - **Decision:** A story that fails C6 (not estimated) or C7 (above the max points) has its band capped at Needs work. Its score is unchanged, and the screen says why it's capped. `RULES_VERSION` is now 2.

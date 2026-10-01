@@ -6,11 +6,9 @@ import { ChangeTable } from "@/components/change-table";
 import { ConfirmButton } from "@/components/confirm-button";
 import { SprintMetricsPanel } from "@/components/sprint-metrics";
 import { formatDay, toDay } from "@/lib/sprint/dates";
-import type { ChangeType } from "@/lib/sprint/diff";
-import { computeMetrics } from "@/lib/sprint/metrics";
-import { db } from "@/lib/server/db";
 import { requireSprint } from "@/lib/server/dal";
 import { toStory } from "@/lib/server/readiness";
+import { loadSprint } from "@/lib/server/sprint";
 
 export const metadata: Metadata = { title: "Sprint" };
 
@@ -18,39 +16,8 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
   const { projectId, sprintId } = await params;
   const { project, sprint } = await requireSprint(projectId, sprintId);
 
-  const [snapshots, changes] = await Promise.all([
-    db.snapshot.findMany({
-      where: { sprintId: sprint.id },
-      orderBy: [{ asOfDate: "asc" }, { uploadedAt: "asc" }],
-      include: { items: { orderBy: { key: "asc" } } },
-    }),
-    db.change.findMany({
-      where: { sprintId: sprint.id },
-      include: { toSnapshot: { select: { asOfDate: true, uploadedAt: true } } },
-    }),
-  ]);
-
-  const baseline = snapshots.find((s) => s.isBaseline);
-  const latest = snapshots.at(-1);
-  const metrics = baseline && latest ? computeMetrics(baseline.items.map(toStory), latest.items.map(toStory)) : null;
+  const { snapshots, baselineRow: baseline, latestRow: latest, metrics, log } = await loadSprint(sprint);
   const total = (items: { storyPoints: number | null }[]) => items.reduce((sum, i) => sum + (i.storyPoints ?? 0), 0);
-
-  // Dated change log, newest first.
-  const log = changes
-    .sort(
-      (a, b) =>
-        b.toSnapshot.asOfDate.getTime() - a.toSnapshot.asOfDate.getTime() ||
-        b.toSnapshot.uploadedAt.getTime() - a.toSnapshot.uploadedAt.getTime() ||
-        a.key.localeCompare(b.key),
-    )
-    .map((c) => ({
-      date: formatDay(c.toSnapshot.asOfDate),
-      key: c.key,
-      type: c.changeType as ChangeType,
-      oldValue: c.oldValue,
-      newValue: c.newValue,
-      pointsDelta: c.pointsDelta,
-    }));
 
   const dayRange = `${formatDay(sprint.startDate)} to ${formatDay(sprint.endDate)}`;
   const uploadProps = {
@@ -70,6 +37,11 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
         </p>
         <h1 className="text-2xl font-semibold">{sprint.name}</h1>
         <p className="mt-1 text-muted">{dayRange}</p>
+        {baseline && (
+          <Link href={`/projects/${project.id}/sprints/${sprint.id}/report`} className="btn-secondary mt-4">
+            Open sprint report
+          </Link>
+        )}
       </div>
 
       {!baseline ? (
