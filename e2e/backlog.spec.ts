@@ -38,19 +38,19 @@ test("a PO creates a project, scores a story and imports a backlog", async ({ pa
   await page.getByRole("link", { name: "Payments team" }).click();
   await page.getByRole("link", { name: "Import CSV" }).click();
   await page.getByLabel("CSV file").setInputFiles({ name: "backlog.csv", mimeType: "text/csv", buffer: Buffer.from(CSV) });
-  await expect(page.getByText("Preview: 2 of 3 stories ready")).toBeVisible();
+  await expect(page.getByText("Preview: 1 of 3 stories ready")).toBeVisible();
   await expect(page.getByText(/Row 3: Story points "XL"/)).toBeVisible();
   await expectAccessible(page);
   await page.getByRole("button", { name: "Import 3 stories" }).click();
 
   // R-3: lowest score first, a summary line, and a band filter.
   await expect(page.getByText("Imported and scored 3 stories.")).toBeVisible();
-  await expect(page.getByText("2 of 4 stories ready")).toBeVisible();
+  await expect(page.getByText("1 of 4 stories ready")).toBeVisible();
   const keys = page.locator("tbody tr td:nth-child(3)");
   await expect(keys).toHaveText(["PAY-2", "STORY-1", "PAY-3", "PAY-1"]);
-  // PAY-3 has no estimate yet still scores 80: only C6 and C7 fail.
-  await page.getByRole("link", { name: "Ready (2)", exact: true }).click();
-  await expect(keys).toHaveText(["PAY-3", "PAY-1"]);
+  // PAY-3 scores 80 but has no estimate, so it's capped at Needs work.
+  await page.getByRole("link", { name: "Ready (1)", exact: true }).click();
+  await expect(keys).toHaveText(["PAY-1"]);
 
   // F-4: delete asks for confirmation and removes the project.
   await page.getByText("Project settings").click();

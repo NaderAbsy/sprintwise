@@ -113,6 +113,32 @@ describe("scoreStory", () => {
   });
 });
 
+describe("band caps (rules v2)", () => {
+  it("caps an unestimated story at Needs work without changing its score", () => {
+    const result = scoreStory(story({ storyPoints: null }));
+    expect(result.score).toBe(80);
+    expect(result.band).toBe("Needs work");
+    expect(result.bandCap).toMatch(/estimated/);
+  });
+
+  it("caps a story above the maximum size", () => {
+    const result = scoreStory(story({ storyPoints: 13 }));
+    expect(result.score).toBe(90);
+    expect(result.band).toBe("Needs work");
+    expect(result.bandCap).toMatch(/split/);
+  });
+
+  it("leaves lower bands alone", () => {
+    const result = scoreStory(story({ storyPoints: null, acceptanceCriteria: "" }));
+    expect(result.band).toBe("Not ready");
+    expect(result.bandCap).toBeUndefined();
+  });
+
+  it("doesn't cap a complete story", () => {
+    expect(scoreStory(story()).bandCap).toBeUndefined();
+  });
+});
+
 describe("bands", () => {
   it.each([
     [100, "Ready"],

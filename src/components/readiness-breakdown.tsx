@@ -13,6 +13,11 @@ export function ReadinessBreakdown({ readiness }: { readiness: Readiness }) {
         </p>
         <BandBadge band={readiness.band} />
       </div>
+      {readiness.bandCap && (
+        <p className="mt-2 text-sm text-needs-work">
+          {readiness.score} would be Ready, but this story is capped at Needs work. {readiness.bandCap}
+        </p>
+      )}
       {failed.length === 0 ? (
         <p className="mt-4 text-sm text-muted">Every check passed.</p>
       ) : (

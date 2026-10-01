@@ -2,7 +2,7 @@
 
 Teams often start sprints with vague stories, and mid-sprint scope changes go unmeasured. Sprintwise scores every user story for readiness before planning, then measures how much the sprint changes after the team commits.
 
-- **Readiness check:** nine fixed rules (C1–C9) give each story a score out of 100. Every point lost comes with a plain-English reason. AI only suggests rewrites; it never sets the score.
+- **Readiness check:** nine fixed rules (C1–C9) give each story a score out of 100. Every point lost comes with a plain-English reason. A story that isn't estimated, or is too big, can't be Ready. AI only suggests rewrites; it never sets the score.
 - **Scope tracking:** lock the day-one sprint as a baseline, upload later snapshots, and see scope added, removed, net change, churn and completion.
 
 No Jira setup in v1: paste a story or upload a CSV. All sample data is invented.
@@ -13,10 +13,10 @@ Version 1 is in progress. See the requirements doc for the backlog and the build
 
 | Phase | Stories | State |
 | --- | --- | --- |
-| 1 · Foundations | F-1 CI, F-3 GitHub sign-in, F-4 projects | Built; deploy pending |
+| 1 · Foundations | F-1 CI, F-3 GitHub sign-in, F-4 projects | Built, CI green; deploy pending |
 | 2 · Readiness rules | R-1 paste a story, R-2 CSV import, R-3 sorted backlog | Built and tested |
 | 3 · AI layer | R-4 rewrites, R-5 test scenarios | Not started |
-| 4 · Scope tracking | S-1 to S-4, S-6 | Engine built and tested; screens not started |
+| 4 · Scope tracking | S-1 to S-4, S-6 | Built and tested |
 | 5 · Report and polish | S-5, F-2 demo, L-2 accessibility, F-5 privacy | Backlog demo, privacy page and account deletion built; sprint report not started |
 | 6 · Launch | L-1, L-3 | Not started |
 

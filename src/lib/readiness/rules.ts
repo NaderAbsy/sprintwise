@@ -1,7 +1,7 @@
 import { splitCriteria, type Story } from "@/lib/stories/types";
 
 /** Bump whenever a rule, weight or default changes, so old scores stay explainable. */
-export const RULES_VERSION = 1;
+export const RULES_VERSION = 2;
 
 export const DEFAULT_MAX_POINTS = 8;
 
@@ -55,6 +55,8 @@ export type Band = "Ready" | "Needs work" | "Not ready";
 export type Readiness = {
   score: number;
   band: Band;
+  /** Why the band is lower than the score alone would give; absent when it isn't capped. */
+  bandCap?: string;
   rules: RuleResult[];
   rulesVersion: number;
 };
@@ -70,6 +72,20 @@ export const RULES: ReadonlyArray<{ id: RuleId; check: string; points: number }>
   { id: "C8", check: "One story, not two", points: 5 },
   { id: "C9", check: "Has a description", points: 5 },
 ];
+
+/**
+ * Blockers (rules v2): a story that isn't estimated (C6) or is too big (C7)
+ * can't be Ready, whatever its score, because the team can't commit to it.
+ * The score itself is unchanged, so every point lost still has one reason.
+ */
+const BLOCKERS: ReadonlyArray<{ id: RuleId; cap: string }> = [
+  { id: "C6", cap: "Can't be Ready until it's estimated." },
+  { id: "C7", cap: "Can't be Ready until it's split below the maximum size." },
+];
+
+function bandCapFor(rules: RuleResult[]): string | undefined {
+  return BLOCKERS.find((b) => rules.some((r) => r.id === b.id && !r.passed))?.cap;
+}
 
 export function bandFor(score: number): Band {
   if (score >= 80) return "Ready";
@@ -192,7 +208,12 @@ export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTIN
   });
 
   const score = rules.reduce((sum, r) => sum + r.earned, 0);
-  return { score, band: bandFor(score), rules, rulesVersion: RULES_VERSION };
+  const cap = bandCapFor(rules);
+  const scoreBand = bandFor(score);
+  if (cap && scoreBand === "Ready") {
+    return { score, band: "Needs work", bandCap: cap, rules, rulesVersion: RULES_VERSION };
+  }
+  return { score, band: scoreBand, rules, rulesVersion: RULES_VERSION };
 }
 
 /** "7 of 12 stories ready" */

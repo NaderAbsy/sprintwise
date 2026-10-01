@@ -5,6 +5,7 @@ import { BandBadge } from "@/components/band-badge";
 import type { Band } from "@/lib/readiness/rules";
 import { db } from "@/lib/server/db";
 import { requireProject } from "@/lib/server/dal";
+import { formatDay } from "@/lib/sprint/dates";
 
 const FILTERS: { slug: string; band: Band }[] = [
   { slug: "ready", band: "Ready" },
@@ -23,10 +24,14 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
   const project = await requireProject(projectId);
   const filter = FILTERS.find((f) => f.slug === bandParam);
 
-  const stories = await db.story.findMany({
-    where: { projectId: project.id },
-    include: { readiness: true },
-  });
+  const [stories, sprints] = await Promise.all([
+    db.story.findMany({ where: { projectId: project.id }, include: { readiness: true } }),
+    db.sprint.findMany({
+      where: { projectId: project.id },
+      orderBy: { startDate: "desc" },
+      include: { snapshots: { select: { id: true } } },
+    }),
+  ]);
   // Lowest score first, so the weakest stories get fixed first (story R-3).
   stories.sort((a, b) => (a.readiness?.score ?? 0) - (b.readiness?.score ?? 0) || a.key.localeCompare(b.key));
   const ready = stories.filter((s) => s.readiness?.band === "Ready").length;
@@ -115,6 +120,40 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
           </div>
         </>
       )}
+
+      <section aria-labelledby="sprints-heading" className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="sprints-heading" className="text-lg font-semibold">
+            Sprints
+          </h2>
+          <Link href={`${base}/sprints/new`} className="btn-secondary">
+            New sprint
+          </Link>
+        </div>
+        {sprints.length === 0 ? (
+          <p className="text-sm text-muted">
+            No sprints yet. Create one to lock a baseline and track how much it changes.
+          </p>
+        ) : (
+          <ul className="card divide-y divide-border text-sm">
+            {sprints.map((sprint) => (
+              <li key={sprint.id}>
+                <Link href={`${base}/sprints/${sprint.id}`} className="flex flex-wrap gap-x-4 gap-y-1 px-4 py-3 hover:bg-background">
+                  <span className="font-medium">{sprint.name}</span>
+                  <span className="text-muted">
+                    {formatDay(sprint.startDate)} to {formatDay(sprint.endDate)}
+                  </span>
+                  <span className="text-muted">
+                    {sprint.snapshots.length === 0
+                      ? "No baseline yet"
+                      : `${sprint.snapshots.length} ${sprint.snapshots.length === 1 ? "snapshot" : "snapshots"}`}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <details className="card p-5">
         <summary className="cursor-pointer font-medium">Project settings</summary>
