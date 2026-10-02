@@ -7,7 +7,7 @@ Teams often start sprints with vague stories, and mid-sprint scope changes go un
 
 No Jira setup in v1: paste a story or upload a CSV. Light and dark themes. All sample data is invented.
 
-**Live:** <https://sprintwise-omega.vercel.app> · try the [demo](https://sprintwise-omega.vercel.app/demo) without signing in · watch the [2-minute captioned demo video](https://github.com/NaderAbsy/sprintwise/releases/download/v0.6/sprintwise-demo.mp4).
+**Live:** <https://sprintwise-omega.vercel.app> · try the [demo](https://sprintwise-omega.vercel.app/demo) without signing in · watch the [2-minute demo video with voice-over](https://github.com/NaderAbsy/sprintwise/releases/download/v0.6/sprintwise-demo.mp4).
 
 ## Status
 
