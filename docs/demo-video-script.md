@@ -1,5 +1,7 @@
 # Demo video script (under 3 minutes)
 
+`pnpm record-demo` records a captioned version of this script from the live site (`docs/demo.webm`, no voice-over). Record it yourself with a voice-over for a warmer version.
+
 The video sells one idea: Sprintwise tells you whether stories are ready before planning, and how much the sprint changed after it. Record the live site at <https://sprintwise-omega.vercel.app>. Everything shown is invented sample data.
 
 **Set-up:**

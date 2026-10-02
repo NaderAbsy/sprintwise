@@ -7,7 +7,7 @@ Teams often start sprints with vague stories, and mid-sprint scope changes go un
 
 No Jira setup in v1: paste a story or upload a CSV. Light and dark themes. All sample data is invented.
 
-**Live:** <https://sprintwise-omega.vercel.app> · try the [demo](https://sprintwise-omega.vercel.app/demo) without signing in.
+**Live:** <https://sprintwise-omega.vercel.app> · try the [demo](https://sprintwise-omega.vercel.app/demo) without signing in · watch the [90-second demo video](https://github.com/NaderAbsy/sprintwise/releases/download/v0.6/sprintwise-demo.webm).
 
 ## Status
 
@@ -20,7 +20,7 @@ Version 1 is in progress and deployed. See the requirements doc for the backlog 
 | 3 · AI layer | R-4 rewrites, R-5 test scenarios | Built and tested, switched off on the live site; moved to v2 (see below) |
 | 4 · Scope tracking | S-1 to S-4, S-6 | Done, live |
 | 5 · Report and polish | S-5, F-2 demo, L-2 accessibility, F-5 privacy | S-5 done; F-2 demo with sample sprint built; F-5 waits for the AI notice; L-2 ongoing |
-| 6 · Launch | L-1, L-3 | L-3 done (`pnpm usage`); L-1 README and screenshots done, demo video to record |
+| 6 · Launch | L-1, L-3 | Done: README, screenshots, demo video and usage counts |
 
 ## Screenshots
 
@@ -148,7 +148,7 @@ CI runs all of these on every push and pull request (`.github/workflows/ci.yml`)
 | Document | Contents |
 | --- | --- |
 | [Case study draft](docs/case-study.md) | Problem, users, role, decisions and what's next, for a portfolio site |
-| [Demo video script](docs/demo-video-script.md) | A timed shot list for a video under 3 minutes |
+| [Demo video script](docs/demo-video-script.md) | A timed shot list; `pnpm record-demo` records it from the live site as [WebM](https://github.com/NaderAbsy/sprintwise/releases/download/v0.6/sprintwise-demo.webm) |
 | [DECISIONS.md](DECISIONS.md) | Every decision with its options and reasons |
 
 **Usage counts (L-3):** `pnpm usage` prints anonymous event counts by month: checks run, imports, reports and AI suggestions. Point it at production with `DATABASE_URL="<Neon connection string>" pnpm usage`. The events table holds only an event type and a time: no user ids and no story text.
