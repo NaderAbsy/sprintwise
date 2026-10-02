@@ -7,7 +7,7 @@ Teams often start sprints with vague stories, and mid-sprint scope changes go un
 
 No Jira setup in v1: paste a story or upload a CSV. Light and dark themes. All sample data is invented.
 
-**Live:** <https://sprintwise-omega.vercel.app> · try the [demo](https://sprintwise-omega.vercel.app/demo) without signing in · watch the [90-second demo video](https://github.com/NaderAbsy/sprintwise/releases/download/v0.6/sprintwise-demo.webm).
+**Live:** <https://sprintwise-omega.vercel.app> · try the [demo](https://sprintwise-omega.vercel.app/demo) without signing in · watch the [2-minute demo video with voice-over](https://github.com/NaderAbsy/sprintwise/releases/download/v0.6/sprintwise-demo.mp4).
 
 ## Status
 
@@ -148,7 +148,7 @@ CI runs all of these on every push and pull request (`.github/workflows/ci.yml`)
 | Document | Contents |
 | --- | --- |
 | [Case study draft](docs/case-study.md) | Problem, users, role, decisions and what's next, for a portfolio site |
-| [Demo video script](docs/demo-video-script.md) | A timed shot list; `pnpm record-demo` records it from the live site as [WebM](https://github.com/NaderAbsy/sprintwise/releases/download/v0.6/sprintwise-demo.webm) |
+| [Demo video script](docs/demo-video-script.md) | A timed shot list; `pnpm record-demo --voice` records it from the live site with a voice-over ([MP4](https://github.com/NaderAbsy/sprintwise/releases/download/v0.6/sprintwise-demo.mp4), [WebM](https://github.com/NaderAbsy/sprintwise/releases/download/v0.6/sprintwise-demo.webm)) |
 | [DECISIONS.md](DECISIONS.md) | Every decision with its options and reasons |
 
 **Usage counts (L-3):** `pnpm usage` prints anonymous event counts by month: checks run, imports, reports and AI suggestions. Point it at production with `DATABASE_URL="<Neon connection string>" pnpm usage`. The events table holds only an event type and a time: no user ids and no story text.
