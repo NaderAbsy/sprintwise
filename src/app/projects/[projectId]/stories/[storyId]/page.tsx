@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AiSuggestionPanel } from "@/app/projects/_components/ai-suggestion-panel";
 import { deleteStory } from "@/app/projects/actions";
 import { ConfirmButton } from "@/components/confirm-button";
 import { ReadinessBreakdown } from "@/components/readiness-breakdown";
+import { SectionHeader } from "@/components/section-header";
 import { rewriteAsStory, SuggestionSchema } from "@/lib/ai/suggestion";
 import { scoreStory } from "@/lib/readiness/rules";
 import { aiConfigured } from "@/lib/server/ai";
@@ -30,48 +30,56 @@ export default async function StoryPage({ params }: PageProps<"/projects/[projec
   const suggestion = stored.success ? stored.data : null;
   const rewrite = suggestion ? scoreStory(rewriteAsStory(story, suggestion), settings) : null;
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-sm text-muted">
-          <Link href={`/projects/${project.id}`} className="hover:underline">
-            {project.name}
-          </Link>
-        </p>
-        <h1 className="text-2xl font-semibold">
-          <span className="mr-2 font-mono text-base text-muted">{story.key}</span>{" "}
-          {story.title}
-        </h1>
-      </div>
+  const base = `/projects/${project.id}`;
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
+  return (
+    <>
+      <SectionHeader
+        back={{ href: base, label: "Backlog" }}
+        title={
+          <>
+            <span className="mr-2 font-mono text-base font-normal text-subtle">{story.key}</span> {story.title}
+          </>
+        }
+        actions={
+          <ConfirmButton
+            label="Delete story"
+            title={`Delete ${story.key}?`}
+            body="This removes the story and its score from the project."
+            confirmLabel="Delete story"
+            action={deleteStory.bind(null, project.id, row.id)}
+          />
+        }
+      />
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
         <ReadinessBreakdown readiness={readiness} />
 
-        <section aria-label="The story" className="card space-y-4 p-5 text-sm">
-          <div>
-            <h2 className="font-semibold">Description</h2>
-            <p className="mt-1 whitespace-pre-wrap text-muted">{story.description || "None"}</p>
+        <section aria-label="The story" className="card divide-y divide-border text-sm">
+          <div className="p-5">
+            <h2 className="eyebrow">Description</h2>
+            <p className="mt-2 whitespace-pre-wrap">{story.description || <span className="text-subtle">None</span>}</p>
           </div>
-          <div>
-            <h2 className="font-semibold">Acceptance criteria</h2>
+          <div className="p-5">
+            <h2 className="eyebrow">Acceptance criteria</h2>
             {criteria.length === 0 ? (
-              <p className="mt-1 text-muted">None</p>
+              <p className="mt-2 text-subtle">None</p>
             ) : (
-              <ul className="mt-1 list-disc space-y-1 pl-5 text-muted">
+              <ul className="mt-2 list-disc space-y-1 pl-5">
                 {criteria.map((c, i) => (
                   <li key={i}>{c}</li>
                 ))}
               </ul>
             )}
           </div>
-          <dl className="flex gap-8">
+          <dl className="grid grid-cols-2 p-5">
             <div>
-              <dt className="font-semibold">Points</dt>
-              <dd className="text-muted">{story.storyPoints ?? "Not estimated"}</dd>
+              <dt className="eyebrow">Points</dt>
+              <dd className="mt-1">{story.storyPoints ?? <span className="text-subtle">Not estimated</span>}</dd>
             </div>
             <div>
-              <dt className="font-semibold">Status</dt>
-              <dd className="text-muted">{story.status || "—"}</dd>
+              <dt className="eyebrow">Status</dt>
+              <dd className="mt-1">{story.status || <span className="text-subtle">—</span>}</dd>
             </div>
           </dl>
         </section>
@@ -79,23 +87,17 @@ export default async function StoryPage({ params }: PageProps<"/projects/[projec
 
       {/* AI is off unless ANTHROPIC_API_KEY is set; then the panel isn't shown at all (DECISIONS.md, 2026-10-02). */}
       {aiConfigured && (
-        <AiSuggestionPanel
-          projectId={project.id}
-          storyId={row.id}
-          eligible={readiness.band !== "Ready"}
-          original={{ score: readiness.score, band: readiness.band }}
-          suggestion={suggestion}
-          rewriteScore={rewrite && { score: rewrite.score, band: rewrite.band }}
-        />
+        <div className="mt-6">
+          <AiSuggestionPanel
+            projectId={project.id}
+            storyId={row.id}
+            eligible={readiness.band !== "Ready"}
+            original={{ score: readiness.score, band: readiness.band }}
+            suggestion={suggestion}
+            rewriteScore={rewrite && { score: rewrite.score, band: rewrite.band }}
+          />
+        </div>
       )}
-
-      <ConfirmButton
-        label="Delete story"
-        title={`Delete ${story.key}?`}
-        body="This removes the story and its score from the project."
-        confirmLabel="Delete story"
-        action={deleteStory.bind(null, project.id, row.id)}
-      />
-    </div>
+    </>
   );
 }

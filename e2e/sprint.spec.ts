@@ -12,6 +12,7 @@ async function createSprint(page: Page) {
   await page.goto("/projects");
   await page.getByLabel("Name").fill("Sprint tracking");
   await page.getByRole("button", { name: "Create project" }).click();
+  await page.getByRole("navigation", { name: "Project sections" }).getByRole("link", { name: "Sprints" }).click();
   await page.getByRole("link", { name: "New sprint" }).click();
   await page.getByLabel("Name").fill("Sprint 14");
   await page.getByLabel("Start date").fill("2026-10-05");
@@ -25,6 +26,7 @@ test("S-1: a sprint needs a name and an end date after its start", async ({ page
   await page.goto("/projects");
   await page.getByLabel("Name").fill("Validation");
   await page.getByRole("button", { name: "Create project" }).click();
+  await page.getByRole("navigation", { name: "Project sections" }).getByRole("link", { name: "Sprints" }).click();
   await page.getByRole("link", { name: "New sprint" }).click();
   await page.getByLabel("Start date").fill("2026-10-05");
   await page.getByLabel("End date").fill("2026-10-05");
@@ -85,6 +87,6 @@ test("a sprint reproduces the worked example from baseline to metrics", async ({
   // S-6: deleting the sprint asks first and keeps the project.
   await page.getByRole("button", { name: "Delete sprint" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Delete sprint" }).click();
-  await expect(page.getByRole("heading", { name: "Sprint tracking" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Sprints" })).toBeVisible();
   await expect(page.getByText("No sprints yet.")).toBeVisible();
 });

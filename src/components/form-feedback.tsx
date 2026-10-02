@@ -11,7 +11,7 @@ export function FieldError({ id, message }: { id: string; message?: string }) {
 export function FormAlert({ state }: { state: FormState }) {
   if (state.error) {
     return (
-      <p role="alert" className="rounded-md bg-not-ready-bg px-3 py-2 text-sm text-not-ready">
+      <p role="alert" className="rounded-lg bg-not-ready-bg px-3 py-2 text-sm text-not-ready">
         {state.error}
       </p>
     );

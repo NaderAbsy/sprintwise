@@ -128,7 +128,7 @@ export function SnapshotUploadForm(props: UploadProps) {
 
   return (
     <form ref={form} action={action} className="card space-y-4 p-5" noValidate>
-      <div className="flex flex-wrap gap-4">
+      <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
         <div>
           <label htmlFor={`${id}-file`} className="label">
             {props.mode === "baseline" ? "Day-one CSV" : "Snapshot CSV"}
@@ -138,7 +138,7 @@ export function SnapshotUploadForm(props: UploadProps) {
             id={`${id}-file`}
             type="file"
             accept=".csv,text/csv"
-            className="mt-2 block text-sm file:mr-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-2 file:text-accent-foreground"
+            className="mt-2 block w-full rounded-lg border border-dashed border-border-strong bg-surface-2/50 p-3 text-sm text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent-foreground hover:file:bg-accent-hover"
             onChange={(e) => onFile(e.target.files?.[0])}
           />
           <input type="hidden" name="csv" value={csv} />
@@ -166,7 +166,7 @@ export function SnapshotUploadForm(props: UploadProps) {
       </p>
 
       {result && !result.ok && (
-        <div role="alert" className="rounded-md bg-not-ready-bg p-4 text-sm text-not-ready">
+        <div role="alert" className="rounded-lg bg-not-ready-bg p-4 text-sm text-not-ready">
           <p className="font-medium">This file can&apos;t be used:</p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {result.errors.slice(0, 20).map((e, i) => (
@@ -182,7 +182,7 @@ export function SnapshotUploadForm(props: UploadProps) {
             {stories.length} {stories.length === 1 ? "story" : "stories"}, {totalPoints(stories)} points in total
           </p>
           {result.warnings.length > 0 && (
-            <ul className="rounded-md bg-needs-work-bg p-3 text-sm text-needs-work">
+            <ul className="rounded-lg bg-needs-work-bg p-3 text-sm text-needs-work">
               {result.warnings.map((w, i) => (
                 <li key={i}>
                   Row {w.row}: {w.message}
@@ -204,7 +204,7 @@ export function SnapshotUploadForm(props: UploadProps) {
               <dialog
                 ref={dialog}
                 aria-labelledby="lock-title"
-                className="m-auto max-w-sm rounded-lg border border-border bg-surface p-6 text-foreground backdrop:bg-black/40"
+                className="m-auto max-w-sm rounded-xl border border-border bg-surface p-6 text-foreground shadow-xl backdrop:bg-black/50"
               >
                 <h2 id="lock-title" className="text-lg font-semibold">
                   Lock this baseline?

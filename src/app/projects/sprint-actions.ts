@@ -43,7 +43,7 @@ export async function createSprint(projectId: string, _prev: FormState, formData
   const sprint = await db.sprint.create({
     data: { projectId: project.id, name: name.data, startDate: dates.startDate, endDate: dates.endDate },
   });
-  revalidatePath(`/projects/${project.id}`);
+  revalidatePath(`/projects/${project.id}/sprints`);
   redirect(sprintPath(project.id, sprint.id));
 }
 
@@ -134,6 +134,6 @@ export async function uploadSnapshot(
 export async function deleteSprint(projectId: string, sprintId: string) {
   const { project, sprint } = await requireSprint(projectId, sprintId);
   await db.sprint.delete({ where: { id: sprint.id } });
-  revalidatePath(`/projects/${project.id}`);
-  redirect(`/projects/${project.id}`);
+  revalidatePath(`/projects/${project.id}/sprints`);
+  redirect(`/projects/${project.id}/sprints`);
 }

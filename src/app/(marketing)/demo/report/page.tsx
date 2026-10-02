@@ -11,7 +11,8 @@ export default function DemoReportPage() {
   const snapshots = demoSprint.snapshots;
   const latest = snapshots.at(-1)!;
   return (
-    <SprintReport
+    <div className="px-4 py-10 sm:px-6">
+      <SprintReport
       projectName={DEMO_PROJECT_NAME}
       sprint={demoSprint}
       baseline={snapshots[0].stories}
@@ -19,7 +20,8 @@ export default function DemoReportPage() {
       latestAsOf={latest.asOfDate}
       log={changeLog(snapshots)}
       settings={DEFAULT_SETTINGS}
-      back={{ href: "/demo#sample-sprint", label: "Back to the demo" }}
-    />
+        back={{ href: "/demo#sample-sprint", label: "Back to the demo" }}
+      />
+    </div>
   );
 }

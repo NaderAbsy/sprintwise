@@ -1,16 +1,18 @@
+import { CircleCheck, CircleDashed, CircleX, FileUp, ListChecks, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ProjectSettings } from "@/app/projects/_components/project-forms";
 import { BandBadge } from "@/components/band-badge";
+import { EmptyState } from "@/components/empty-state";
+import { ScoreRing } from "@/components/score-ring";
+import { SectionHeader } from "@/components/section-header";
 import type { Band } from "@/lib/readiness/rules";
 import { db } from "@/lib/server/db";
 import { requireProject } from "@/lib/server/dal";
-import { formatDay } from "@/lib/sprint/dates";
 
-const FILTERS: { slug: string; band: Band }[] = [
-  { slug: "ready", band: "Ready" },
-  { slug: "needs-work", band: "Needs work" },
-  { slug: "not-ready", band: "Not ready" },
+const FILTERS: { slug: string; band: Band; Icon: typeof CircleCheck; tone: string }[] = [
+  { slug: "ready", band: "Ready", Icon: CircleCheck, tone: "text-ready-dot" },
+  { slug: "needs-work", band: "Needs work", Icon: CircleDashed, tone: "text-needs-work-dot" },
+  { slug: "not-ready", band: "Not ready", Icon: CircleX, tone: "text-not-ready-dot" },
 ];
 
 export async function generateMetadata({ params }: PageProps<"/projects/[projectId]">): Promise<Metadata> {
@@ -23,156 +25,126 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
   const { band: bandParam, imported } = await searchParams;
   const project = await requireProject(projectId);
   const filter = FILTERS.find((f) => f.slug === bandParam);
-
-  const [stories, sprints] = await Promise.all([
-    db.story.findMany({ where: { projectId: project.id }, include: { readiness: true } }),
-    db.sprint.findMany({
-      where: { projectId: project.id },
-      orderBy: { startDate: "desc" },
-      include: { snapshots: { select: { id: true } } },
-    }),
-  ]);
-  // Lowest score first, so the weakest stories get fixed first (story R-3).
-  stories.sort((a, b) => (a.readiness?.score ?? 0) - (b.readiness?.score ?? 0) || a.key.localeCompare(b.key));
-  const ready = stories.filter((s) => s.readiness?.band === "Ready").length;
-  const shown = filter ? stories.filter((s) => s.readiness?.band === filter.band) : stories;
   const base = `/projects/${project.id}`;
 
+  const stories = await db.story.findMany({ where: { projectId: project.id }, include: { readiness: true } });
+  // Lowest score first, so the weakest stories get fixed first (story R-3).
+  stories.sort((a, b) => (a.readiness?.score ?? 0) - (b.readiness?.score ?? 0) || a.key.localeCompare(b.key));
+  const count = (band: Band) => stories.filter((s) => s.readiness?.band === band).length;
+  const ready = count("Ready");
+  const shown = filter ? stories.filter((s) => s.readiness?.band === filter.band) : stories;
+  const actions = (
+    <>
+      <Link href={`${base}/import`} className="btn-secondary">
+        <FileUp aria-hidden="true" className="h-4 w-4" />
+        Import CSV
+      </Link>
+      <Link href={`${base}/stories/new`} className="btn-primary">
+        <Plus aria-hidden="true" className="h-4 w-4" />
+        Score a story
+      </Link>
+    </>
+  );
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-sm text-muted">
-            <Link href="/projects" className="hover:underline">
-              Projects
-            </Link>
-          </p>
-          <h1 className="text-2xl font-semibold">{project.name}</h1>
-          {stories.length > 0 && (
-            <p className="mt-1 text-muted">
-              {ready} of {stories.length} {stories.length === 1 ? "story" : "stories"} ready
-            </p>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href={`${base}/stories/new`} className="btn-primary">
-            Score a story
-          </Link>
-          <Link href={`${base}/import`} className="btn-secondary">
-            Import CSV
-          </Link>
-        </div>
-      </div>
+    <>
+      <SectionHeader
+        title="Backlog"
+        description={
+          stories.length > 0
+            ? `${ready} of ${stories.length} ${stories.length === 1 ? "story" : "stories"} ready. Weakest first, so you know what to fix before planning.`
+            : "Score stories to see which are ready for planning."
+        }
+        actions={stories.length > 0 ? actions : undefined}
+      />
 
       {imported && (
-        <p role="status" className="rounded-md bg-ready-bg px-3 py-2 text-sm text-ready">
+        <p role="status" className="mb-4 rounded-lg bg-ready-bg px-4 py-2.5 text-sm text-ready">
           Imported and scored {imported} {imported === "1" ? "story" : "stories"}.
         </p>
       )}
 
       {stories.length === 0 ? (
-        <div className="card p-8 text-center">
-          <p className="font-medium">No stories yet.</p>
-          <p className="mt-1 text-sm text-muted">Score one story by pasting it, or import your backlog from a CSV.</p>
-        </div>
+        <EmptyState icon={ListChecks} title="No stories yet." action={<div className="flex gap-2">{actions}</div>}>
+          Score one story by pasting it, or import your backlog from a CSV.
+        </EmptyState>
       ) : (
-        <>
-          <nav aria-label="Filter by band" className="flex flex-wrap gap-2 text-sm">
-            <FilterLink href={base} active={!filter}>
-              All ({stories.length})
-            </FilterLink>
+        <div className="space-y-4">
+          <nav aria-label="Filter by band" className="grid gap-3 sm:grid-cols-4">
+            <FilterCard href={base} active={!filter} label="All" value={stories.length} />
             {FILTERS.map((f) => (
-              <FilterLink key={f.slug} href={`${base}?band=${f.slug}`} active={filter?.slug === f.slug}>
-                {f.band} ({stories.filter((s) => s.readiness?.band === f.band).length})
-              </FilterLink>
+              <FilterCard
+                key={f.slug}
+                href={`${base}?band=${f.slug}`}
+                active={filter?.slug === f.slug}
+                label={f.band}
+                value={count(f.band)}
+                icon={<f.Icon aria-hidden="true" className={`h-4 w-4 ${f.tone}`} />}
+              />
             ))}
           </nav>
 
           <div className="card overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="data-table">
               <caption className="sr-only">Stories sorted by readiness score, lowest first</caption>
-              <thead className="border-b border-border text-left text-muted">
+              <thead>
                 <tr>
-                  <th scope="col" className="px-4 py-2 font-medium">Score</th>
-                  <th scope="col" className="px-4 py-2 font-medium">Band</th>
-                  <th scope="col" className="px-4 py-2 font-medium">Key</th>
-                  <th scope="col" className="px-4 py-2 font-medium">Title</th>
-                  <th scope="col" className="px-4 py-2 text-right font-medium">Points</th>
+                  <th scope="col" className="w-16">Score</th>
+                  <th scope="col">Story</th>
+                  <th scope="col" className="w-32">Band</th>
+                  <th scope="col" className="w-20 text-right">Points</th>
                 </tr>
               </thead>
               <tbody>
                 {shown.map((story) => (
-                  <tr key={story.id} className="border-b border-border last:border-0">
-                    <td className="px-4 py-2 font-semibold tabular-nums">{story.readiness?.score ?? "—"}</td>
-                    <td className="px-4 py-2">{story.readiness && <BandBadge band={story.readiness.band as Band} />}</td>
-                    <td className="whitespace-nowrap px-4 py-2 font-mono text-xs">{story.key}</td>
-                    <td className="px-4 py-2">
-                      <Link href={`${base}/stories/${story.id}`} className="hover:underline">
-                        {story.title}
+                  <tr key={story.id}>
+                    <td>{story.readiness && <ScoreRing score={story.readiness.score} band={story.readiness.band as Band} size="sm" />}</td>
+                    <td>
+                      <Link href={`${base}/stories/${story.id}`} className="group block">
+                        <span className="font-mono text-xs text-subtle">{story.key}</span>{" "}
+                        <span className="font-medium group-hover:text-accent group-hover:underline">{story.title}</span>
                       </Link>
                     </td>
-                    <td className="px-4 py-2 text-right tabular-nums">{story.storyPoints ?? "—"}</td>
+                    <td>{story.readiness && <BandBadge band={story.readiness.band as Band} />}</td>
+                    <td className="text-right tabular-nums text-muted">{story.storyPoints ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            {shown.length === 0 && <p className="p-4 text-sm text-muted">No stories in this band.</p>}
+            {shown.length === 0 && <p className="p-6 text-center text-sm text-muted">No stories in this band.</p>}
           </div>
-        </>
+        </div>
       )}
-
-      <section aria-labelledby="sprints-heading" className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 id="sprints-heading" className="text-lg font-semibold">
-            Sprints
-          </h2>
-          <Link href={`${base}/sprints/new`} className="btn-secondary">
-            New sprint
-          </Link>
-        </div>
-        {sprints.length === 0 ? (
-          <p className="text-sm text-muted">
-            No sprints yet. Create one to lock a baseline and track how much it changes.
-          </p>
-        ) : (
-          <ul className="card divide-y divide-border text-sm">
-            {sprints.map((sprint) => (
-              <li key={sprint.id}>
-                <Link href={`${base}/sprints/${sprint.id}`} className="flex flex-wrap gap-x-4 gap-y-1 px-4 py-3 hover:bg-background">
-                  <span className="font-medium">{sprint.name}</span>
-                  <span className="text-muted">
-                    {formatDay(sprint.startDate)} to {formatDay(sprint.endDate)}
-                  </span>
-                  <span className="text-muted">
-                    {sprint.snapshots.length === 0
-                      ? "No baseline yet"
-                      : `${sprint.snapshots.length} ${sprint.snapshots.length === 1 ? "snapshot" : "snapshots"}`}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <details className="card p-5">
-        <summary className="cursor-pointer font-medium">Project settings</summary>
-        <div className="mt-4">
-          <ProjectSettings projectId={project.id} name={project.name} />
-        </div>
-      </details>
-    </div>
+    </>
   );
 }
 
-function FilterLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
+function FilterCard({
+  href,
+  active,
+  label,
+  value,
+  icon,
+}: {
+  href: string;
+  active: boolean;
+  label: string;
+  value: number;
+  icon?: React.ReactNode;
+}) {
   return (
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className={`rounded-full border px-3 py-1 ${active ? "border-accent bg-accent text-accent-foreground" : "border-border hover:border-accent"}`}
+      className={`card flex items-center justify-between px-4 py-3 transition-colors ${
+        active ? "border-accent ring-1 ring-accent" : "hover:border-border-strong"
+      }`}
     >
-      {children}
+      <span className="flex items-center gap-2 text-sm text-muted">
+        {icon}
+        {label}
+      </span>
+      <span className="text-lg font-semibold tabular-nums">{value}</span>
     </Link>
   );
 }

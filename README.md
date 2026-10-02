@@ -5,7 +5,7 @@ Teams often start sprints with vague stories, and mid-sprint scope changes go un
 - **Readiness check:** nine fixed rules (C1–C9) give each story a score out of 100. Every point lost comes with a plain-English reason. A story that isn't estimated, or is too big, can't be Ready. The score never uses AI.
 - **Scope tracking:** lock the day-one sprint as a baseline, upload later snapshots, and see scope added, removed, net change, churn and completion.
 
-No Jira setup in v1: paste a story or upload a CSV. All sample data is invented.
+No Jira setup in v1: paste a story or upload a CSV. Light and dark themes. All sample data is invented.
 
 **Live:** <https://sprintwise-omega.vercel.app> · try the [demo](https://sprintwise-omega.vercel.app/demo) without signing in.
 

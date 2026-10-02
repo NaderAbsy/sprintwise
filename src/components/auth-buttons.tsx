@@ -1,8 +1,6 @@
 "use client";
-import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { signInWithGitHub } from "@/app/auth-actions";
-import { authClient } from "@/lib/auth-client";
 
 /** A real form, so the first click works even before hydration. */
 export function SignInButton({ className = "btn-primary" }: { className?: string }) {
@@ -18,22 +16,5 @@ export function SignInButton({ className = "btn-primary" }: { className?: string
         </span>
       )}
     </form>
-  );
-}
-
-export function SignOutButton() {
-  const router = useRouter();
-  return (
-    <button
-      type="button"
-      className="text-muted hover:text-foreground"
-      onClick={async () => {
-        await authClient.signOut();
-        router.push("/");
-        router.refresh();
-      }}
-    >
-      Sign out
-    </button>
   );
 }

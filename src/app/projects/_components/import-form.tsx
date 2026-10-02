@@ -40,14 +40,14 @@ export function ImportForm({ projectId, settings }: { projectId: string; setting
           id="csv-file"
           type="file"
           accept=".csv,text/csv"
-          className="mt-2 block text-sm file:mr-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-2 file:text-accent-foreground"
+          className="mt-2 block w-full rounded-lg border border-dashed border-border-strong bg-surface-2/50 p-3 text-sm text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent-foreground hover:file:bg-accent-hover"
           onChange={(e) => onFile(e.target.files?.[0])}
         />
         <input type="hidden" name="csv" value={csv} />
       </div>
 
       {result && !result.ok && (
-        <div role="alert" className="rounded-md bg-not-ready-bg p-4 text-sm text-not-ready">
+        <div role="alert" className="rounded-lg bg-not-ready-bg p-4 text-sm text-not-ready">
           <p className="font-medium">This file can&apos;t be imported:</p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {result.errors.slice(0, 20).map((e, i) => (
@@ -64,7 +64,7 @@ export function ImportForm({ projectId, settings }: { projectId: string; setting
             Preview: {readySummary(scored.map((s) => s.readiness))}
           </p>
           {result.warnings.length > 0 && (
-            <ul className="rounded-md bg-needs-work-bg p-3 text-sm text-needs-work">
+            <ul className="rounded-lg bg-needs-work-bg p-3 text-sm text-needs-work">
               {result.warnings.map((w, i) => (
                 <li key={i}>
                   Row {w.row}: {w.message}
@@ -73,22 +73,22 @@ export function ImportForm({ projectId, settings }: { projectId: string; setting
             </ul>
           )}
           <div className="card max-h-96 overflow-auto">
-            <table className="w-full text-sm">
-              <thead className="sticky top-0 border-b border-border bg-surface text-left text-muted">
+            <table className="data-table">
+              <thead className="sticky top-0">
                 <tr>
-                  <th scope="col" className="px-3 py-2 font-medium">Key</th>
-                  <th scope="col" className="px-3 py-2 font-medium">Title</th>
-                  <th scope="col" className="px-3 py-2 text-right font-medium">Points</th>
-                  <th scope="col" className="px-3 py-2 font-medium">Score</th>
+                  <th scope="col">Key</th>
+                  <th scope="col">Title</th>
+                  <th scope="col" className="text-right">Points</th>
+                  <th scope="col">Score</th>
                 </tr>
               </thead>
               <tbody>
                 {scored.map(({ story, readiness }) => (
-                  <tr key={story.key} className="border-b border-border last:border-0">
-                    <td className="whitespace-nowrap px-3 py-1.5 font-mono text-xs">{story.key}</td>
-                    <td className="px-3 py-1.5">{story.title}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums">{story.storyPoints ?? "—"}</td>
-                    <td className="whitespace-nowrap px-3 py-1.5">
+                  <tr key={story.key}>
+                    <td className="whitespace-nowrap font-mono text-xs">{story.key}</td>
+                    <td>{story.title}</td>
+                    <td className="text-right tabular-nums">{story.storyPoints ?? "—"}</td>
+                    <td className="whitespace-nowrap">
                       <span className="mr-2 tabular-nums">{readiness.score}</span>
                       <BandBadge band={readiness.band} />
                     </td>
