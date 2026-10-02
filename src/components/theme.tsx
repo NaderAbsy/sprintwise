@@ -47,7 +47,10 @@ const OPTIONS: { value: ThemeChoice; label: string; Icon: typeof Sun }[] = [
   { value: "system", label: "System", Icon: Monitor },
 ];
 
-/** Light / Dark / System. The choice is remembered in this browser only. */
+/**
+ * Light / Dark / System, as a proper radio group: one Tab stop, arrow keys to
+ * change. The choice is remembered in this browser only.
+ */
 export function ThemeToggle({ className = "" }: { className?: string }) {
   // null on the server, so no option is marked until the browser's choice is known.
   const choice = useSyncExternalStore(subscribe, readChoice, () => null);
@@ -60,8 +63,20 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     return () => media.removeEventListener("change", onChange);
   }, [choice]);
 
+  const current = choice ?? "system";
+  function onKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+    if (!step) return;
+    event.preventDefault();
+    const index = OPTIONS.findIndex((o) => o.value === current);
+    const next = OPTIONS[(index + step + OPTIONS.length) % OPTIONS.length];
+    choose(next.value);
+    event.currentTarget.querySelector<HTMLButtonElement>(`[data-value="${next.value}"]`)?.focus();
+  }
+
   return (
     <div
+      onKeyDown={onKeyDown}
       role="radiogroup"
       aria-label="Colour theme"
       className={`inline-flex items-center gap-0.5 rounded-lg border border-border bg-surface-2 p-0.5 ${className}`}
@@ -71,7 +86,9 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
           key={value}
           type="button"
           role="radio"
+          data-value={value}
           aria-checked={choice === value}
+          tabIndex={value === current ? 0 : -1}
           aria-label={label}
           title={label}
           onClick={() => choose(value)}

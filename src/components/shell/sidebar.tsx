@@ -2,7 +2,7 @@
 import { BookOpen, FolderKanban, LayoutGrid, LogOut, Menu, Plus, Shield, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme";
 import { authClient } from "@/lib/auth-client";
@@ -12,10 +12,21 @@ type Props = {
   user: { name: string; image: string | null } | null;
 };
 
+const DESKTOP = "(min-width: 1024px)";
+const subscribeDesktop = (onChange: () => void) => {
+  const media = matchMedia(DESKTOP);
+  media.addEventListener("change", onChange);
+  return () => media.removeEventListener("change", onChange);
+};
+
 /** Desktop: a fixed sidebar. Phones: a top bar whose menu opens the same list as a drawer. */
 export function Sidebar(props: Props) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const menuButton = useRef<HTMLButtonElement>(null);
+  const drawer = useRef<HTMLElement>(null);
+  // Before hydration assume desktop, so the sidebar is never inert on a large screen.
+  const isDesktop = useSyncExternalStore(subscribeDesktop, () => matchMedia(DESKTOP).matches, () => true);
 
   // Close the drawer after navigating (adjusting state during render, not in an effect).
   const [shownPath, setShownPath] = useState(pathname);
@@ -24,11 +35,22 @@ export function Sidebar(props: Props) {
     setOpen(false);
   }
   useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    if (!open || isDesktop) return;
+    // Move focus into the drawer when it opens; Escape closes it and returns focus to the menu button.
+    drawer.current?.querySelector<HTMLElement>("a, button")?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      menuButton.current?.focus();
+    };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, [open, isDesktop]);
+
+  const close = () => {
+    setOpen(false);
+    menuButton.current?.focus();
+  };
 
   return (
     <>
@@ -36,6 +58,7 @@ export function Sidebar(props: Props) {
       <div className="no-print sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background/85 px-4 backdrop-blur lg:hidden">
         <Logo href="/projects" />
         <button
+          ref={menuButton}
           type="button"
           className="btn-ghost px-2"
           aria-expanded={open}
@@ -48,11 +71,14 @@ export function Sidebar(props: Props) {
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" aria-hidden="true" onClick={() => setOpen(false)} />
+        <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" aria-hidden="true" onClick={close} />
       )}
 
       <aside
+        ref={drawer}
         id="app-nav"
+        // A closed drawer is off-screen on phones; inert keeps its links out of the Tab order.
+        inert={!open && !isDesktop}
         className={`no-print fixed inset-y-0 left-0 z-50 w-64 border-r border-border bg-surface transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:border-r-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}

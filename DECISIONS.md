@@ -2,6 +2,16 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-03 — Keyboard pass (L-2)
+
+- **Method:** I went through every page with only Tab, Shift+Tab, Enter, Space, the arrow keys and Escape, logging where focus landed, whether it was on screen, and whether a focus ring showed.
+- **Found and fixed:**
+  - The closed phone menu sat off-screen, but its 11 links were still in the Tab order. It's now `inert` while closed on small screens.
+  - Opening the menu now moves focus into it, and Escape closes it and returns focus to the menu button.
+  - The theme switch was announced as a radio group but had three Tab stops. It now has one Tab stop, and the arrow keys change the option (roving tabindex), as the ARIA radio-group pattern expects.
+- **Already fine:** a skip link first on every page, visible focus rings everywhere, and logical order. The native `<dialog>` confirmations move focus to Cancel, close on Escape and return focus to the trigger.
+- **Kept honest:** `e2e/keyboard.spec.ts` repeats the pass on every CI run, so a regression fails the build.
+
 ## 2026-10-03 — Rule settings re-score the whole project at once
 
 - **Decision:** R-6 lets each project set its max story points (a whole number from 1 to 100) and its vague-word list (up to 100 words). Saving re-scores every story in the project in the same database transaction as the settings change. "Reset to defaults" restores 8 points and the default list.
