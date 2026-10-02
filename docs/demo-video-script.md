@@ -1,6 +1,6 @@
 # Demo video script (under 3 minutes)
 
-`pnpm record-demo --voice` records this script from the live site with a text-to-speech voice-over and matching captions (`docs/demo.mp4` and `docs/demo.webm`; needs `brew install ffmpeg`). Without `--voice` it records captions only. Choose a voice with `DEMO_VOICE=Daniel`. A recording in your own voice will still sound warmer.
+`pnpm record-demo --voice` records this script from the live site with a natural AI voice-over and matching captions (`docs/demo.mp4` and `docs/demo.webm`). The voice is [Kokoro](https://github.com/hexgrad/kokoro), an open-source neural model (Apache 2.0) that runs locally with no account or cost; the first run downloads it (about 300 MB). It needs `brew install ffmpeg`. Without `--voice` it records captions only. Choose a voice with `DEMO_VOICE`: `af_heart` (default, US), `am_michael` (US), `bf_emma` or `bm_george` (UK).
 
 The video sells one idea: Sprintwise tells you whether stories are ready before planning, and how much the sprint changed after it. Record the live site at <https://sprintwise-omega.vercel.app>. Everything shown is invented sample data.
 

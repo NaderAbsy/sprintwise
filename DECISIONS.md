@@ -2,6 +2,15 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-03 — Demo voice-over uses Kokoro, an open-source neural voice
+
+- **Decision:** `pnpm record-demo --voice` narrates with Kokoro-82M, an Apache-2.0 open model, run locally through `kokoro-js`. The default voice is `af_heart`. Every line is generated before recording starts, and each scene lasts as long as its line.
+- **Options:**
+  - (a) macOS text-to-speech: tried first, rejected as too robotic.
+  - (b) A cloud service such as ElevenLabs: needs an account, an API key and, beyond the free tier, payment.
+  - (c) Kokoro: natural-sounding, free, offline after a one-time ~300 MB model download, and no keys.
+- **Notes:** `kokoro-js` is a dev dependency only, so it never ships with the app. Numbers and web addresses get a separate spoken version, so the captions stay exact and the speech sounds natural.
+
 ## 2026-10-03 — Keyboard pass (L-2)
 
 - **Method:** I went through every page with only Tab, Shift+Tab, Enter, Space, the arrow keys and Escape, logging where focus landed, whether it was on screen, and whether a focus ring showed.
