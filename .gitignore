@@ -50,3 +50,6 @@ next-env.d.ts
 
 # Local editor launch config
 /.claude/launch.json
+
+# Demo video: attached to the GitHub release, not committed (pnpm record-demo)
+/docs/demo.webm

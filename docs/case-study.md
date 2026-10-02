@@ -30,7 +30,7 @@ The demo, with invented data, works without signing up.
 I owned the work end to end as Product Owner:
 
 - the requirements doc, with goals, users, scope by version, acceptance criteria and a definition of done
-- the backlog: [N] stories in four epics, prioritised with MoSCoW
+- the backlog: 18 v1 stories in four epics, prioritised with MoSCoW, plus 2 moved to v2
 - user acceptance testing and the release plan
 
 I built it with Next.js, PostgreSQL and automated tests, in [N] weeks alongside my job.
@@ -60,5 +60,5 @@ I built it with Next.js, PostgreSQL and automated tests, in [N] weeks alongside 
 
 - Live app: <https://sprintwise-omega.vercel.app>
 - Demo: <https://sprintwise-omega.vercel.app/demo>
-- Code: [GitHub link, once the repo is public]
-- Demo video: [link]
+- Code: <https://github.com/NaderAbsy/sprintwise>
+- Demo video: <https://github.com/NaderAbsy/sprintwise/releases/download/v0.6/sprintwise-demo.webm>
