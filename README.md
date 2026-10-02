@@ -16,7 +16,7 @@ Version 1 is in progress and deployed. See the requirements doc for the backlog 
 | Phase | Stories | State |
 | --- | --- | --- |
 | 1 · Foundations | F-1 CI, F-3 GitHub sign-in, F-4 projects | Done, live |
-| 2 · Readiness rules | R-1 paste a story, R-2 CSV import, R-3 sorted backlog | Done, live |
+| 2 · Readiness rules | R-1 paste a story, R-2 CSV import, R-3 sorted backlog, R-6 rule settings | Done, live |
 | 3 · AI layer | R-4 rewrites, R-5 test scenarios | Built and tested, switched off on the live site; moved to v2 (see below) |
 | 4 · Scope tracking | S-1 to S-4, S-6 | Done, live |
 | 5 · Report and polish | S-5, F-2 demo, L-2 accessibility, F-5 privacy | S-5 done; F-2 demo with sample sprint built; F-5 waits for the AI notice; L-2 ongoing |
@@ -156,4 +156,3 @@ CI runs all of these on every push and pull request (`.github/workflows/ci.yml`)
 ## Known limits in v1
 
 - CSV snapshots can't show who made a change, only between which two snapshots it happened. Who changed what arrives with the Jira integration in v2.
-- The rule settings (max points, vague words) are stored per project but can't be edited yet (story R-6, a Could).

@@ -7,11 +7,12 @@ import { parseStoriesCsv } from "@/lib/csv/parse";
 import type { FormState } from "@/lib/form-state";
 import { db } from "@/lib/server/db";
 import { requireProject, requireUser } from "@/lib/server/dal";
-import { projectDefaults, readinessData, settingsOf } from "@/lib/server/readiness";
+import { projectDefaults, readinessData, settingsOf, toStory } from "@/lib/server/readiness";
 import { recordUsage } from "@/lib/server/usage";
 import { normalizeKey, parsePoints, type Story } from "@/lib/stories/types";
 import { Prisma } from "@/generated/prisma/client";
 import { MAX_PROJECTS } from "@/lib/limits";
+import { DEFAULT_RULE_SETTINGS, parseRuleSettings } from "@/lib/readiness/settings";
 
 const projectName = z
   .string()
@@ -149,4 +150,37 @@ export async function deleteStory(projectId: string, storyId: string) {
   await db.story.deleteMany({ where: { id: storyId, projectId: project.id } });
   revalidatePath(`/projects/${project.id}`);
   redirect(`/projects/${project.id}`);
+}
+
+// ---------------------------------------------------------------------------
+// Rule settings (story R-6)
+// ---------------------------------------------------------------------------
+
+/** Saves the project's max points and vague words, then re-scores every story with them. */
+export async function updateRuleSettings(projectId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  const project = await requireProject(projectId);
+  const parsed =
+    formData.get("intent") === "reset"
+      ? { ok: true as const, settings: DEFAULT_RULE_SETTINGS }
+      : parseRuleSettings(String(formData.get("maxPoints") ?? ""), String(formData.get("vagueWords") ?? ""));
+  if (!parsed.ok) return { fieldErrors: parsed.errors };
+
+  const { settings } = parsed;
+  const stories = await db.story.findMany({ where: { projectId: project.id } });
+  // One transaction, so scores are never left half on the old settings and half on the new.
+  await db.$transaction([
+    db.project.update({ where: { id: project.id }, data: { maxPoints: settings.maxPoints, vagueWords: settings.vagueWords } }),
+    ...stories.map((row) => {
+      const readiness = readinessData(toStory(row), settings);
+      return db.readinessResult.upsert({
+        where: { storyId: row.id },
+        create: { storyId: row.id, ...readiness },
+        update: readiness,
+      });
+    }),
+  ]);
+  revalidatePath(`/projects/${project.id}`, "layout");
+  return {
+    message: `Saved. ${stories.length} ${stories.length === 1 ? "story was" : "stories were"} re-scored with the new settings.`,
+  };
 }
