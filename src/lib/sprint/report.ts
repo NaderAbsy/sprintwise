@@ -1,4 +1,5 @@
 import { scoreStory, type RuleSettings } from "@/lib/readiness/rules";
+import { formatDay } from "@/lib/sprint/dates";
 import { diffSnapshots, indexByKey, type Change, type ChangeType } from "@/lib/sprint/diff";
 import type { Story } from "@/lib/stories/types";
 
@@ -58,4 +59,23 @@ export function readinessFinding({ changed, unchanged }: ReadinessComparison): s
   return gap > 0
     ? `Stories that changed scored ${gap} points lower at the baseline than those that didn't.`
     : `Stories that changed scored ${-gap} points higher at the baseline than those that didn't.`;
+}
+
+/** A change log row: a change plus the "as of" day of the snapshot it appeared in. */
+export type LogRow = Change & { date: string };
+
+/**
+ * The dated change log for snapshots in date order (baseline first): each
+ * snapshot is compared with the one before it. Newest first, ties by key.
+ */
+export function changeLog(snapshots: { asOfDate: Date; stories: Story[] }[]): LogRow[] {
+  const rows: (LogRow & { at: number; step: number })[] = [];
+  snapshots.slice(1).forEach((snapshot, i) => {
+    for (const change of diffSnapshots(snapshots[i].stories, snapshot.stories)) {
+      rows.push({ ...change, date: formatDay(snapshot.asOfDate), at: snapshot.asOfDate.getTime(), step: i });
+    }
+  });
+  return rows
+    .sort((a, b) => b.at - a.at || b.step - a.step || a.key.localeCompare(b.key, undefined, { numeric: true }))
+    .map(({ at: _at, step: _step, ...row }) => row);
 }

@@ -45,7 +45,37 @@ test("the template downloads with the frozen columns", async ({ request }) => {
   expect((await response.text()).split("\n")[0]).toBe("key,title,description,acceptance_criteria,story_points,status");
 });
 
-for (const path of ["/", "/demo", "/privacy"]) {
+test("F-2: the demo includes a sample sprint and its one-page report", async ({ page }) => {
+  await page.goto("/demo");
+  const sprint = page.getByRole("region", { name: "Sprint 12 (sample data)" });
+  await expect(
+    sprint.getByText("Stories that changed scored 40 points lower at the baseline than those that didn't."),
+  ).toBeVisible();
+  await expect(sprint.getByText("+18.8%")).toBeVisible();
+  await expect(sprint.getByText("50.0%")).toBeVisible();
+  await expect(sprint.getByText("37.5%")).toBeVisible();
+
+  await sprint.getByRole("link", { name: "Open the sprint report" }).click();
+  await expect(page).toHaveURL(/\/demo\/report$/);
+  await expect(
+    page.getByText("Scope grew 18.8%, churn was 50.0%, and 37.5% of the original commitment was done."),
+  ).toBeVisible();
+  const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
+  expect(pdf.toString("latin1").match(/\/Type\s*\/Page(?!s)/g)?.length).toBe(1);
+});
+
+test("the first click on Sign in with GitHub is handled", async ({ page }) => {
+  // With GitHub configured (a local .env) the click goes to GitHub; without it (CI) an error shows.
+  // Either way one click is enough. Requests to github.com are stubbed so the test never leaves the machine.
+  await page.route("https://github.com/**", (route) => route.fulfill({ status: 200, body: "GitHub" }));
+  await page.goto("/");
+  await page.getByRole("main").getByRole("button", { name: "Sign in with GitHub" }).click();
+  await expect
+    .poll(async () => page.url().startsWith("https://github.com/") || (await page.getByRole("alert").count()) > 0)
+    .toBe(true);
+});
+
+for (const path of ["/", "/demo", "/demo/report", "/privacy"]) {
   test(`${path} has no serious accessibility issues`, async ({ page }) => {
     await page.goto(path);
     await expectAccessible(page);

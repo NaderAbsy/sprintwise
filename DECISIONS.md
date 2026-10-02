@@ -2,6 +2,22 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-02 — Database migrations run only for production deploys
+
+- **Decision:** Vercel's build command is `pnpm build`, which runs `scripts/build.mjs`. That script runs `prisma migrate deploy` only when `VERCEL_ENV=production`, and preview builds skip it.
+- **Why:** `DATABASE_URL` is still shared by Production and Preview. Under the old build command, a pull request's preview build would have applied unmerged migrations to the live database.
+- **Still to do:** give Preview its own `DATABASE_URL` (the Neon `preview` branch). Until then, preview deploys read and write the live database at runtime.
+
+## 2026-10-02 — Sign-in is a server action
+
+- **Decision:** "Sign in with GitHub" is a form that posts to a server action. The action calls Better Auth's `signInSocial` and redirects to GitHub.
+- **Why:** The client-only button ignored clicks made before the page's JavaScript loaded. On a cold start, the first click often did nothing. A form works from the first click, even without JavaScript.
+
+## 2026-10-02 — The demo includes a sample sprint
+
+- **Decision:** `/demo` shows an invented three-snapshot sprint (Sprint 12, Tidyhome) and links to its one-page report at `/demo/report`. Both reuse the real report component.
+- **Why:** F-2 asks for a sample backlog *and* sprint. The sample data was chosen to show the product's main finding: the stories that changed mid-sprint averaged 55 at the baseline, against 95 for the rest. A unit test pins these numbers.
+
 ## 2026-10-01 — What the sprint report counts as a change
 
 - **Decision:**

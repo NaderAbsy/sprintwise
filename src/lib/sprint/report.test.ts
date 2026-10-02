@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_SETTINGS } from "@/lib/readiness/rules";
-import { compareReadiness, isScopeChange, readinessFinding } from "@/lib/sprint/report";
+import { changeLog, compareReadiness, isScopeChange, readinessFinding } from "@/lib/sprint/report";
 import { story } from "@/test/story";
 
 // A complete story scores 100; one with no criteria scores 65 (C1 and C3 fail).
@@ -65,5 +65,26 @@ describe("isScopeChange", () => {
     expect(isScopeChange({ type: "status-changed" })).toBe(false);
     expect(isScopeChange({ type: "renamed" })).toBe(false);
     expect(isScopeChange({ type: "re-estimated" })).toBe(true);
+  });
+});
+
+describe("changeLog", () => {
+  const day = (d: string) => new Date(`${d}T00:00:00Z`);
+
+  it("compares each snapshot with the previous one, newest first", () => {
+    const log = changeLog([
+      { asOfDate: day("2026-10-05"), stories: [ready("A"), ready("B")] },
+      { asOfDate: day("2026-10-08"), stories: [ready("A")] },
+      { asOfDate: day("2026-10-13"), stories: [ready("A", { storyPoints: 5 }), ready("C")] },
+    ]);
+    expect(log.map((r) => `${r.date} ${r.key} ${r.type}`)).toEqual([
+      "13 Oct 2026 A re-estimated",
+      "13 Oct 2026 C added",
+      "8 Oct 2026 B removed",
+    ]);
+  });
+
+  it("is empty for a baseline alone", () => {
+    expect(changeLog([{ asOfDate: day("2026-10-05"), stories: [ready("A")] }])).toEqual([]);
   });
 });
