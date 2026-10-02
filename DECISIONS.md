@@ -2,6 +2,12 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-03 — Rule settings re-score the whole project at once
+
+- **Decision:** R-6 lets each project set its max story points (a whole number from 1 to 100) and its vague-word list (up to 100 words). Saving re-scores every story in the project in the same database transaction as the settings change. "Reset to defaults" restores 8 points and the default list.
+- **Why one transaction:** a backlog where some scores use the old settings and some use the new would quietly mislead. Each score also stores `settings_used`, so an old score stays explainable.
+- **What it doesn't touch:** sprint snapshots are frozen copies. Their readiness comparison in the report is scored with the project's *current* settings at the time the report is viewed.
+
 ## 2026-10-02 — Interface redesign: app shell, project tabs, light and dark themes
 
 - **Navigation:**
