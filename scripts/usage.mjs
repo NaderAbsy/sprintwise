@@ -1,4 +1,4 @@
-// Prints the anonymous usage counts for the case study (story L-3).
+// Prints the anonymous usage counts (story L-3).
 // Usage: `pnpm usage` (reads DATABASE_URL from .env), or for production:
 //   DATABASE_URL="<the Neon connection string>" pnpm usage
 // usage_events holds only an event type and a timestamp: no user ids, no story text.

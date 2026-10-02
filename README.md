@@ -11,7 +11,7 @@ No Jira setup in v1: paste a story or upload a CSV. Light and dark themes. All s
 
 ## Status
 
-Version 1 is in progress and deployed. See the requirements doc for the backlog and the build plan.
+**Version 1 is done** (v1.0) and deployed. See the requirements doc for the backlog and the build plan.
 
 | Phase | Stories | State |
 | --- | --- | --- |
@@ -147,7 +147,6 @@ CI runs all of these on every push and pull request (`.github/workflows/ci.yml`)
 
 | Document | Contents |
 | --- | --- |
-| [Case study draft](docs/case-study.md) | Problem, users, role, decisions and what's next, for a portfolio site |
 | [Demo video script](docs/demo-video-script.md) | A timed shot list; `pnpm record-demo --voice` records it from the live site with a voice-over ([MP4](https://github.com/NaderAbsy/sprintwise/releases/download/v0.6/sprintwise-demo.mp4), [WebM](https://github.com/NaderAbsy/sprintwise/releases/download/v0.6/sprintwise-demo.webm)) |
 | [DECISIONS.md](DECISIONS.md) | Every decision with its options and reasons |
 
