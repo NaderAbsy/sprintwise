@@ -75,7 +75,57 @@ test("the first click on Sign in with GitHub is handled", async ({ page }) => {
     .toBe(true);
 });
 
-for (const path of ["/", "/demo", "/demo/report", "/privacy"]) {
+test("the home page scores a story live as you type", async ({ page }) => {
+  await page.goto("/");
+  const scorer = page.getByRole("main").locator("[aria-live=polite]");
+  await expect(scorer.getByText("Not ready")).toBeVisible();
+  await page.getByRole("button", { name: "Ready", exact: true }).click();
+  await expect(scorer.getByText("Every check passed")).toBeVisible();
+  await page.getByLabel("Story title").fill("Make it fast");
+  await expect(scorer.getByText("No vague words in the story: failed")).toBeAttached();
+});
+
+test("the home page has the demo video with a transcript", async ({ page }) => {
+  await page.goto("/");
+  const video = page.locator("video");
+  await expect(video).toHaveAttribute("poster", "/media/demo-poster.jpg");
+  await expect(video.locator("source")).toHaveCount(2);
+  for (const src of await video.locator("source").evaluateAll((els) => els.map((e) => e.getAttribute("src")))) {
+    expect((await page.request.head(src!)).ok()).toBe(true);
+  }
+  await page.getByText("Read the transcript").click();
+  await expect(page.getByText("Every story gets a score out of 100 from nine fixed rules.", { exact: false })).toBeVisible();
+});
+
+test("the header tabs reach every public page and mark the current one", async ({ page }) => {
+  await page.goto("/");
+  const nav = page.getByRole("navigation", { name: "Main" });
+  for (const [name, heading] of [
+    ["Product", "Everything Sprintwise does, and how"],
+    ["Changelog", "What's new in Sprintwise"],
+    ["About", "Built by a Product Owner, for Product Owners"],
+  ]) {
+    await nav.getByRole("link", { name }).click();
+    await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
+    await expect(nav.getByRole("link", { name })).toHaveAttribute("aria-current", "page");
+  }
+});
+
+test("on a phone, the menu opens, links work, and Escape closes it", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  const toggle = page.getByRole("button", { name: "Open menu" });
+  await toggle.click();
+  await expect(page.getByRole("button", { name: "Close menu" })).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Escape");
+  await expect(toggle).toBeFocused();
+  await toggle.click();
+  await page.locator("#marketing-menu").getByRole("link", { name: "Changelog" }).click();
+  await expect(page).toHaveURL(/\/changelog$/);
+  await expect(page.locator("#marketing-menu")).toHaveCount(0);
+});
+
+for (const path of ["/", "/product", "/changelog", "/about", "/demo", "/demo/report", "/privacy"]) {
   test(`${path} has no serious accessibility issues`, async ({ page }) => {
     await page.goto(path);
     await expectAccessible(page);

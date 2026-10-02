@@ -14,6 +14,8 @@ export async function signIn(page: Page) {
 
 /** Zero serious or critical accessibility issues (stories L-2, Gate 5). */
 export async function expectAccessible(page: Page) {
+  // Scroll reveals start transparent; reduced motion shows everything at once, so contrast is measured as seen.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
   const serious = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
   expect(serious.map((v) => `${v.id}: ${v.help} (${v.nodes.length})`)).toEqual([]);

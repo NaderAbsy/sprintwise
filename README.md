@@ -7,7 +7,7 @@ Teams often start sprints with vague stories, and mid-sprint scope changes go un
 
 No Jira setup in v1: paste a story or upload a CSV. Light and dark themes. All sample data is invented.
 
-**Live:** <https://sprintwise-omega.vercel.app> · try the [demo](https://sprintwise-omega.vercel.app/demo) without signing in · watch the [2-minute demo video with voice-over](https://github.com/NaderAbsy/sprintwise/releases/download/v0.6/sprintwise-demo.mp4).
+**Live:** <https://sprintwise-omega.vercel.app> · try the [demo](https://sprintwise-omega.vercel.app/demo) without signing in · watch the [2-minute demo video with voice-over](https://sprintwise-omega.vercel.app/#video) on the home page.
 
 ## Status
 
@@ -28,7 +28,7 @@ All data shown is invented. The images follow your GitHub theme. Regenerate them
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/landing-dark.png">
-  <img alt="Landing page with a readiness score card and sprint metrics" src="docs/screenshots/landing-light.png">
+  <img alt="Home page with a live readiness check that scores a story as you type" src="docs/screenshots/landing-light.png">
 </picture>
 
 **Backlog**: every story scored and sorted weakest first, with band filters.
@@ -126,7 +126,7 @@ Then open <http://localhost:3000>. The demo at `/demo` works without signing in.
 | Command | What it covers |
 | --- | --- |
 | `pnpm test` | Unit tests: every scoring rule, the CSV parser, snapshot comparison and every metric, including the requirements doc's worked example |
-| `pnpm test:e2e` | End-to-end tests against a production build: demo, sign-in, projects, scoring, CSV import, access control, and axe accessibility scans |
+| `pnpm test:e2e` | End-to-end tests against a production build: home page, demo, sign-in, projects, scoring, CSV import, access control, keyboard-only flows, and axe accessibility scans of every public page |
 | `pnpm lint` and `pnpm typecheck` | Static checks |
 
 CI runs all of these on every push and pull request (`.github/workflows/ci.yml`).
@@ -139,8 +139,9 @@ CI runs all of these on every push and pull request (`.github/workflows/ci.yml`)
 | `src/lib/csv` | The frozen CSV template and parser |
 | `src/lib/sprint` | Snapshot comparison and sprint metrics: pure functions |
 | `src/lib/server` | Database client, auth, and the data access layer that checks ownership on every read and write |
-| `src/app` | Pages and server actions |
-| `src/demo` | Invented sample data for demo mode |
+| `src/app` | Pages and server actions; `(marketing)` holds the public site: home, product, demo, changelog, about and privacy |
+| `src/components/marketing` | The home page's interactive parts: live scorer, feature tabs, video player, scroll reveals |
+| `src/demo` | Invented sample data for demo mode, and the demo video's captions (`video-lines.json`), shared by the recorder and the home page transcript |
 | `e2e` | Playwright tests |
 
 ## Launch kit

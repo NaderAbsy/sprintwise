@@ -11,7 +11,7 @@
 // The first --voice run downloads the model (~300 MB) from Hugging Face and caches it.
 import { chromium } from "@playwright/test";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, renameSync, rmSync } from "node:fs";
+import { mkdirSync, readFileSync, renameSync, rmSync } from "node:fs";
 
 const args = process.argv.slice(2);
 const VOICE = args.includes("--voice");
@@ -28,36 +28,9 @@ mkdirSync("docs", { recursive: true });
 /**
  * Every line of narration, generated before recording starts so the video never waits on the voice.
  * Captions show `caption`; the voice reads `spoken` when it differs (numbers and web addresses).
+ * The same file is the transcript under the video on the home page, so the two can't drift apart.
  */
-const LINES = {
-  intro: { caption: "Product Owners face two questions every sprint: were our stories ready, and did we stick to what we committed?" },
-  answer: { caption: "Sprintwise answers both with data. No Jira setup: paste a story or upload a CSV." },
-  rules: { caption: "Every story gets a score out of 100 from nine fixed rules. The weakest stories come first." },
-  weak: { caption: "This one uses vague words like 'fast' and 'easy', and states no benefit, so it scores 50." },
-  noAi: {
-    caption: "No AI sets the score: the same story always scores the same, and every lost point has a reason.",
-    spoken: "No A.I. sets the score. The same story always scores the same, and every lost point has a reason.",
-  },
-  tryIt: { caption: "You can score your own story. It runs in the browser; nothing is sent or saved.", minMs: 3000 },
-  vague: { caption: "A vague one-line story scores low…", spoken: "A vague, one-line story scores low.", minMs: 2500 },
-  climbs: {
-    caption: "…and the score climbs as the story gets clear. Only the word 'fast' still costs points.",
-    spoken: "And the score climbs as the story gets clearer. Only the word fast still costs points.",
-  },
-  baseline: { caption: "On day one the team locks a baseline it can't edit. Later CSV snapshots are compared against it, story by story." },
-  metrics: {
-    caption: "Here scope grew 18.8%, churn was 50%, and only 37.5% of the original commitment was done.",
-    spoken: "Here, scope grew eighteen point eight percent, churn was fifty percent, and only thirty-seven and a half percent of the original commitment was done.",
-  },
-  finding: { caption: "And the finding that matters: the stories that changed scored 40 points lower before planning." },
-  report: { caption: "It all fits on one printable page for the retrospective." },
-  owner: { caption: "I owned the requirements, backlog and testing end to end. Every rule and metric has an automated test." },
-  close: {
-    caption: "Sprintwise: sprintwise-omega.vercel.app · code on github.com/NaderAbsy/sprintwise",
-    spoken: "Sprintwise. Try the demo, and find the code, at the links below.",
-    minMs: 4500,
-  },
-};
+const LINES = JSON.parse(readFileSync("src/demo/video-lines.json", "utf8"));
 
 const voiced = {};
 if (VOICE) {

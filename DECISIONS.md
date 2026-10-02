@@ -2,6 +2,24 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-03 — A real home page and public site
+
+- **Decision:** the landing page became a home page, and the public site gained Product, Changelog and About tabs, with a menu on phones. The demo video is on the home page, served from the app itself.
+- **What's on it:**
+  - A live readiness check in the hero: the same rules as the app run in the browser on every keystroke.
+  - The video with a poster, a play button and a transcript.
+  - Feature tabs using the ARIA tabs pattern, with previews built from the sample data.
+  - Counters, the nine rules, how it works, an FAQ and a closing call to action.
+- **Ideas taken from:**
+  - Linear and Vercel: the release pill above the headline, gradient type, and a soft grid.
+  - Stripe: an interactive product demo in the hero instead of a static picture.
+  - Raycast: cards that glow under the pointer.
+- **Kept honest:**
+  - No logos, testimonials or user counts: Sprintwise has none. Every number on the page is a fact about the product or comes from the invented sample sprint.
+  - Motion stops under `prefers-reduced-motion`, and content that fades in on scroll is visible without JavaScript.
+  - The video transcript is read from the same file as the recorder's captions, so the two can't drift apart.
+- **Rejected:** an animation library such as Framer Motion. CSS and one IntersectionObserver do the job without extra JavaScript.
+
 ## 2026-10-03 — v1.0: shipped without a written case study
 
 - **Decision:** v1 is done and tagged v1.0. The written case study, part of L-1's packaging and Gate 6, is dropped, and its draft is removed from the repo.
