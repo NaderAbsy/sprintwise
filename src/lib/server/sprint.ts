@@ -1,12 +1,11 @@
 import "server-only";
 import type { Sprint } from "@/generated/prisma/client";
 import { formatDay } from "@/lib/sprint/dates";
-import type { Change, ChangeType } from "@/lib/sprint/diff";
+import type { ChangeType } from "@/lib/sprint/diff";
 import { computeMetrics } from "@/lib/sprint/metrics";
+import type { LogRow } from "@/lib/sprint/report";
 import { db } from "@/lib/server/db";
 import { toStory } from "@/lib/server/readiness";
-
-export type LogRow = Change & { date: string };
 
 /** Everything the sprint page and the sprint report show. Callers check ownership first (dal.ts). */
 export async function loadSprint(sprint: Pick<Sprint, "id">) {

@@ -1,39 +1,23 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useActionState } from "react";
+import { signInWithGitHub } from "@/app/auth-actions";
 import { authClient } from "@/lib/auth-client";
 
+/** A real form, so the first click works even before hydration. */
 export function SignInButton({ className = "btn-primary" }: { className?: string }) {
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [state, action, pending] = useActionState(signInWithGitHub, null);
   return (
-    <span className="inline-flex flex-col items-start gap-1">
-      <button
-        type="button"
-        className={className}
-        disabled={pending}
-        onClick={async () => {
-          setPending(true);
-          setError(null);
-          const { error } = await authClient.signIn.social({ provider: "github", callbackURL: "/projects" });
-          if (error) {
-            setError(
-              process.env.NODE_ENV === "development"
-                ? "GitHub sign-in isn't set up: add GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET to .env."
-                : "GitHub sign-in isn't available right now.",
-            );
-            setPending(false);
-          }
-        }}
-      >
+    <form action={action} className="inline-flex flex-col items-start gap-1">
+      <button className={className} disabled={pending}>
         {pending ? "Opening GitHub…" : "Sign in with GitHub"}
       </button>
-      {error && (
+      {state?.error && (
         <span role="alert" className="text-xs text-not-ready">
-          {error}
+          {state.error}
         </span>
       )}
-    </span>
+    </form>
   );
 }
 
