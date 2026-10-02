@@ -11,7 +11,6 @@ type Score = { score: number; band: Band };
 export function AiSuggestionPanel({
   projectId,
   storyId,
-  configured,
   eligible,
   original,
   suggestion,
@@ -19,7 +18,6 @@ export function AiSuggestionPanel({
 }: {
   projectId: string;
   storyId: string;
-  configured: boolean;
   /** Only stories that aren't Ready get suggestions (story R-4). */
   eligible: boolean;
   original: Score;
@@ -39,9 +37,7 @@ export function AiSuggestionPanel({
         </h2>
       </div>
 
-      {!configured ? (
-        <p className="text-sm text-muted">AI suggestions aren&apos;t set up on this site yet. The rule results above still apply.</p>
-      ) : !eligible && !suggestion ? (
+      {!eligible && !suggestion ? (
         <p className="text-sm text-muted">This story is Ready, so it doesn&apos;t need a rewrite.</p>
       ) : (
         <form action={action} className="space-y-2">
