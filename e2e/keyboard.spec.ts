@@ -45,6 +45,22 @@ test("the theme switch is one Tab stop, changed with the arrow keys", async ({ p
   expect(["Light", "Dark", "System"]).not.toContain(await focusedName(page));
 });
 
+test("the home page feature tabs are one Tab stop, switched with the arrow keys", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("tab", { name: "Readiness" }).focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("tab", { name: "Scope tracking" })).toBeFocused();
+  await expect(page.getByRole("tab", { name: "Scope tracking" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("tabpanel", { name: "Scope tracking" })).toBeVisible();
+  await page.keyboard.press("End");
+  await expect(page.getByRole("tab", { name: "Sprint report" })).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("tab", { name: "Readiness" })).toBeFocused();
+  // Tab moves into the panel, not to the next tab.
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("tabpanel", { name: "Readiness" })).toBeFocused();
+});
+
 test("the demo works by keyboard", async ({ page }) => {
   await page.goto("/demo");
   await tabTo(page, (el) => el.name.startsWith("TIDY-103"));

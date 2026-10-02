@@ -12,7 +12,8 @@ async function shot(page: Page, name: string, scheme: "light" | "dark", fullPage
   await page.screenshot({ path: `${OUT}/${name}-${scheme}.png`, fullPage });
 }
 
-test.use({ viewport: { width: 1440, height: 900 } });
+// Reduced motion: counters show their final numbers and scroll reveals are already in place.
+test.use({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
 
 test("@screenshots public pages", async ({ page }) => {
   for (const scheme of ["light", "dark"] as const) {
