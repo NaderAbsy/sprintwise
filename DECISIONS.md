@@ -2,6 +2,20 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-02 — AI suggestions: Claude Opus 5.5 at low effort, with server-side fallback
+
+- **Decision:** R-4 and R-5 call the Claude API from a server action using structured outputs (`betaZodOutputFormat`), so the reply must match the fixed JSON shape. The settings:
+  - model `claude-opus-5-5`, overridable with `ANTHROPIC_MODEL`
+  - `effort: "low"`
+  - a 15-second timeout and one retry
+  - `fallbacks: "default"`, so a safety-classifier decline is re-run on Anthropic's recommended fallback model
+- **Changes to the requirements doc:** it suggested "the cheapest model that gives usable rewrites". The Claude API guidance is to default to the current top model and leave a cheaper choice to the owner, so the model is one environment variable.
+  - At $4 / $20 per million tokens, a typical suggestion of about 1,500 tokens in and 800 out costs roughly two US cents.
+  - At the cap of 20 a day, that's at most about $0.40 per user per day.
+- **Safety:** the story is sent as escaped data inside `<story>` tags and the prompt says to treat it as data. The reply is parsed against a Zod schema, which drops unknown fields, and length limits are checked again on the server. A refusal, a cut-off or malformed reply, a timeout or a rate limit shows a plain message, and the rule results still stand. Logs record only the HTTP status, never story text.
+- **Cap:** `ai_usage` counts *attempts* per user per UTC day, so failed calls can't be used to get around the limit (default 20, `AI_DAILY_LIMIT`).
+- **Tests:** `AI_FAKE_RESPONSES=true` returns a deterministic reply for end-to-end tests and refuses to start in production. Unit tests drive the wrapper with a fake client covering success, refusal, malformed reply, rate limit and timeout.
+
 ## 2026-10-02 — Database migrations run only for production deploys
 
 - **Decision:** Vercel's build command is `pnpm build`, which runs `scripts/build.mjs`. That script runs `prisma migrate deploy` only when `VERCEL_ENV=production`, and preview builds skip it.

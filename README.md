@@ -17,7 +17,7 @@ Version 1 is in progress and deployed. See the requirements doc for the backlog 
 | --- | --- | --- |
 | 1 · Foundations | F-1 CI, F-3 GitHub sign-in, F-4 projects | Done, live |
 | 2 · Readiness rules | R-1 paste a story, R-2 CSV import, R-3 sorted backlog | Done, live |
-| 3 · AI layer | R-4 rewrites, R-5 test scenarios | Not started |
+| 3 · AI layer | R-4 rewrites, R-5 test scenarios | Built and tested; goes live once `ANTHROPIC_API_KEY` is set |
 | 4 · Scope tracking | S-1 to S-4, S-6 | Done, live |
 | 5 · Report and polish | S-5, F-2 demo, L-2 accessibility, F-5 privacy | S-5 done; F-2 demo with sample sprint built; F-5 waits for the AI notice; L-2 ongoing |
 | 6 · Launch | L-1, L-3 | Not started |

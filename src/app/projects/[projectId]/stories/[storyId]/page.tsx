@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AiSuggestionPanel } from "@/app/projects/_components/ai-suggestion-panel";
 import { deleteStory } from "@/app/projects/actions";
 import { ConfirmButton } from "@/components/confirm-button";
 import { ReadinessBreakdown } from "@/components/readiness-breakdown";
+import { rewriteAsStory, SuggestionSchema } from "@/lib/ai/suggestion";
 import { scoreStory } from "@/lib/readiness/rules";
+import { aiConfigured } from "@/lib/server/ai";
 import { db } from "@/lib/server/db";
 import { requireProject } from "@/lib/server/dal";
 import { settingsOf, toStory } from "@/lib/server/readiness";
@@ -15,12 +18,17 @@ export const metadata: Metadata = { title: "Story" };
 export default async function StoryPage({ params }: PageProps<"/projects/[projectId]/stories/[storyId]">) {
   const { projectId, storyId } = await params;
   const project = await requireProject(projectId);
-  const row = await db.story.findFirst({ where: { id: storyId, projectId: project.id } });
+  const row = await db.story.findFirst({ where: { id: storyId, projectId: project.id }, include: { readiness: true } });
   if (!row) notFound();
 
   const story = toStory(row);
-  const readiness = scoreStory(story, settingsOf(project));
+  const settings = settingsOf(project);
+  const readiness = scoreStory(story, settings);
   const criteria = splitCriteria(story.acceptanceCriteria);
+  // Stored suggestions are re-checked against the schema before they're shown.
+  const stored = SuggestionSchema.safeParse(row.readiness?.aiSuggestion);
+  const suggestion = stored.success ? stored.data : null;
+  const rewrite = suggestion ? scoreStory(rewriteAsStory(story, suggestion), settings) : null;
 
   return (
     <div className="space-y-6">
@@ -68,6 +76,16 @@ export default async function StoryPage({ params }: PageProps<"/projects/[projec
           </dl>
         </section>
       </div>
+
+      <AiSuggestionPanel
+        projectId={project.id}
+        storyId={row.id}
+        configured={aiConfigured}
+        eligible={readiness.band !== "Ready"}
+        original={{ score: readiness.score, band: readiness.band }}
+        suggestion={suggestion}
+        rewriteScore={rewrite && { score: rewrite.score, band: rewrite.band }}
+      />
 
       <ConfirmButton
         label="Delete story"
