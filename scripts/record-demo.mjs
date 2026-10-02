@@ -1,12 +1,14 @@
 // Records the demo video (docs/demo-video-script.md) from the live site.
 //
 //   pnpm record-demo [base URL]            captions only, WebM (needs nothing else)
-//   pnpm record-demo --voice [base URL]    adds a text-to-speech voice-over, MP4 + WebM
-//                                          (needs macOS `say` and a full ffmpeg: brew install ffmpeg)
+//   pnpm record-demo --voice [base URL]    adds a natural AI voice-over, MP4 + WebM
+//                                          (Kokoro, an open-source neural voice that runs locally;
+//                                          needs a full ffmpeg: brew install ffmpeg)
 //
 // Only the public demo is used, so every story and number on screen is invented sample data.
 // Each scene lasts as long as its narration, and every caption repeats what's said, so the
-// video also works muted. Pick another voice with DEMO_VOICE="Daniel" (any `say -v '?'` voice).
+// video also works muted. Pick another Kokoro voice with DEMO_VOICE, e.g. "am_michael" or "bf_emma".
+// The first --voice run downloads the model (~300 MB) from Hugging Face and caches it.
 import { chromium } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 import { mkdirSync, renameSync, rmSync } from "node:fs";
@@ -14,7 +16,7 @@ import { mkdirSync, renameSync, rmSync } from "node:fs";
 const args = process.argv.slice(2);
 const VOICE = args.includes("--voice");
 const BASE = args.find((a) => !a.startsWith("--")) ?? "https://sprintwise-omega.vercel.app";
-const VOICE_NAME = process.env.DEMO_VOICE ?? "Samantha";
+const VOICE_NAME = process.env.DEMO_VOICE ?? "af_heart";
 const SIZE = { width: 1440, height: 900 };
 const TMP = "test-results/demo-video";
 const OUT = "docs/demo";
@@ -23,15 +25,52 @@ rmSync(TMP, { recursive: true, force: true });
 mkdirSync(`${TMP}/voice`, { recursive: true });
 mkdirSync("docs", { recursive: true });
 
-/** Renders one line of narration; returns its length in ms (0 without --voice). */
-let clipCount = 0;
-function render(text) {
-  if (!VOICE) return { file: null, ms: 0 };
-  const file = `${TMP}/voice/${String(clipCount++).padStart(2, "0")}.aiff`;
-  execFileSync("say", ["-v", VOICE_NAME, "-r", "172", "-o", file, text]);
-  const info = execFileSync("afinfo", [file]).toString();
-  const seconds = Number(/estimated duration: ([\d.]+)/.exec(info)?.[1] ?? 0);
-  return { file, ms: Math.round(seconds * 1000) };
+/**
+ * Every line of narration, generated before recording starts so the video never waits on the voice.
+ * Captions show `caption`; the voice reads `spoken` when it differs (numbers and web addresses).
+ */
+const LINES = {
+  intro: { caption: "Product Owners face two questions every sprint: were our stories ready, and did we stick to what we committed?" },
+  answer: { caption: "Sprintwise answers both with data. No Jira setup: paste a story or upload a CSV." },
+  rules: { caption: "Every story gets a score out of 100 from nine fixed rules. The weakest stories come first." },
+  weak: { caption: "This one uses vague words like 'fast' and 'easy', and states no benefit, so it scores 50." },
+  noAi: {
+    caption: "No AI sets the score: the same story always scores the same, and every lost point has a reason.",
+    spoken: "No A.I. sets the score. The same story always scores the same, and every lost point has a reason.",
+  },
+  tryIt: { caption: "You can score your own story. It runs in the browser; nothing is sent or saved.", minMs: 3000 },
+  vague: { caption: "A vague one-line story scores low…", spoken: "A vague, one-line story scores low.", minMs: 2500 },
+  climbs: {
+    caption: "…and the score climbs as the story gets clear. Only the word 'fast' still costs points.",
+    spoken: "And the score climbs as the story gets clearer. Only the word fast still costs points.",
+  },
+  baseline: { caption: "On day one the team locks a baseline it can't edit. Later CSV snapshots are compared against it, story by story." },
+  metrics: {
+    caption: "Here scope grew 18.8%, churn was 50%, and only 37.5% of the original commitment was done.",
+    spoken: "Here, scope grew eighteen point eight percent, churn was fifty percent, and only thirty-seven and a half percent of the original commitment was done.",
+  },
+  finding: { caption: "And the finding that matters: the stories that changed scored 40 points lower before planning." },
+  report: { caption: "It all fits on one printable page for the retrospective." },
+  owner: { caption: "I owned the requirements, backlog and testing end to end. Every rule and metric has an automated test." },
+  close: {
+    caption: "Sprintwise: sprintwise-omega.vercel.app · code on github.com/NaderAbsy/sprintwise",
+    spoken: "Sprintwise. Try the demo, and find the code, at the links below.",
+    minMs: 4500,
+  },
+};
+
+const voiced = {};
+if (VOICE) {
+  const { KokoroTTS } = await import("kokoro-js");
+  const tts = await KokoroTTS.from_pretrained("onnx-community/Kokoro-82M-v1.0-ONNX", { dtype: "fp32", device: "cpu" });
+  for (const [key, line] of Object.entries(LINES)) {
+    const file = `${TMP}/voice/${key}.wav`;
+    const audio = await tts.generate(line.spoken ?? line.caption, { voice: VOICE_NAME, speed: 1 });
+    await audio.save(file);
+    const seconds = Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", file]).toString());
+    voiced[key] = { file, ms: Math.round(seconds * 1000) };
+  }
+  console.log(`Generated ${Object.keys(voiced).length} lines with Kokoro (${VOICE_NAME})`);
 }
 
 const browser = await chromium.launch();
@@ -58,17 +97,18 @@ async function overlay() {
   });
 }
 
-/** Shows a caption and speaks it; the scene lasts at least `minMs`, or as long as the line takes. */
-async function say(caption, { spoken = caption, minMs = 3500 } = {}) {
-  const clip = render(spoken);
+/** Shows a caption and plays its line; the scene lasts at least `minMs`, or as long as the line takes. */
+async function say(key) {
+  const line = LINES[key];
+  const clip = voiced[key];
   await overlay();
   await page.evaluate((t) => {
     const el = document.getElementById("demo-caption");
     el.textContent = t;
     el.style.opacity = "1";
-  }, caption);
-  if (clip.file) clips.push({ file: clip.file, at: Date.now() - t0 });
-  await wait(Math.max(minMs, clip.ms + 500));
+  }, line.caption);
+  if (clip) clips.push({ file: clip.file, at: Date.now() - t0 });
+  await wait(Math.max(line.minMs ?? 3500, (clip?.ms ?? 0) + 600));
 }
 
 async function pointAt(locator) {
@@ -101,27 +141,25 @@ async function scrollTo(selector) {
 // Landing
 await page.goto(BASE);
 await wait(800);
-await say("Product Owners face two questions every sprint: were our stories ready, and did we stick to what we committed?");
-await say("Sprintwise answers both with data. No Jira setup: paste a story or upload a CSV.");
+await say("intro");
+await say("answer");
 await click(page.getByRole("link", { name: "Try the demo" }));
 
 // Backlog
 await page.waitForURL(/\/demo/);
-await say("Every story gets a score out of 100 from nine fixed rules. The weakest stories come first.");
+await say("rules");
 await click(page.getByRole("button", { name: /TIDY-103/ }));
-await say("This one uses vague words like 'fast' and 'easy', and states no benefit, so it scores 50.");
-await say("No AI sets the score: the same story always scores the same, and every lost point has a reason.", {
-  spoken: "No A.I. sets the score. The same story always scores the same, and every lost point has a reason.",
-});
+await say("weak");
+await say("noAi");
 
 // Score your own
 await scrollTo("#try-it");
-await say("You can score your own story. It runs in the browser; nothing is sent or saved.", { minMs: 3000 });
+await say("tryIt");
 const title = page.getByLabel("Title");
 await click(title);
 await title.pressSequentially("Make invoice export fast", { delay: 45 });
 await click(page.getByRole("button", { name: "Score this story" }));
-await say("A vague one-line story scores low…", { minMs: 2500 });
+await say("vague");
 const description = page.getByLabel("Description");
 await click(description);
 await description.pressSequentially("As a finance admin I want to export an invoice as a PDF so that I can email it to a client", {
@@ -133,34 +171,27 @@ await criteria.pressSequentially("- The PDF downloads within 3 seconds\n- It mat
 await click(page.getByLabel("Story points"));
 await page.getByLabel("Story points").pressSequentially("3", { delay: 60 });
 await click(page.getByRole("button", { name: "Score this story" }));
-await say("…and the score climbs as the story gets clear. Only the word 'fast' still costs points.", {
-  spoken: "And the score climbs as the story gets clear. Only the word fast still costs points.",
-});
+await say("climbs");
 
 // Sample sprint
 await scrollTo("#sample-sprint");
-await say("On day one the team locks a baseline it can't edit. Later CSV snapshots are compared against it, story by story.");
+await say("baseline");
 await pointAt(page.getByRole("region", { name: "Sprint metrics" }));
-await say("Here scope grew 18.8%, churn was 50%, and only 37.5% of the original commitment was done.", {
-  spoken: "Here, scope grew 18.8 percent, churn was 50 percent, and only 37.5 percent of the original commitment was done.",
-});
+await say("metrics");
 await pointAt(page.getByText(/40 points lower/));
-await say("And the finding that matters: the stories that changed scored 40 points lower before planning.");
+await say("finding");
 
 // Report
 await click(page.getByRole("link", { name: "Open the sprint report" }));
 await page.waitForURL(/\/demo\/report/);
-await say("It all fits on one printable page for the retrospective.");
+await say("report");
 await pointAt(page.getByRole("button", { name: "Print or save as PDF" }));
 await wait(1000);
 
 // Close
 await page.goto(BASE);
-await say("I owned the requirements, backlog and testing end to end. Every rule and metric has an automated test.");
-await say("Sprintwise: sprintwise-omega.vercel.app · code on github.com/NaderAbsy/sprintwise", {
-  spoken: "Sprintwise. Try the demo, and find the code, at the links below.",
-  minMs: 4500,
-});
+await say("owner");
+await say("close");
 
 const video = page.video();
 await context.close();
@@ -179,6 +210,6 @@ if (!VOICE) {
   const common = ["-y", "-i", silent, ...inputs, "-filter_complex", mix, "-map", "0:v", "-map", "[voice]", "-shortest"];
   execFileSync("ffmpeg", [...common, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "23", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", `${OUT}.mp4`], { stdio: "ignore" });
   execFileSync("ffmpeg", [...common, "-c:v", "libvpx-vp9", "-b:v", "0", "-crf", "36", "-c:a", "libopus", "-b:a", "96k", `${OUT}.webm`], { stdio: "ignore" });
-  console.log(`Saved ${OUT}.mp4 and ${OUT}.webm with a ${VOICE_NAME} voice-over (${clips.length} lines)`);
+  console.log(`Saved ${OUT}.mp4 and ${OUT}.webm with a Kokoro ${VOICE_NAME} voice-over (${clips.length} lines)`);
 }
 rmSync(TMP, { recursive: true, force: true });
