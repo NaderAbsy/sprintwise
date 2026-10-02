@@ -2,6 +2,25 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-02 — Interface redesign: app shell, project tabs, light and dark themes
+
+- **Navigation:**
+  - Signed-in pages use a sidebar that lists every project. On phones it becomes a drawer.
+  - Each project keeps its name and four tabs in view: Backlog, Sprints, Import and Settings. Sprints and Settings became their own pages instead of sections at the bottom of the backlog.
+  - Public pages (landing, demo, privacy) use a slim top bar.
+- **Themes:** Light, Dark or System.
+  - An inline script sets `data-theme` before first paint, so there's no flash.
+  - The choice is stored in `localStorage` and is a per-browser convenience only.
+  - Without JavaScript, the system setting applies through `prefers-color-scheme`.
+  - Printing always uses the light palette.
+- **Visual language:**
+  - Neutral greys with one indigo accent.
+  - Readiness shown as a score ring coloured by band.
+  - Band badges with a coloured dot, so colour is never the only signal.
+  - Empty states with a single next step.
+- **Accessibility:** colour tokens were checked to WCAG 2.1 AA in both themes. The axe scans caught the first "subtle" grey at about 3.4:1, and it was darkened to pass.
+- **Why:** the first interface worked but read as a prototype. Projects with sprints needed real navigation, and dark mode was a user request.
+
 ## 2026-10-02 — AI suggestions move to v2; the live site runs without them
 
 - **Decision:** No `ANTHROPIC_API_KEY` is set on the live site. R-4 (AI rewrite) and R-5 (Given / When / Then scenarios) move from the v1 backlog to the v2 list. When no key is set, the story page doesn't show the AI panel at all, and the privacy page says no story text is sent to any AI service.

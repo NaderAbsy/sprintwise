@@ -36,6 +36,8 @@ export async function createProject(_prev: FormState, formData: FormData): Promi
   const project = await db.project.create({
     data: { userId: user.id, name: name.data, ...projectDefaults },
   });
+  // The sidebar lists projects, so refresh the shared layout too.
+  revalidatePath("/projects", "layout");
   redirect(`/projects/${project.id}`);
 }
 
@@ -45,7 +47,7 @@ export async function renameProject(projectId: string, _prev: FormState, formDat
   if (!name.success) return { fieldErrors: { name: name.error.issues[0].message } };
 
   await db.project.update({ where: { id: project.id }, data: { name: name.data } });
-  revalidatePath(`/projects/${project.id}`);
+  revalidatePath("/projects", "layout");
   return { message: "Project renamed." };
 }
 
@@ -53,7 +55,7 @@ export async function deleteProject(projectId: string) {
   const project = await requireProject(projectId);
   // Cascades to stories, scores, sprints, snapshots and changes.
   await db.project.delete({ where: { id: project.id } });
-  revalidatePath("/projects");
+  revalidatePath("/projects", "layout");
   redirect("/projects");
 }
 

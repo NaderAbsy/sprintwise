@@ -25,7 +25,7 @@ export function ConfirmButton({
       <dialog
         ref={dialog}
         aria-labelledby="confirm-title"
-        className="m-auto max-w-sm rounded-lg border border-border bg-surface p-6 text-foreground backdrop:bg-black/40"
+        className="m-auto max-w-sm rounded-xl border border-border bg-surface p-6 text-foreground shadow-xl backdrop:bg-black/50"
       >
         <h2 id="confirm-title" className="text-lg font-semibold">
           {title}

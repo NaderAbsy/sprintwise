@@ -1,0 +1,163 @@
+"use client";
+import { BookOpen, FolderKanban, LayoutGrid, LogOut, Menu, Plus, Shield, UserRound, X } from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Logo } from "@/components/logo";
+import { ThemeToggle } from "@/components/theme";
+import { authClient } from "@/lib/auth-client";
+
+type Props = {
+  projects: { id: string; name: string }[];
+  user: { name: string; image: string | null } | null;
+};
+
+/** Desktop: a fixed sidebar. Phones: a top bar whose menu opens the same list as a drawer. */
+export function Sidebar(props: Props) {
+  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  // Close the drawer after navigating (adjusting state during render, not in an effect).
+  const [shownPath, setShownPath] = useState(pathname);
+  if (pathname !== shownPath) {
+    setShownPath(pathname);
+    setOpen(false);
+  }
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  return (
+    <>
+      {/* Layers on phones: drawer (z-50) over the top bar (z-40) over the backdrop (z-30), so the close button stays clickable. */}
+      <div className="no-print sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background/85 px-4 backdrop-blur lg:hidden">
+        <Logo href="/projects" />
+        <button
+          type="button"
+          className="btn-ghost px-2"
+          aria-expanded={open}
+          aria-controls="app-nav"
+          onClick={() => setOpen((v) => !v)}
+        >
+          {open ? <X aria-hidden="true" className="h-5 w-5" /> : <Menu aria-hidden="true" className="h-5 w-5" />}
+          <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
+        </button>
+      </div>
+
+      {open && (
+        <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" aria-hidden="true" onClick={() => setOpen(false)} />
+      )}
+
+      <aside
+        id="app-nav"
+        className={`no-print fixed inset-y-0 left-0 z-50 w-64 border-r border-border bg-surface transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:border-r-0 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <SidebarContent {...props} pathname={pathname} />
+      </aside>
+    </>
+  );
+}
+
+function SidebarContent({ projects, user, pathname }: Props & { pathname: string }) {
+  const router = useRouter();
+  const item = (active: boolean) =>
+    `flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm transition-colors ${
+      active ? "bg-accent-soft font-medium text-accent-soft-foreground" : "text-muted hover:bg-surface-2 hover:text-foreground"
+    }`;
+
+  return (
+    <nav aria-label="App" className="flex h-full flex-col">
+      <div className="flex h-14 items-center px-4">
+        <Logo href="/projects" />
+      </div>
+
+      <div className="flex-1 space-y-6 overflow-y-auto px-3 py-2">
+        <Link href="/projects" className={item(pathname === "/projects")} aria-current={pathname === "/projects" ? "page" : undefined}>
+          <LayoutGrid aria-hidden="true" className="h-4 w-4" />
+          All projects
+        </Link>
+
+        <div>
+          <div className="flex items-center justify-between px-2.5 pb-1.5">
+            <p className="eyebrow">Projects</p>
+            <Link href="/projects#new-project" className="rounded p-0.5 text-subtle hover:text-foreground" title="New project">
+              <Plus aria-hidden="true" className="h-4 w-4" />
+              <span className="sr-only">New project</span>
+            </Link>
+          </div>
+          {projects.length === 0 ? (
+            <p className="px-2.5 text-sm text-subtle">No projects yet.</p>
+          ) : (
+            <ul className="space-y-0.5">
+              {projects.map((p) => {
+                const active = pathname.startsWith(`/projects/${p.id}`);
+                return (
+                  <li key={p.id}>
+                    <Link href={`/projects/${p.id}`} className={item(active)} aria-current={active ? "page" : undefined}>
+                      <FolderKanban aria-hidden="true" className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{p.name}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        <div className="space-y-0.5">
+          <p className="eyebrow px-2.5 pb-1.5">Explore</p>
+          <Link href="/demo" className={item(false)}>
+            <BookOpen aria-hidden="true" className="h-4 w-4" />
+            Demo
+          </Link>
+          <Link href="/privacy" className={item(false)}>
+            <Shield aria-hidden="true" className="h-4 w-4" />
+            Privacy
+          </Link>
+        </div>
+      </div>
+
+      <div className="space-y-3 border-t border-border p-3">
+        <div className="flex items-center justify-between px-1">
+          <span className="text-xs text-subtle">Theme</span>
+          <ThemeToggle />
+        </div>
+        {user && (
+          <div className="flex items-center gap-1">
+            <Link
+              href="/account"
+              className={`${item(pathname === "/account")} min-w-0 flex-1`}
+              aria-current={pathname === "/account" ? "page" : undefined}
+            >
+              {user.image ? (
+                // eslint-disable-next-line @next/next/no-img-element -- GitHub avatars; next/image would need a remote pattern.
+                <img src={user.image} alt="" className="h-5 w-5 rounded-full" />
+              ) : (
+                <UserRound aria-hidden="true" className="h-4 w-4" />
+              )}
+              <span className="truncate">{user.name}</span>
+            </Link>
+            <button
+              type="button"
+              className="btn-ghost px-2"
+              title="Sign out"
+              onClick={async () => {
+                await authClient.signOut();
+                router.push("/");
+                router.refresh();
+              }}
+            >
+              <LogOut aria-hidden="true" className="h-4 w-4" />
+              <span className="sr-only">Sign out</span>
+            </button>
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+}

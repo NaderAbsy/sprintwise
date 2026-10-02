@@ -9,6 +9,7 @@ async function sprintWithBaseline(page: Page, baseline: Buffer) {
   await page.goto("/projects");
   await page.getByLabel("Name").fill("Report project");
   await page.getByRole("button", { name: "Create project" }).click();
+  await page.getByRole("navigation", { name: "Project sections" }).getByRole("link", { name: "Sprints" }).click();
   await page.getByRole("link", { name: "New sprint" }).click();
   await page.getByLabel("Name").fill("Sprint 15");
   await page.getByLabel("Start date").fill("2026-10-05");

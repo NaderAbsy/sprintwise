@@ -36,25 +36,25 @@ export function ChangeTable({ caption, rows }: { caption: string; rows: (Change 
   const dated = rows.some((r) => r.date);
   return (
     <div className="card overflow-x-auto">
-      <table className="w-full text-sm">
+      <table className="data-table">
         <caption className="sr-only">{caption}</caption>
-        <thead className="border-b border-border text-left text-muted">
+        <thead>
           <tr>
-            {dated && <th scope="col" className="px-3 py-2 font-medium">Date</th>}
-            <th scope="col" className="px-3 py-2 font-medium">Story</th>
-            <th scope="col" className="px-3 py-2 font-medium">Change</th>
-            <th scope="col" className="px-3 py-2 font-medium">Detail</th>
-            <th scope="col" className="px-3 py-2 text-right font-medium">Points</th>
+            {dated && <th scope="col">Date</th>}
+            <th scope="col">Story</th>
+            <th scope="col">Change</th>
+            <th scope="col">Detail</th>
+            <th scope="col" className="text-right">Points</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((change, i) => (
-            <tr key={i} className="border-b border-border last:border-0">
-              {dated && <td className="whitespace-nowrap px-3 py-1.5">{change.date}</td>}
-              <td className="whitespace-nowrap px-3 py-1.5 font-mono text-xs">{change.key}</td>
-              <td className="whitespace-nowrap px-3 py-1.5">{LABELS[change.type]}</td>
-              <td className="px-3 py-1.5 text-muted">{describe(change)}</td>
-              <td className={`px-3 py-1.5 text-right tabular-nums ${change.pointsDelta === 0 ? "text-muted" : ""}`}>
+            <tr key={i}>
+              {dated && <td className="whitespace-nowrap">{change.date}</td>}
+              <td className="whitespace-nowrap font-mono text-xs">{change.key}</td>
+              <td className="whitespace-nowrap">{LABELS[change.type]}</td>
+              <td className="text-muted">{describe(change)}</td>
+              <td className={`text-right tabular-nums ${change.pointsDelta === 0 ? "text-subtle" : "font-medium"}`}>
                 {delta(change.pointsDelta)}
               </td>
             </tr>

@@ -11,18 +11,20 @@ export function SprintMetricsPanel({ metrics }: { metrics: SprintMetrics }) {
   ];
   return (
     <section aria-labelledby="metrics-heading" className="space-y-3">
-      <h2 id="metrics-heading" className="text-lg font-semibold">
-        Sprint metrics
-      </h2>
-      <p className="text-sm text-muted">
-        Baseline {metrics.baselineTotal} points · latest snapshot {metrics.latestTotal} points
-      </p>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="metrics-heading" className="font-semibold">
+          Sprint metrics
+        </h2>
+        <p className="text-sm text-muted">
+          Baseline {metrics.baselineTotal} points · latest snapshot {metrics.latestTotal} points
+        </p>
+      </div>
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {tiles.map((tile) => (
           <div key={tile.label} className="card p-4">
-            <dt className="text-sm text-muted">{tile.label}</dt>
-            <dd className="mt-1 text-2xl font-semibold tabular-nums">{tile.value}</dd>
-            <dd className="mt-1 text-xs text-muted">{tile.note}</dd>
+            <dt className="text-xs font-medium text-muted">{tile.label}</dt>
+            <dd className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">{tile.value}</dd>
+            <dd className="mt-1 text-xs text-subtle">{tile.note}</dd>
           </div>
         ))}
       </dl>
@@ -30,7 +32,7 @@ export function SprintMetricsPanel({ metrics }: { metrics: SprintMetrics }) {
         <p className="text-sm text-needs-work">The baseline has 0 points, so percentages can&apos;t be calculated.</p>
       )}
       {metrics.unestimatedKeys.length > 0 && (
-        <p className="rounded-md bg-needs-work-bg px-3 py-2 text-sm text-needs-work">
+        <p className="rounded-lg bg-needs-work-bg px-3 py-2 text-sm text-needs-work">
           {metrics.unestimatedKeys.length} {metrics.unestimatedKeys.length === 1 ? "story has" : "stories have"} no
           points and {metrics.unestimatedKeys.length === 1 ? "counts" : "count"} as 0:{" "}
           {metrics.unestimatedKeys.join(", ")}.

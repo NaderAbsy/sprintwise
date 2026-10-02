@@ -36,12 +36,20 @@ export function DemoScorer() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid items-start gap-6 lg:grid-cols-2">
       <form onSubmit={onSubmit} className="card space-y-4 p-5" noValidate>
         <StoryFields errors={errors} />
         <button className="btn-primary">Score this story</button>
       </form>
-      <div aria-live="polite">{readiness && <ReadinessBreakdown readiness={readiness} />}</div>
+      <div aria-live="polite">
+        {readiness ? (
+          <ReadinessBreakdown readiness={readiness} />
+        ) : (
+          <div className="card grid min-h-48 place-items-center p-6 text-center text-sm text-subtle">
+            The score and every reason appear here.
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,108 +1,213 @@
 @import "tailwindcss";
 
+/* Dark mode follows the data-theme attribute that the inline script in layout.tsx sets before first paint. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ---------------------------------------------------------------------------
+   Design tokens. Light is the default; dark applies via [data-theme="dark"],
+   or via the system setting when no script has run (no-JS fallback).
+   Contrast pairs are checked to WCAG 2.1 AA (story L-2).
+   --------------------------------------------------------------------------- */
 :root {
-  /* Native controls (date pickers, file inputs, scrollbars) follow the theme. */
   color-scheme: light;
-  --background: #fafaf9;
+  --background: #f7f7f8;
   --surface: #ffffff;
-  --foreground: #1c1917;
-  --muted: #57534e;
-  --border: #e7e5e4;
-  --accent: #4338ca;
+  --surface-2: #f2f2f4;
+  --foreground: #18181b;
+  --muted: #5f5f6b;
+  --subtle: #6b6b76;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
   --accent-foreground: #ffffff;
+  --accent-soft: #eef2ff;
+  --accent-soft-foreground: #3730a3;
   --ready: #166534;
   --ready-bg: #dcfce7;
-  --needs-work: #854d0e;
-  --needs-work-bg: #fef9c3;
-  --not-ready: #991b1b;
+  --ready-dot: #16a34a;
+  --needs-work: #92400e;
+  --needs-work-bg: #fef3c7;
+  --needs-work-dot: #d97706;
+  --not-ready: #b91c1c;
   --not-ready-bg: #fee2e2;
+  --not-ready-dot: #dc2626;
+  --shadow: 0 1px 2px rgb(24 24 27 / 0.04), 0 1px 3px rgb(24 24 27 / 0.06);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #0b0b0e;
+  --surface: #131317;
+  --surface-2: #1b1b21;
+  --foreground: #ededf0;
+  --muted: #a1a1aa;
+  --subtle: #8f8f99;
+  --border: #26262d;
+  --border-strong: #34343c;
+  --accent: #8b93f8;
+  --accent-hover: #a5abfa;
+  --accent-foreground: #0b0b0e;
+  --accent-soft: #1d1c38;
+  --accent-soft-foreground: #c7cbfd;
+  --ready: #6ee7a0;
+  --ready-bg: #0c2b19;
+  --ready-dot: #34d399;
+  --needs-work: #fcd34d;
+  --needs-work-bg: #2d2109;
+  --needs-work-dot: #f59e0b;
+  --not-ready: #fca5a5;
+  --not-ready-bg: #2f1111;
+  --not-ready-dot: #f87171;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     color-scheme: dark;
-    --background: #0c0a09;
-    --surface: #1c1917;
-    --foreground: #f5f5f4;
-    --muted: #a8a29e;
-    --border: #292524;
-    --accent: #a5b4fc;
-    --accent-foreground: #1e1b4b;
-    --ready: #86efac;
-    --ready-bg: #14532d;
-    --needs-work: #fde047;
-    --needs-work-bg: #422006;
+    --background: #0b0b0e;
+    --surface: #131317;
+    --surface-2: #1b1b21;
+    --foreground: #ededf0;
+    --muted: #a1a1aa;
+    --subtle: #8f8f99;
+    --border: #26262d;
+    --border-strong: #34343c;
+    --accent: #8b93f8;
+    --accent-hover: #a5abfa;
+    --accent-foreground: #0b0b0e;
+    --accent-soft: #1d1c38;
+    --accent-soft-foreground: #c7cbfd;
+    --ready: #6ee7a0;
+    --ready-bg: #0c2b19;
+    --ready-dot: #34d399;
+    --needs-work: #fcd34d;
+    --needs-work-bg: #2d2109;
+    --needs-work-dot: #f59e0b;
     --not-ready: #fca5a5;
-    --not-ready-bg: #450a0a;
+    --not-ready-bg: #2f1111;
+    --not-ready-dot: #f87171;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.3);
   }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-soft-foreground: var(--accent-soft-foreground);
   --color-ready: var(--ready);
   --color-ready-bg: var(--ready-bg);
+  --color-ready-dot: var(--ready-dot);
   --color-needs-work: var(--needs-work);
   --color-needs-work-bg: var(--needs-work-bg);
+  --color-needs-work-dot: var(--needs-work-dot);
   --color-not-ready: var(--not-ready);
   --color-not-ready-bg: var(--not-ready-bg);
+  --color-not-ready-dot: var(--not-ready-dot);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
+  font-feature-settings: "cv11", "ss01";
 }
 
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+  border-radius: 6px;
 }
 
+/* ---------------------------------------------------------------------------
+   Shared component styles
+   --------------------------------------------------------------------------- */
 @utility btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60;
+  @apply inline-flex h-9 items-center justify-center gap-2 rounded-lg px-3.5 text-sm font-medium whitespace-nowrap transition-colors disabled:pointer-events-none disabled:opacity-60;
 }
 @utility btn-primary {
-  @apply btn bg-accent text-accent-foreground hover:opacity-90;
+  @apply btn bg-accent text-accent-foreground shadow-sm hover:bg-accent-hover;
 }
 @utility btn-secondary {
-  @apply btn border border-border bg-surface text-foreground hover:bg-background;
+  @apply btn border border-border-strong bg-surface text-foreground hover:bg-surface-2;
+}
+@utility btn-ghost {
+  @apply btn text-muted hover:bg-surface-2 hover:text-foreground;
 }
 @utility btn-danger {
-  @apply btn border border-not-ready/40 bg-surface text-not-ready hover:bg-not-ready-bg;
+  @apply btn border border-not-ready/30 bg-surface text-not-ready hover:bg-not-ready-bg;
+}
+@utility btn-sm {
+  @apply h-8 px-2.5 text-xs;
 }
 @utility field {
-  @apply block w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted;
+  @apply block w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-foreground shadow-xs placeholder:text-subtle focus-visible:border-accent;
 }
 @utility label {
-  @apply block text-sm font-medium;
+  @apply block text-sm font-medium text-foreground;
 }
 @utility card {
-  @apply rounded-lg border border-border bg-surface;
+  @apply rounded-xl border border-border bg-surface shadow-[var(--shadow)];
+}
+@utility eyebrow {
+  @apply text-xs font-medium tracking-wide text-subtle uppercase;
 }
 
+/* Tables share one look: quiet header, hover rows, tabular numbers. */
+@utility data-table {
+  @apply w-full text-sm;
+  & thead th {
+    @apply border-b border-border bg-surface-2/60 px-4 py-2.5 text-left text-xs font-medium text-muted;
+  }
+  & tbody td {
+    @apply border-b border-border px-4 py-3 align-middle;
+  }
+  & tbody tr:last-child td {
+    @apply border-b-0;
+  }
+  & tbody tr {
+    @apply transition-colors hover:bg-surface-2/50;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Print: always light, no app chrome, compact enough for one A4 page (S-5).
+   --------------------------------------------------------------------------- */
 @media print {
   @page {
     size: A4;
     margin: 14mm;
   }
-  /* Always print in the light palette, whatever the screen theme. */
-  :root {
+  :root,
+  :root[data-theme="dark"] {
     color-scheme: light;
     --background: #ffffff;
     --surface: #ffffff;
-    --foreground: #1c1917;
-    --muted: #57534e;
-    --border: #d6d3d1;
-    --accent: #4338ca;
+    --surface-2: #f4f4f5;
+    --foreground: #18181b;
+    --muted: #52525b;
+    --subtle: #71717a;
+    --border: #d4d4d8;
+    --border-strong: #d4d4d8;
+    --accent: #4f46e5;
     --accent-foreground: #ffffff;
+    --shadow: none;
   }
   .no-print {
     display: none !important;
@@ -115,7 +220,6 @@ body {
     padding: 0 !important;
     max-width: none !important;
   }
-  /* Smaller type in print so the report fits one A4 page (story S-5). */
   html {
     font-size: 11px;
   }

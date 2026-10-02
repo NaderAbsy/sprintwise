@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { FileText, Lock } from "lucide-react";
 import Link from "next/link";
 import { SnapshotUploadForm } from "@/app/projects/_components/sprint-forms";
 import { deleteSprint } from "@/app/projects/sprint-actions";
 import { ChangeTable } from "@/components/change-table";
 import { ConfirmButton } from "@/components/confirm-button";
+import { SectionHeader } from "@/components/section-header";
 import { SprintMetricsPanel } from "@/components/sprint-metrics";
 import { formatDay, toDay } from "@/lib/sprint/dates";
 import { requireSprint } from "@/lib/server/dal";
@@ -27,26 +29,38 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
     endDay: toDay(sprint.endDate),
   };
 
+  const deleteButton = (
+    <ConfirmButton
+      label="Delete sprint"
+      title={`Delete ${sprint.name}?`}
+      body="This removes the sprint's baseline, snapshots and change log. The project's backlog stories are untouched."
+      confirmLabel="Delete sprint"
+      action={deleteSprint.bind(null, project.id, sprint.id)}
+    />
+  );
+
   return (
     <div className="space-y-8">
-      <div>
-        <p className="text-sm text-muted">
-          <Link href={`/projects/${project.id}`} className="hover:underline">
-            {project.name}
-          </Link>
-        </p>
-        <h1 className="text-2xl font-semibold">{sprint.name}</h1>
-        <p className="mt-1 text-muted">{dayRange}</p>
-        {baseline && (
-          <Link href={`/projects/${project.id}/sprints/${sprint.id}/report`} className="btn-secondary mt-4">
-            Open sprint report
-          </Link>
-        )}
-      </div>
+      <SectionHeader
+        back={{ href: `/projects/${project.id}/sprints`, label: "Sprints" }}
+        title={sprint.name}
+        description={dayRange}
+        actions={
+          <>
+            {deleteButton}
+            {baseline && (
+              <Link href={`/projects/${project.id}/sprints/${sprint.id}/report`} className="btn-primary">
+                <FileText aria-hidden="true" className="h-4 w-4" />
+                Open sprint report
+              </Link>
+            )}
+          </>
+        }
+      />
 
       {!baseline ? (
         <section aria-labelledby="baseline-heading" className="space-y-3">
-          <h2 id="baseline-heading" className="text-lg font-semibold">
+          <h2 id="baseline-heading" className="font-semibold">
             Step 1: lock the baseline
           </h2>
           <p className="max-w-2xl text-sm text-muted">
@@ -60,7 +74,7 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
           {metrics && <SprintMetricsPanel metrics={metrics} />}
 
           <section aria-labelledby="upload-heading" className="space-y-3">
-            <h2 id="upload-heading" className="text-lg font-semibold">
+            <h2 id="upload-heading" className="font-semibold">
               Upload a later snapshot
             </h2>
             <p className="max-w-2xl text-sm text-muted">
@@ -76,7 +90,7 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
           </section>
 
           <section aria-labelledby="log-heading" className="space-y-3">
-            <h2 id="log-heading" className="text-lg font-semibold">
+            <h2 id="log-heading" className="font-semibold">
               Change log
             </h2>
             {log.length === 0 ? (
@@ -90,7 +104,7 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
           </section>
 
           <section aria-labelledby="snapshots-heading" className="space-y-3">
-            <h2 id="snapshots-heading" className="text-lg font-semibold">
+            <h2 id="snapshots-heading" className="font-semibold">
               Snapshots
             </h2>
             <ol className="card divide-y divide-border text-sm">
@@ -98,7 +112,8 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
                 <li key={s.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2">
                   <span className="w-28 font-medium">{formatDay(s.asOfDate)}</span>
                   {s.isBaseline && (
-                    <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent-soft-foreground">
+                      <Lock aria-hidden="true" className="h-3 w-3" />
                       Baseline · locked
                     </span>
                   )}
@@ -112,13 +127,7 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
         </>
       )}
 
-      <ConfirmButton
-        label="Delete sprint"
-        title={`Delete ${sprint.name}?`}
-        body="This removes the sprint's baseline, snapshots and change log. The project's backlog stories are untouched."
-        confirmLabel="Delete sprint"
-        action={deleteSprint.bind(null, project.id, sprint.id)}
-      />
+
     </div>
   );
 }
