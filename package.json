@@ -13,7 +13,9 @@
     "test:e2e": "playwright test",
     "db:up": "docker compose up -d",
     "db:migrate": "prisma migrate dev",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "screenshots": "SCREENSHOTS=1 playwright test --grep @screenshots",
+    "usage": "node --env-file-if-exists=.env scripts/usage.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",

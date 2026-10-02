@@ -20,7 +20,44 @@ Version 1 is in progress and deployed. See the requirements doc for the backlog 
 | 3 · AI layer | R-4 rewrites, R-5 test scenarios | Built and tested, switched off on the live site; moved to v2 (see below) |
 | 4 · Scope tracking | S-1 to S-4, S-6 | Done, live |
 | 5 · Report and polish | S-5, F-2 demo, L-2 accessibility, F-5 privacy | S-5 done; F-2 demo with sample sprint built; F-5 waits for the AI notice; L-2 ongoing |
-| 6 · Launch | L-1, L-3 | Not started |
+| 6 · Launch | L-1, L-3 | L-3 done (`pnpm usage`); L-1 README and screenshots done, demo video to record |
+
+## Screenshots
+
+All data shown is invented. The images follow your GitHub theme. Regenerate them with `pnpm screenshots`.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/landing-dark.png">
+  <img alt="Landing page with a readiness score card and sprint metrics" src="docs/screenshots/landing-light.png">
+</picture>
+
+**Backlog**: every story scored and sorted weakest first, with band filters.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/backlog-dark.png">
+  <img alt="Backlog with score rings, band badges and filter cards" src="docs/screenshots/backlog-light.png">
+</picture>
+
+**Story**: the score and a plain-English reason for every point lost.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/story-dark.png">
+  <img alt="Story page with a score ring and the failed checks" src="docs/screenshots/story-light.png">
+</picture>
+
+**Sprint**: metrics against the locked baseline, and the dated change log.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/demo-sprint-dark.png">
+  <img alt="Sample sprint with five metric tiles, the readiness finding and the change log" src="docs/screenshots/demo-sprint-light.png">
+</picture>
+
+**Report**: one printable A4 page.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/sprint-report-dark.png">
+  <img alt="One-page sprint report" src="docs/screenshots/sprint-report-light.png">
+</picture>
 
 ## Product decisions
 
@@ -105,6 +142,16 @@ CI runs all of these on every push and pull request (`.github/workflows/ci.yml`)
 | `src/app` | Pages and server actions |
 | `src/demo` | Invented sample data for demo mode |
 | `e2e` | Playwright tests |
+
+## Launch kit
+
+| Document | Contents |
+| --- | --- |
+| [Case study draft](docs/case-study.md) | Problem, users, role, decisions and what's next, for a portfolio site |
+| [Demo video script](docs/demo-video-script.md) | A timed shot list for a video under 3 minutes |
+| [DECISIONS.md](DECISIONS.md) | Every decision with its options and reasons |
+
+**Usage counts (L-3):** `pnpm usage` prints anonymous event counts by month: checks run, imports, reports and AI suggestions. Point it at production with `DATABASE_URL="<Neon connection string>" pnpm usage`. The events table holds only an event type and a time: no user ids and no story text.
 
 ## Known limits in v1
 

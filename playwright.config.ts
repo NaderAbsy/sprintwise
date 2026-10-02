@@ -6,6 +6,8 @@ export default defineConfig({
   testDir: "e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
+  // README screenshots run only on demand: `pnpm screenshots`.
+  grepInvert: process.env.SCREENSHOTS ? undefined : /@screenshots/,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
   use: { baseURL, trace: "retain-on-failure" },
