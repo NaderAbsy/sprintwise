@@ -77,15 +77,17 @@ export default async function StoryPage({ params }: PageProps<"/projects/[projec
         </section>
       </div>
 
-      <AiSuggestionPanel
-        projectId={project.id}
-        storyId={row.id}
-        configured={aiConfigured}
-        eligible={readiness.band !== "Ready"}
-        original={{ score: readiness.score, band: readiness.band }}
-        suggestion={suggestion}
-        rewriteScore={rewrite && { score: rewrite.score, band: rewrite.band }}
-      />
+      {/* AI is off unless ANTHROPIC_API_KEY is set; then the panel isn't shown at all (DECISIONS.md, 2026-10-02). */}
+      {aiConfigured && (
+        <AiSuggestionPanel
+          projectId={project.id}
+          storyId={row.id}
+          eligible={readiness.band !== "Ready"}
+          original={{ score: readiness.score, band: readiness.band }}
+          suggestion={suggestion}
+          rewriteScore={rewrite && { score: rewrite.score, band: rewrite.band }}
+        />
+      )}
 
       <ConfirmButton
         label="Delete story"

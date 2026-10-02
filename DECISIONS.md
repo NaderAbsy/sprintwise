@@ -2,6 +2,15 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-02 — AI suggestions move to v2; the live site runs without them
+
+- **Decision:** No `ANTHROPIC_API_KEY` is set on the live site. R-4 (AI rewrite) and R-5 (Given / When / Then scenarios) move from the v1 backlog to the v2 list. When no key is set, the story page doesn't show the AI panel at all, and the privacy page says no story text is sent to any AI service.
+- **Options:**
+  - (a) Pay for the Claude API: a few dollars a month at expected use.
+  - (b) Keep a visible "AI isn't set up" message.
+  - (c) Keep the tested code, switch it off, and hide it.
+- **Reason for (c):** It's a portfolio project with no budget. A permanently disabled button looks unfinished, while the code and its tests still show the work. Turning it on later needs only the API key and a redeploy.
+
 ## 2026-10-02 — AI suggestions: Claude Opus 5.5 at low effort, with server-side fallback
 
 - **Decision:** R-4 and R-5 call the Claude API from a server action using structured outputs (`betaZodOutputFormat`), so the reply must match the fixed JSON shape. The settings:

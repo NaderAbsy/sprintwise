@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { aiConfigured } from "@/lib/server/ai";
 
 export const metadata: Metadata = { title: "Privacy" };
 
@@ -13,18 +14,25 @@ export default function PrivacyPage() {
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>From GitHub sign-in: your GitHub account id, name, email and avatar link. No password.</li>
           <li>The projects, stories, sprints and snapshots you create or upload, and their scores.</li>
-          <li>A count of how many AI suggestions you asked for each day, to enforce the daily limit.</li>
+          {aiConfigured && <li>A count of how many AI suggestions you asked for each day, to enforce the daily limit.</li>}
           <li>Anonymous usage counts (checks run, imports, reports) with no user id or story text.</li>
         </ul>
       </section>
 
       <section>
         <h2 className="text-base font-semibold">AI suggestions</h2>
-        <p className="mt-2">
-          When you ask for an AI rewrite, that story&apos;s text is sent to the Claude API from Anthropic to generate the
-          suggestion. Nothing is sent unless you click the button. Scores never use AI; they come from fixed rules.
-          Don&apos;t paste confidential or customer data.
-        </p>
+        {aiConfigured ? (
+          <p className="mt-2">
+            When you ask for an AI rewrite, that story&apos;s text is sent to the Claude API from Anthropic to generate
+            the suggestion. Nothing is sent unless you click the button. Scores never use AI; they come from fixed
+            rules. Don&apos;t paste confidential or customer data.
+          </p>
+        ) : (
+          <p className="mt-2">
+            AI suggestions are switched off on this site, so no story text is sent to any AI service. Scores never use
+            AI; they come from fixed rules.
+          </p>
+        )}
       </section>
 
       <section>
