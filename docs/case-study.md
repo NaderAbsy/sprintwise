@@ -61,4 +61,4 @@ I built it with Next.js, PostgreSQL and automated tests, in [N] weeks alongside 
 - Live app: <https://sprintwise-omega.vercel.app>
 - Demo: <https://sprintwise-omega.vercel.app/demo>
 - Code: <https://github.com/NaderAbsy/sprintwise>
-- Demo video: <https://github.com/NaderAbsy/sprintwise/releases/download/v0.6/sprintwise-demo.webm>
+- Demo video: <https://github.com/NaderAbsy/sprintwise/releases/download/v0.6/sprintwise-demo.mp4>

@@ -53,3 +53,4 @@ next-env.d.ts
 
 # Demo video: attached to the GitHub release, not committed (pnpm record-demo)
 /docs/demo.webm
+/docs/demo.mp4
