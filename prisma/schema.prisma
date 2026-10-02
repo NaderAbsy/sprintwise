@@ -202,7 +202,7 @@ model Change {
   @@map("changes")
 }
 
-/// Anonymous counts for the case study (story L-3). No user id, no story text.
+/// Anonymous usage counts (story L-3). No user id, no story text.
 model UsageEvent {
   id        String   @id @default(cuid())
   eventType String

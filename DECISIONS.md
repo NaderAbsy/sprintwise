@@ -2,6 +2,12 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-03 — v1.0: shipped without a written case study
+
+- **Decision:** v1 is done and tagged v1.0. The written case study, part of L-1's packaging and Gate 6, is dropped, and its draft is removed from the repo.
+- **Why:** the owner's call. The README already carries the problem, the screenshots, the product decisions and a link to the demo video. With this file, the reasoning lives in one place instead of two.
+- **What v1 shipped:** 17 of 18 v1 stories Done; F-5 is Done too, apart from the AI-consent notice, which only applies once AI is switched on (R-4 and R-5 are in v2).
+
 ## 2026-10-03 — Demo voice-over uses Kokoro, an open-source neural voice
 
 - **Decision:** `pnpm record-demo --voice` narrates with Kokoro-82M, an Apache-2.0 open model, run locally through `kokoro-js`. The default voice is `af_heart`. Every line is generated before recording starts, and each scene lasts as long as its line.
