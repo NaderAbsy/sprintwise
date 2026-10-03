@@ -56,7 +56,7 @@ export function Sidebar(props: Props) {
     <>
       {/* Layers on phones: drawer (z-50) over the top bar (z-40) over the backdrop (z-30), so the close button stays clickable. */}
       <div className="no-print sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background/85 px-4 backdrop-blur lg:hidden">
-        <Logo href="/projects" />
+        <Logo />
         <button
           ref={menuButton}
           type="button"
@@ -99,7 +99,7 @@ function SidebarContent({ projects, user, pathname }: Props & { pathname: string
   return (
     <nav aria-label="App" className="flex h-full flex-col">
       <div className="flex h-14 items-center px-4">
-        <Logo href="/projects" />
+        <Logo />
       </div>
 
       <div className="flex-1 space-y-6 overflow-y-auto px-3 py-2">

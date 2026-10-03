@@ -1,9 +1,13 @@
 import { SearchX } from "lucide-react";
 import Link from "next/link";
+import { Logo } from "@/components/logo";
 
 export default function NotFound() {
   return (
-    <main id="main" className="grid min-h-screen place-items-center px-4">
+    <main id="main" className="relative grid min-h-screen place-items-center px-4">
+      <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
+        <Logo />
+      </div>
       <div className="text-center">
         <span className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-accent-soft text-accent-soft-foreground">
           <SearchX aria-hidden="true" className="h-6 w-6" />
