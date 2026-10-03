@@ -4,6 +4,7 @@ export const GITHUB_URL = "https://github.com/NaderAbsy/sprintwise";
 /** The public site's tabs, in the header and the footer. */
 export const MARKETING_LINKS = [
   { href: "/product", label: "Product" },
+  { href: "/guide", label: "Guide" },
   { href: "/demo", label: "Demo" },
   { href: "/changelog", label: "Changelog" },
   { href: "/about", label: "About" },
@@ -13,6 +14,19 @@ export type Release = { version: string; date: string; title: string; summary: s
 
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
+  {
+    version: "v1.1",
+    date: "2026-10-03",
+    title: "Easier without Jira, and safer",
+    summary: "Edit stories with a live score, run a sprint straight from the backlog, and a guide for newcomers.",
+    items: [
+      "Edit any saved story; the score updates as you type.",
+      "Lock a baseline and save snapshots by ticking stories in the backlog. No CSV needed.",
+      "New projects get a Getting started checklist, 12 sample stories on request, and a pre-filled two-week sprint.",
+      "A Guide page explains every step, number and term.",
+      "Security: input limits, security headers, shared sign-in rate limiting and encrypted GitHub tokens.",
+    ],
+  },
   {
     version: "v1.0",
     date: "2026-10-03",

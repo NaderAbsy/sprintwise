@@ -9,9 +9,11 @@ import { db } from "@/lib/server/db";
 import { requireProject, requireUser } from "@/lib/server/dal";
 import { projectDefaults, readinessData, settingsOf, toStory } from "@/lib/server/readiness";
 import { recordUsage } from "@/lib/server/usage";
-import { normalizeKey, parsePoints, type Story } from "@/lib/stories/types";
+import { readStoryForm } from "@/lib/stories/form";
+import { normalizeKey, type Story } from "@/lib/stories/types";
 import { Prisma } from "@/generated/prisma/client";
-import { MAX_PROJECTS } from "@/lib/limits";
+import { MAX_PROJECTS, MAX_STORIES_PER_PROJECT } from "@/lib/limits";
+import { demoBacklog } from "@/demo/backlog";
 import { DEFAULT_RULE_SETTINGS, parseRuleSettings } from "@/lib/readiness/settings";
 
 const projectName = z
@@ -73,32 +75,18 @@ async function nextStoryKey(projectId: string): Promise<string> {
 /** Paste one story: score it, save it, and open its result. */
 export async function addStory(projectId: string, _prev: FormState, formData: FormData): Promise<FormState> {
   const project = await requireProject(projectId);
-  const text = (name: string) => String(formData.get(name) ?? "").trim();
+  const { story: fields, rawKey, fieldErrors } = readStoryForm(formData);
+  if ((await db.story.count({ where: { projectId: project.id } })) >= MAX_STORIES_PER_PROJECT) {
+    return { error: `A project can hold up to ${MAX_STORIES_PER_PROJECT} stories. Delete some to make room.` };
+  }
 
-  const fieldErrors: Record<string, string> = {};
-  const title = text("title");
-  if (title === "") fieldErrors.title = "Paste a story title to score.";
-  if (title.length > 300) fieldErrors.title = "Keep the title under 300 characters.";
-  const points = parsePoints(text("storyPoints"));
-  if (!points.valid) fieldErrors.storyPoints = "Story points must be a number of 0 or more.";
-
-  const rawKey = text("key");
   const key = rawKey === "" ? await nextStoryKey(project.id) : normalizeKey(rawKey);
-  if (key.length > 50) fieldErrors.key = "Keep the key under 50 characters.";
-  else if (await db.story.findUnique({ where: { projectId_key: { projectId: project.id, key } } })) {
+  if (!fieldErrors.key && (await db.story.findUnique({ where: { projectId_key: { projectId: project.id, key } } }))) {
     fieldErrors.key = `${key} is already in this project. Use another key, or leave it blank.`;
   }
   if (Object.keys(fieldErrors).length > 0) return { fieldErrors };
 
-  const story: Story = {
-    key,
-    title,
-    description: text("description"),
-    acceptanceCriteria: text("acceptanceCriteria"),
-    storyPoints: points.points,
-    status: text("status"),
-  };
-
+  const story: Story = { key, ...fields };
   const created = await db.story.create({
     data: {
       projectId: project.id,
@@ -109,6 +97,31 @@ export async function addStory(projectId: string, _prev: FormState, formData: Fo
   await recordUsage("check_run");
   revalidatePath(`/projects/${project.id}`);
   redirect(`/projects/${project.id}/stories/${created.id}`);
+}
+
+/** Edit a saved story and re-score it. The key stays, because sprints match stories by key. */
+export async function updateStory(projectId: string, storyId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  const project = await requireProject(projectId);
+  const existing = await db.story.findFirst({ where: { id: storyId, projectId: project.id }, select: { id: true, key: true } });
+  if (!existing) return { error: "This story no longer exists." };
+
+  const { story: fields, fieldErrors } = readStoryForm(formData);
+  delete fieldErrors.key;
+  if (Object.keys(fieldErrors).length > 0) return { fieldErrors };
+
+  const story: Story = { key: existing.key, ...fields };
+  const readiness = readinessData(story, settingsOf(project));
+  await db.story.update({
+    where: { id: existing.id },
+    data: {
+      ...fields,
+      // A changed story makes its old AI suggestion stale.
+      readiness: { upsert: { create: readiness, update: { ...readiness, aiSuggestion: Prisma.DbNull } } },
+    },
+  });
+  await recordUsage("check_run");
+  revalidatePath(`/projects/${project.id}`);
+  redirect(`/projects/${project.id}/stories/${existing.id}?saved=1`);
 }
 
 /**
@@ -123,6 +136,16 @@ export async function importStories(projectId: string, _prev: FormState, formDat
   const parsed = parseStoriesCsv(csv);
   if (!parsed.ok) {
     return { error: parsed.errors.map((e) => (e.row ? `Row ${e.row}: ${e.message}` : e.message)).join(" ") };
+  }
+
+  const existingKeys = new Set(
+    (await db.story.findMany({ where: { projectId: project.id }, select: { key: true } })).map((s) => s.key),
+  );
+  const newCount = parsed.stories.filter((s) => !existingKeys.has(s.key)).length;
+  if (existingKeys.size + newCount > MAX_STORIES_PER_PROJECT) {
+    return {
+      error: `This import would take the project past ${MAX_STORIES_PER_PROJECT} stories. Delete some stories or split the project.`,
+    };
   }
 
   const settings = settingsOf(project);
@@ -143,6 +166,24 @@ export async function importStories(projectId: string, _prev: FormState, formDat
   await recordUsage("import");
   revalidatePath(`/projects/${project.id}`);
   redirect(`/projects/${project.id}?imported=${parsed.stories.length}`);
+}
+
+/** Loads the invented demo backlog into a project, so a new user can try every screen. Existing keys are kept. */
+export async function addSampleStories(projectId: string) {
+  const project = await requireProject(projectId);
+  const settings = settingsOf(project);
+  const existing = new Set(
+    (await db.story.findMany({ where: { projectId: project.id }, select: { key: true } })).map((s) => s.key),
+  );
+  const fresh = demoBacklog.filter((s) => !existing.has(s.key));
+  if (existing.size + fresh.length > MAX_STORIES_PER_PROJECT) redirect(`/projects/${project.id}`);
+  await db.$transaction(
+    fresh.map((story) =>
+      db.story.create({ data: { projectId: project.id, ...story, readiness: { create: readinessData(story, settings) } } }),
+    ),
+  );
+  revalidatePath(`/projects/${project.id}`);
+  redirect(`/projects/${project.id}?imported=${fresh.length}`);
 }
 
 export async function deleteStory(projectId: string, storyId: string) {

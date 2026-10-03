@@ -11,11 +11,11 @@ const github =
 
 /**
  * Email sign-in exists only so end-to-end tests can sign in without GitHub.
- * It must never be on in production.
+ * It must never be on in any Vercel deploy: previews share the live database.
  */
 const testSignIn = process.env.ENABLE_TEST_SIGN_IN === "true";
-if (testSignIn && process.env.VERCEL_ENV === "production") {
-  throw new Error("ENABLE_TEST_SIGN_IN must not be set in production.");
+if (testSignIn && process.env.VERCEL_ENV) {
+  throw new Error("ENABLE_TEST_SIGN_IN must not be set on a Vercel deploy.");
 }
 
 /** GitHub sign-in only in real use: no passwords stored. */
@@ -23,7 +23,10 @@ export const auth = betterAuth({
   database: prismaAdapter(db, { provider: "postgresql" }),
   socialProviders: github ? { github } : {},
   emailAndPassword: { enabled: testSignIn },
-  // Parallel test sign-ups would trip the limiter; it stays on everywhere else.
-  rateLimit: { enabled: testSignIn ? false : undefined },
+  // The app never uses the GitHub tokens after sign-in; encrypted, a database leak doesn't expose them.
+  account: { encryptOAuthTokens: true },
+  // Parallel test sign-ups would trip the limiter; it stays on everywhere else. Counts live in the
+  // database, so every serverless instance shares them.
+  rateLimit: { enabled: testSignIn ? false : undefined, storage: "database" },
   plugins: [nextCookies()],
 });

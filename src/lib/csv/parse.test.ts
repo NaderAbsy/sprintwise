@@ -77,3 +77,19 @@ describe("parseStoriesCsv", () => {
     expect(errors("key,title\n\n")).toEqual(["The file has no stories."]);
   });
 });
+
+describe("parseStoriesCsv field limits", () => {
+  const header = "key,title,description,acceptance_criteria,story_points,status";
+
+  it("rejects a row whose description is too long", () => {
+    const result = parseStoriesCsv(`${header}\nA-1,Title,"${"x".repeat(5001)}",,3,`);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.errors).toContainEqual({ row: 1, message: "The description is longer than 5000 characters." });
+  });
+
+  it("rejects absurd story points", () => {
+    const result = parseStoriesCsv(`${header}\nA-1,Title,,,5000,`);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.errors[0].message).toBe("Story points can't be more than 1000.");
+  });
+});
