@@ -75,6 +75,16 @@ model Verification {
   @@map("verifications")
 }
 
+/// Sign-in rate-limit counters, shared by every serverless instance.
+model RateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("rate_limits")
+}
+
 // ---------------------------------------------------------------------------
 // Sprintwise data, as in the requirements doc's data model.
 // ---------------------------------------------------------------------------

@@ -1,6 +1,8 @@
-import { CircleCheck, CircleDashed, CircleX, FileUp, ListChecks, Plus } from "lucide-react";
+import { CircleCheck, CircleDashed, CircleX, FileUp, ListChecks, Plus, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { addSampleStories } from "@/app/projects/actions";
+import { GettingStarted } from "@/app/projects/_components/getting-started";
 import { BandBadge } from "@/components/band-badge";
 import { EmptyState } from "@/components/empty-state";
 import { ScoreRing } from "@/components/score-ring";
@@ -27,7 +29,20 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
   const filter = FILTERS.find((f) => f.slug === bandParam);
   const base = `/projects/${project.id}`;
 
-  const stories = await db.story.findMany({ where: { projectId: project.id }, include: { readiness: true } });
+  const [stories, latestSprint] = await Promise.all([
+    db.story.findMany({ where: { projectId: project.id }, include: { readiness: true } }),
+    db.sprint.findFirst({
+      where: { projectId: project.id },
+      orderBy: { createdAt: "desc" },
+      include: { snapshots: { select: { isBaseline: true } } },
+    }),
+  ]);
+  const progress = {
+    stories: stories.length,
+    sprintId: latestSprint?.id ?? null,
+    baselineLocked: latestSprint?.snapshots.some((s) => s.isBaseline) ?? false,
+    snapshotSaved: latestSprint?.snapshots.some((s) => !s.isBaseline) ?? false,
+  };
   // Lowest score first, so the weakest stories get fixed first (story R-3).
   stories.sort((a, b) => (a.readiness?.score ?? 0) - (b.readiness?.score ?? 0) || a.key.localeCompare(b.key));
   const count = (band: Band) => stories.filter((s) => s.readiness?.band === band).length;
@@ -58,6 +73,8 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
         actions={stories.length > 0 ? actions : undefined}
       />
 
+      <GettingStarted base={base} progress={progress} />
+
       {imported && (
         <p role="status" className="mb-4 rounded-lg bg-ready-bg px-4 py-2.5 text-sm text-ready">
           Imported and scored {imported} {imported === "1" ? "story" : "stories"}.
@@ -65,8 +82,23 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
       )}
 
       {stories.length === 0 ? (
-        <EmptyState icon={ListChecks} title="No stories yet." action={<div className="flex gap-2">{actions}</div>}>
-          Score one story by pasting it, or import your backlog from a CSV.
+        <EmptyState
+          icon={ListChecks}
+          title="No stories yet."
+          action={
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex flex-wrap justify-center gap-2">{actions}</div>
+              <form action={addSampleStories.bind(null, project.id)}>
+                <button className="btn-ghost btn-sm">
+                  <Sparkles aria-hidden="true" className="h-4 w-4" />
+                  Or load 12 sample stories to try it out
+                </button>
+              </form>
+            </div>
+          }
+        >
+          Score one story by pasting it, or import your backlog from a CSV. Sample stories are invented, and you can
+          delete them any time.
         </EmptyState>
       ) : (
         <div className="space-y-4">

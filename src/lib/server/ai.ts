@@ -21,8 +21,8 @@ const TIMEOUT_MS = 15_000;
 
 /** Canned replies for end-to-end tests; never allowed in production. */
 const fakeResponses = process.env.AI_FAKE_RESPONSES === "true";
-if (fakeResponses && process.env.VERCEL_ENV === "production") {
-  throw new Error("AI_FAKE_RESPONSES must not be set in production.");
+if (fakeResponses && process.env.VERCEL_ENV) {
+  throw new Error("AI_FAKE_RESPONSES must not be set on a Vercel deploy.");
 }
 
 export const aiConfigured = fakeResponses || Boolean(process.env.ANTHROPIC_API_KEY);
@@ -30,6 +30,12 @@ export const aiConfigured = fakeResponses || Boolean(process.env.ANTHROPIC_API_K
 export function dailyLimit(): number {
   const parsed = Number(process.env.AI_DAILY_LIMIT);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : 20;
+}
+
+/** Suggestions per day across every account (AI_SITE_DAILY_LIMIT, default 200). */
+export function siteDailyLimit(): number {
+  const parsed = Number(process.env.AI_SITE_DAILY_LIMIT);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 200;
 }
 
 export type SuggestResult = { ok: true; suggestion: Suggestion } | { ok: false; error: string };

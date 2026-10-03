@@ -4,7 +4,7 @@ import Link from "next/link";
 import { CountUp } from "@/components/marketing/count-up";
 import { PageHero } from "@/components/marketing/page-hero";
 import { Reveal } from "@/components/marketing/reveal";
-import { GITHUB_URL } from "@/lib/site";
+import { GITHUB_URL, RELEASES } from "@/lib/site";
 
 export const metadata: Metadata = { title: "About" };
 
@@ -69,7 +69,7 @@ export default function AboutPage() {
           <dl className="grid grid-cols-2 gap-3">
             {[
               { value: 18, label: "v1 stories shipped" },
-              { value: 5, label: "releases" },
+              { value: RELEASES.length, label: "releases" },
               { value: 9, label: "readiness rules" },
               { value: 2, label: "themes, both WCAG AA" },
             ].map((stat) => (

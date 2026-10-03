@@ -102,6 +102,7 @@ test("the header tabs reach every public page and mark the current one", async (
   const nav = page.getByRole("navigation", { name: "Main" });
   for (const [name, heading] of [
     ["Product", "Everything Sprintwise does, and how"],
+    ["Guide", "How to use Sprintwise"],
     ["Changelog", "What's new in Sprintwise"],
     ["About", "Built by a Product Owner, for Product Owners"],
   ]) {
@@ -125,7 +126,7 @@ test("on a phone, the menu opens, links work, and Escape closes it", async ({ pa
   await expect(page.locator("#marketing-menu")).toHaveCount(0);
 });
 
-for (const path of ["/", "/product", "/changelog", "/about", "/demo", "/demo/report", "/privacy"]) {
+for (const path of ["/", "/product", "/guide", "/changelog", "/about", "/demo", "/demo/report", "/privacy"]) {
   test(`${path} has no serious accessibility issues`, async ({ page }) => {
     await page.goto(path);
     await expectAccessible(page);

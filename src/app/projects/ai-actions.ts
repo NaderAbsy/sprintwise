@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { Prisma } from "@/generated/prisma/client";
 import { scoreStory } from "@/lib/readiness/rules";
-import { suggestForStory, dailyLimit } from "@/lib/server/ai";
+import { dailyLimit, siteDailyLimit, suggestForStory } from "@/lib/server/ai";
 import { db } from "@/lib/server/db";
 import { requireProject, requireUser } from "@/lib/server/dal";
 import { settingsOf, toStory } from "@/lib/server/readiness";
@@ -33,6 +33,11 @@ export async function requestSuggestion(projectId: string, storyId: string, _pre
   });
   if (usage.count > dailyLimit()) {
     return { error: `You've used today's ${dailyLimit()} AI suggestions. The limit resets at midnight UTC.` };
+  }
+  // A site-wide ceiling too, so many accounts together can't run up the bill.
+  const siteWide = await db.aiUsage.aggregate({ where: { day: today }, _sum: { count: true } });
+  if ((siteWide._sum.count ?? 0) > siteDailyLimit()) {
+    return { error: "AI suggestions have reached today's limit for the whole site. Try again tomorrow." };
   }
 
   const failedChecks = readiness.rules.filter((r) => !r.passed).map((r) => `${r.check}: ${r.reason}`);

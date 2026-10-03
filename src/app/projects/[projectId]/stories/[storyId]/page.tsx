@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Pencil } from "lucide-react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AiSuggestionPanel } from "@/app/projects/_components/ai-suggestion-panel";
 import { deleteStory } from "@/app/projects/actions";
@@ -15,8 +17,9 @@ import { splitCriteria } from "@/lib/stories/types";
 
 export const metadata: Metadata = { title: "Story" };
 
-export default async function StoryPage({ params }: PageProps<"/projects/[projectId]/stories/[storyId]">) {
+export default async function StoryPage({ params, searchParams }: PageProps<"/projects/[projectId]/stories/[storyId]">) {
   const { projectId, storyId } = await params;
+  const saved = (await searchParams).saved === "1";
   const project = await requireProject(projectId);
   const row = await db.story.findFirst({ where: { id: storyId, projectId: project.id }, include: { readiness: true } });
   if (!row) notFound();
@@ -42,15 +45,35 @@ export default async function StoryPage({ params }: PageProps<"/projects/[projec
           </>
         }
         actions={
-          <ConfirmButton
-            label="Delete story"
-            title={`Delete ${story.key}?`}
-            body="This removes the story and its score from the project."
-            confirmLabel="Delete story"
-            action={deleteStory.bind(null, project.id, row.id)}
-          />
+          <>
+            <ConfirmButton
+              label="Delete story"
+              title={`Delete ${story.key}?`}
+              body="This removes the story and its score from the project."
+              confirmLabel="Delete story"
+              action={deleteStory.bind(null, project.id, row.id)}
+            />
+            <Link href={`${base}/stories/${row.id}/edit`} className="btn-primary">
+              <Pencil aria-hidden="true" className="h-4 w-4" />
+              Edit story
+            </Link>
+          </>
         }
       />
+
+      {saved && (
+        <p role="status" className="mb-6 rounded-lg bg-ready-bg px-4 py-3 text-sm text-ready">
+          Changes saved and the story re-scored.
+        </p>
+      )}
+      {!saved && readiness.band !== "Ready" && (
+        <p className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-accent-soft px-4 py-3 text-sm text-accent-soft-foreground">
+          Each reason below says what to fix. Edit the story and the score updates as you type.
+          <Link href={`${base}/stories/${row.id}/edit`} className="font-medium underline underline-offset-2">
+            Improve this story
+          </Link>
+        </p>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
         <ReadinessBreakdown readiness={readiness} />

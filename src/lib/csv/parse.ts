@@ -6,6 +6,7 @@ import {
   REQUIRED_COLUMNS,
   type TemplateColumn,
 } from "@/lib/csv/template";
+import { STORY_LIMITS } from "@/lib/stories/form";
 import { normalizeKey, parsePoints, type Story } from "@/lib/stories/types";
 
 export type CsvIssue = {
@@ -82,6 +83,14 @@ export function parseStoriesCsv(text: string): CsvResult {
     const title = cell("title");
     if (key === "") errors.push({ row, message: "The key is empty." });
     if (title === "") errors.push({ row, message: "The title is empty." });
+    const tooLong = (column: TemplateColumn, limit: number, label: string) => {
+      if ((record[column] ?? "").trim().length > limit) errors.push({ row, message: `The ${label} is longer than ${limit} characters.` });
+    };
+    tooLong("key", STORY_LIMITS.key, "key");
+    tooLong("title", STORY_LIMITS.title, "title");
+    tooLong("description", STORY_LIMITS.description, "description");
+    tooLong("acceptance_criteria", STORY_LIMITS.acceptanceCriteria, "acceptance criteria");
+    tooLong("status", STORY_LIMITS.status, "status");
 
     const normalized = normalizeKey(key);
     if (key !== "") {
@@ -94,6 +103,9 @@ export function parseStoriesCsv(text: string): CsvResult {
     }
 
     const { points, valid } = parsePoints(record.story_points);
+    if (points !== null && points > STORY_LIMITS.points) {
+      errors.push({ row, message: `Story points can't be more than ${STORY_LIMITS.points}.` });
+    }
     if (!valid) {
       warnings.push({
         row,

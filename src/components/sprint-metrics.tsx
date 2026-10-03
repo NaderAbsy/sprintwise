@@ -16,7 +16,10 @@ export function SprintMetricsPanel({ metrics }: { metrics: SprintMetrics }) {
           Sprint metrics
         </h2>
         <p className="text-sm text-muted">
-          Baseline {metrics.baselineTotal} points · latest snapshot {metrics.latestTotal} points
+          Baseline {metrics.baselineTotal} points · latest snapshot {metrics.latestTotal} points ·{" "}
+          <a href="/guide#numbers-heading" className="no-print text-accent hover:underline">
+            What these mean
+          </a>
         </p>
       </div>
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">

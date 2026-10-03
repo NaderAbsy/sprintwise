@@ -8,6 +8,7 @@ import { ConfirmButton } from "@/components/confirm-button";
 import { SectionHeader } from "@/components/section-header";
 import { SprintMetricsPanel } from "@/components/sprint-metrics";
 import { formatDay, toDay } from "@/lib/sprint/dates";
+import { db } from "@/lib/server/db";
 import { requireSprint } from "@/lib/server/dal";
 import { toStory } from "@/lib/server/readiness";
 import { loadSprint } from "@/lib/server/sprint";
@@ -22,7 +23,12 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
   const total = (items: { storyPoints: number | null }[]) => items.reduce((sum, i) => sum + (i.storyPoints ?? 0), 0);
 
   const dayRange = `${formatDay(sprint.startDate)} to ${formatDay(sprint.endDate)}`;
+  const backlog = (await db.story.findMany({ where: { projectId: project.id }, orderBy: { key: "asc" } })).map((row) => ({
+    id: row.id,
+    ...toStory(row),
+  }));
   const uploadProps = {
+    backlog,
     projectId: project.id,
     sprintId: sprint.id,
     rangeLabel: dayRange,
@@ -64,8 +70,8 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
             Step 1: lock the baseline
           </h2>
           <p className="max-w-2xl text-sm text-muted">
-            Upload the sprint as the team committed to it on day one. Every later snapshot is compared against it, so
-            once it&apos;s locked it can&apos;t be edited or replaced.
+            Choose the stories the team committed to on day one, from the backlog or a CSV. Every later snapshot is
+            compared against this baseline, so once it&apos;s locked it can&apos;t be edited or replaced.
           </p>
           <SnapshotUploadForm mode="baseline" {...uploadProps} minDay={toDay(sprint.startDate)} />
         </section>
@@ -75,11 +81,12 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
 
           <section aria-labelledby="upload-heading" className="space-y-3">
             <h2 id="upload-heading" className="font-semibold">
-              Upload a later snapshot
+              Save a later snapshot
             </h2>
             <p className="max-w-2xl text-sm text-muted">
-              Export the sprint again and upload it. You&apos;ll see what changed since the previous snapshot before
-              saving. Stories are matched by key, so a renamed story isn&apos;t counted as removed and added.
+              As the sprint runs, record where it stands: pick the stories from the backlog, or upload a fresh export.
+              You&apos;ll see what changed before saving. Stories are matched by key, so a renamed story isn&apos;t
+              counted as removed and added.
             </p>
             <SnapshotUploadForm
               mode="snapshot"

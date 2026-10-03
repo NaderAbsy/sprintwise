@@ -2,6 +2,40 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-03 — Easier to use without Jira, and a security pass
+
+- **Usability review:** I walked through the app as a new user with no Jira and found four problems.
+  - A saved story couldn't be edited, though fixing weak stories is the point of the score. You had to delete it and paste it again.
+  - Sprints needed a CSV for the baseline and every snapshot, even when the stories were already in the backlog.
+  - A new project gave no sense of the order of steps.
+  - Words like baseline, churn and story points weren't explained anywhere.
+- **Changes:**
+  - **Edit story:** the score updates as you type, using the project's own rule settings, and the "Score a story" page does the same. The key can't change, because sprints match stories by key.
+  - **Sprints from the backlog:** "From the backlog" is now the default source for the baseline and for snapshots. A later snapshot starts with the sprint's current stories ticked. CSV upload is still one click away.
+  - **New projects:**
+    - a four-step "Getting started" checklist that disappears once a sprint has a snapshot
+    - a button that loads the 12 invented sample stories
+    - a new sprint pre-filled as two weeks from today
+  - **A public Guide page:** the steps, what each number means, and a glossary for people new to Scrum or Jira. It's linked from the header, the sidebar and the sprint metrics.
+- **Security audit:** read-only, across ownership checks, auth, input limits, injection, headers, secrets, dependencies and CI. It found no critical or high issues. Every page and action already checks ownership.
+- **Fixed:**
+  - **Server-side limits:**
+    - story fields: title 300, description and criteria 5,000, status 50, key 50, points 1,000, in both the form and the CSV parser
+    - 1,000 stories per project, 50 sprints per project, 30 snapshots per sprint
+    - the server action body limit lowered from 2 MB to 1.2 MB
+  - **Test-only flags:** test sign-in and fake AI replies now refuse to start on any Vercel deploy, not only production, because Preview shares the live database.
+  - **Security headers:** a CSP limited to framing, base URL, plugins and form targets, plus `X-Frame-Options`, `nosniff`, `Referrer-Policy` and `Permissions-Policy`. The `X-Powered-By` header is removed.
+  - **Sign-in rate limiting** now stores its counts in the database (`rate_limits`), so every serverless instance shares them.
+  - **GitHub OAuth tokens** are encrypted at rest. The app never uses them after sign-in.
+  - **A site-wide daily AI ceiling** (`AI_SITE_DAILY_LIMIT`, default 200), on top of the per-user cap.
+  - **Dependencies:** patched versions of the Prisma CLI's `deepmerge-ts` and `mysql2` are pinned through pnpm overrides, so `pnpm audit --prod` is clean.
+  - **CI:** a read-only token, and actions pinned to commit SHAs.
+- **Still open, and needing the owner:**
+  - give Preview its own database
+  - turn on Dependabot alerts
+  - protect `main` so CI must pass before a merge
+- **Not done:** a `script-src` CSP. Next's inline bootstrap scripts would need a per-request nonce, which makes every page dynamic. There's no user-supplied HTML on the site, so the risk it covers is small.
+
 ## 2026-10-03 — A real home page and public site
 
 - **Decision:** the landing page became a home page, and the public site gained Product, Changelog and About tabs, with a menu on phones. The demo video is on the home page, served from the app itself.

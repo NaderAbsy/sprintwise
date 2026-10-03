@@ -1,5 +1,5 @@
 "use client";
-import { BookOpen, FolderKanban, LayoutGrid, LogOut, Menu, Plus, Shield, UserRound, X } from "lucide-react";
+import { BookOpen, FolderKanban, LayoutGrid, LifeBuoy, LogOut, Menu, Plus, Shield, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -137,6 +137,10 @@ function SidebarContent({ projects, user, pathname }: Props & { pathname: string
 
         <div className="space-y-0.5">
           <p className="eyebrow px-2.5 pb-1.5">Explore</p>
+          <Link href="/guide" className={item(false)}>
+            <LifeBuoy aria-hidden="true" className="h-4 w-4" />
+            Guide
+          </Link>
           <Link href="/demo" className={item(false)}>
             <BookOpen aria-hidden="true" className="h-4 w-4" />
             Demo

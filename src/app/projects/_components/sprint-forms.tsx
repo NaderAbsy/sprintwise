@@ -12,9 +12,18 @@ import type { Story } from "@/lib/stories/types";
 
 const totalPoints = (stories: Story[]) => stories.reduce((sum, s) => sum + (s.storyPoints ?? 0), 0);
 
+/** YYYY-MM-DD plus `days`, in UTC so it never shifts with the time zone. */
+function addDays(day: string, days: number): string {
+  const date = new Date(`${day}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
 export function CreateSprintForm({ projectId }: { projectId: string }) {
   const [state, action, pending] = useActionState(createSprint.bind(null, projectId), emptyFormState);
   const errors = state.fieldErrors ?? {};
+  // A two-week sprint starting today: the most common shape, easy to change.
+  const today = localToday();
   return (
     <form action={action} className="card max-w-lg space-y-4 p-5" noValidate>
       <div>
@@ -40,6 +49,8 @@ export function CreateSprintForm({ projectId }: { projectId: string }) {
             id="startDate"
             name="startDate"
             type="date"
+            defaultValue={today}
+            suppressHydrationWarning
             className="field mt-1"
             aria-invalid={errors.startDate ? true : undefined}
             aria-describedby="startDate-error"
@@ -54,6 +65,8 @@ export function CreateSprintForm({ projectId }: { projectId: string }) {
             id="endDate"
             name="endDate"
             type="date"
+            defaultValue={addDays(today, 13)}
+            suppressHydrationWarning
             className="field mt-1"
             aria-invalid={errors.endDate ? true : undefined}
             aria-describedby="endDate-error"
@@ -69,6 +82,8 @@ export function CreateSprintForm({ projectId }: { projectId: string }) {
   );
 }
 
+export type BacklogStory = Story & { id: string };
+
 type UploadProps = {
   projectId: string;
   sprintId: string;
@@ -78,19 +93,31 @@ type UploadProps = {
   endDay: string;
   /** Earliest allowed "as of" day: the previous snapshot's, or the sprint start for the baseline. */
   minDay: string;
+  /** The project's backlog, so teams without Jira can pick stories instead of uploading a CSV. */
+  backlog: BacklogStory[];
 } & ({ mode: "baseline" } | { mode: "snapshot"; previous: Story[] });
 
+type Source = "backlog" | "csv";
+
 /**
- * Baseline (S-2) and later snapshots (S-3) share one form. The file is read
- * and previewed in the browser; the server re-parses it before saving.
+ * Baseline (S-2) and later snapshots (S-3) share one form. Stories come from
+ * the project's backlog or a CSV; a CSV is read and previewed in the browser,
+ * and the server re-reads either source before saving.
  */
 export function SnapshotUploadForm(props: UploadProps) {
-  const { projectId, sprintId, rangeLabel, endDay, minDay } = props;
+  const { projectId, sprintId, rangeLabel, endDay, minDay, backlog } = props;
   const serverAction = props.mode === "baseline" ? lockBaseline : uploadSnapshot;
   const [state, action, pending] = useActionState(serverAction.bind(null, projectId, sprintId), emptyFormState);
+  const [source, setSource] = useState<Source>(backlog.length > 0 ? "backlog" : "csv");
   const [csv, setCsv] = useState("");
   const [result, setResult] = useState<CsvResult | null>(null);
   const [fileKey, setFileKey] = useState(0);
+  // A later snapshot starts from the stories already in the sprint.
+  const [picked, setPicked] = useState<Set<string>>(() => {
+    if (props.mode !== "snapshot") return new Set();
+    const keys = new Set(props.previous.map((s) => s.key));
+    return new Set(backlog.filter((s) => keys.has(s.key)).map((s) => s.id));
+  });
   const form = useRef<HTMLFormElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const errors = state.fieldErrors ?? {};
@@ -111,6 +138,15 @@ export function SnapshotUploadForm(props: UploadProps) {
     setResult(parseStoriesCsv(text));
   }
 
+  function toggle(id: string) {
+    setPicked((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
   // After a successful save, clear the file so the same CSV isn't submitted twice.
   const [handledState, setHandledState] = useState(state);
   if (state !== handledState) {
@@ -122,13 +158,88 @@ export function SnapshotUploadForm(props: UploadProps) {
     }
   }
 
-  const stories = result?.ok ? result.stories : [];
-  const changes = result?.ok && props.mode === "snapshot" ? diffSnapshots(props.previous, stories) : [];
+  const stories =
+    source === "backlog" ? backlog.filter((s) => picked.has(s.id)) : result?.ok ? result.stories : [];
+  const hasStories = stories.length > 0 && (source === "backlog" || result?.ok === true);
+  const changes = hasStories && props.mode === "snapshot" ? diffSnapshots(props.previous, stories) : [];
   const id = props.mode;
 
   return (
-    <form ref={form} action={action} className="card space-y-4 p-5" noValidate>
-      <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
+    <form ref={form} action={action} className="card space-y-5 p-5" noValidate>
+      <fieldset>
+        <legend className="label">Where are the stories?</legend>
+        <div className="mt-2 inline-flex rounded-lg border border-border bg-surface-2 p-0.5">
+          {(
+            [
+              ["backlog", "From the backlog"],
+              ["csv", "Upload a CSV"],
+            ] as const
+          ).map(([value, label]) => (
+            <label
+              key={value}
+              className="cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium text-muted transition-colors has-checked:bg-surface has-checked:text-foreground has-checked:shadow-sm has-focus-visible:ring-2 has-focus-visible:ring-accent"
+            >
+              <input
+                type="radio"
+                name="source"
+                value={value}
+                checked={source === value}
+                onChange={() => setSource(value)}
+                className="sr-only"
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      {source === "backlog" ? (
+        backlog.length === 0 ? (
+          <p className="rounded-lg bg-surface-2 p-4 text-sm text-muted">
+            This project&apos;s backlog is empty. Add or import stories first, or upload a CSV instead.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm text-muted">
+                {props.mode === "baseline"
+                  ? "Tick the stories the team committed to."
+                  : "Tick the stories in the sprint now. Update their status and points in the backlog first; Done stories count towards completion."}
+              </p>
+              <div className="flex gap-2">
+                <button type="button" className="btn-ghost btn-sm" onClick={() => setPicked(new Set(backlog.map((s) => s.id)))}>
+                  Select all
+                </button>
+                <button type="button" className="btn-ghost btn-sm" onClick={() => setPicked(new Set())}>
+                  Clear
+                </button>
+              </div>
+            </div>
+            <ul className="max-h-80 divide-y divide-border overflow-y-auto rounded-lg border border-border">
+              {backlog.map((s) => (
+                <li key={s.id}>
+                  <label className="flex cursor-pointer items-center gap-3 px-3 py-2 text-sm hover:bg-surface-2/50">
+                    <input
+                      type="checkbox"
+                      name="storyId"
+                      value={s.id}
+                      checked={picked.has(s.id)}
+                      onChange={() => toggle(s.id)}
+                      className="h-4 w-4 accent-[var(--accent)]"
+                    />
+                    <span className="w-20 shrink-0 font-mono text-xs text-subtle sm:w-24">{s.key}</span>
+                    <span className="line-clamp-2 min-w-0 flex-1">{s.title}</span>
+                    <span className="hidden text-xs text-muted sm:inline">{s.status || "No status"}</span>
+                    <span className="w-14 text-right text-xs tabular-nums text-muted">
+                      {s.storyPoints === null ? "—" : `${s.storyPoints} pts`}
+                    </span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      ) : (
         <div>
           <label htmlFor={`${id}-file`} className="label">
             {props.mode === "baseline" ? "Day-one CSV" : "Snapshot CSV"}
@@ -142,30 +253,38 @@ export function SnapshotUploadForm(props: UploadProps) {
             onChange={(e) => onFile(e.target.files?.[0])}
           />
           <input type="hidden" name="csv" value={csv} />
+          <p className="mt-2 text-xs text-muted">
+            Export the sprint from Jira, or use the{" "}
+            <a href="/template.csv" className="text-accent hover:underline">
+              Sprintwise template
+            </a>
+            .
+          </p>
         </div>
-        <div>
-          <label htmlFor={`${id}-date`} className="label">
-            As of
-          </label>
-          <input
-            id={`${id}-date`}
-            name="asOfDate"
-            type="date"
-            defaultValue={defaultDay}
-            min={minDay}
-            max={endDay}
-            className="field mt-1"
-            aria-invalid={errors.asOfDate ? true : undefined}
-            aria-describedby={`${id}-date-error`}
-          />
-          <FieldError id={`${id}-date-error`} message={errors.asOfDate} />
-        </div>
-      </div>
-      <p className="text-xs text-muted">
-        The date the CSV was exported. It must be within the sprint ({rangeLabel}).
-      </p>
+      )}
 
-      {result && !result.ok && (
+      <div>
+        <label htmlFor={`${id}-date`} className="label">
+          As of
+        </label>
+        <input
+          id={`${id}-date`}
+          name="asOfDate"
+          type="date"
+          defaultValue={defaultDay}
+          min={minDay}
+          max={endDay}
+          className="field mt-1 w-44"
+          aria-invalid={errors.asOfDate ? true : undefined}
+          aria-describedby={`${id}-date-error ${id}-date-hint`}
+        />
+        <FieldError id={`${id}-date-error`} message={errors.asOfDate} />
+        <p id={`${id}-date-hint`} className="mt-1 text-xs text-muted">
+          The day these stories describe. It must be within the sprint ({rangeLabel}).
+        </p>
+      </div>
+
+      {source === "csv" && result && !result.ok && (
         <div role="alert" className="rounded-lg bg-not-ready-bg p-4 text-sm text-not-ready">
           <p className="font-medium">This file can&apos;t be used:</p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
@@ -176,12 +295,12 @@ export function SnapshotUploadForm(props: UploadProps) {
         </div>
       )}
 
-      {result?.ok && (
+      {hasStories && (
         <section aria-label="Preview" className="space-y-3">
           <p className="font-medium">
             {stories.length} {stories.length === 1 ? "story" : "stories"}, {totalPoints(stories)} points in total
           </p>
-          {result.warnings.length > 0 && (
+          {source === "csv" && result?.ok && result.warnings.length > 0 && (
             <ul className="rounded-lg bg-needs-work-bg p-3 text-sm text-needs-work">
               {result.warnings.map((w, i) => (
                 <li key={i}>
