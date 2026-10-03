@@ -1,0 +1,31 @@
+# Routine dependency updates, once a month and grouped, so they arrive as a
+# couple of PRs rather than dozens. Security fixes come separately and right
+# away (Dependabot security updates, switched on in the repo settings).
+# CI runs the full test suite on every one before it can be merged.
+version: 2
+updates:
+  - package-ecosystem: npm # covers pnpm
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      production:
+        dependency-type: production
+        update-types: [minor, patch]
+      development:
+        dependency-type: development
+        update-types: [minor, patch]
+    commit-message:
+      prefix: deps
+
+  # Keeps the SHA-pinned actions in ci.yml current.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci
