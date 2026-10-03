@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_VAGUE_WORDS, scoreStory } from "@/lib/readiness/rules";
-import { DEFAULT_RULE_SETTINGS, isDefault, parseRuleSettings } from "@/lib/readiness/settings";
+import { DEFAULT_RULE_SETTINGS, isDefault, parseCustomChecks, parseRuleSettings, readCustomChecks } from "@/lib/readiness/settings";
 import { story } from "@/test/story";
 
 describe("parseRuleSettings (R-6)", () => {
@@ -40,5 +40,29 @@ describe("parseRuleSettings (R-6)", () => {
     const r = scoreStory(fiveFast, relaxed.settings);
     expect(r.score).toBe(90); // "fast" no longer vague (+10), 5 > 3 so C7 fails (-10)
     expect(r.band).toBe("Needs work"); // and C7 caps the band
+  });
+});
+
+describe("parseCustomChecks", () => {
+  it("skips blank rows and keeps valid checks", () => {
+    expect(parseCustomChecks(["Design", ""], ["any", "any"], ["figma.com", ""])).toEqual({
+      ok: true,
+      checks: [{ name: "Design", field: "any", phrase: "figma.com" }],
+    });
+  });
+
+  it("explains half-filled or invalid rows", () => {
+    const result = parseCustomChecks(["", "Design", "X"], ["any", "any", "nowhere"], ["figma", "", "y"]);
+    expect(result).toEqual({
+      ok: false,
+      errors: { "check-0": "Give this check a name.", "check-1": 'Say what "Design" must contain.', "check-2": "Choose where to look." },
+    });
+  });
+
+  it("drops malformed stored checks", () => {
+    expect(readCustomChecks([{ name: "A", field: "any", phrase: "b" }, { name: "", field: "any", phrase: "x" }, "junk", null])).toEqual([
+      { name: "A", field: "any", phrase: "b" },
+    ]);
+    expect(readCustomChecks("nope")).toEqual([]);
   });
 });

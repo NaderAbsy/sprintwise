@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { FileText, Lock } from "lucide-react";
 import Link from "next/link";
+import { ReasonSelect, SprintGoalForm } from "@/app/projects/_components/sprint-goal";
 import { SnapshotUploadForm } from "@/app/projects/_components/sprint-forms";
 import { deleteSprint } from "@/app/projects/sprint-actions";
 import { ChangeTable } from "@/components/change-table";
@@ -10,8 +11,9 @@ import { SprintMetricsPanel } from "@/components/sprint-metrics";
 import { formatDay, toDay } from "@/lib/sprint/dates";
 import { db } from "@/lib/server/db";
 import { requireSprint } from "@/lib/server/dal";
-import { toStory } from "@/lib/server/readiness";
-import { loadSprint } from "@/lib/server/sprint";
+import { settingsOf, toStory } from "@/lib/server/readiness";
+import { loadProjectTrends, loadSprint } from "@/lib/server/sprint";
+import { averageVelocity } from "@/lib/sprint/trends";
 
 export const metadata: Metadata = { title: "Sprint" };
 
@@ -27,8 +29,11 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
     id: row.id,
     ...toStory(row),
   }));
+  const settings = settingsOf(project);
+  const capacity = baseline ? null : averageVelocity(await loadProjectTrends(project.id, settings, sprint.id));
   const uploadProps = {
     backlog,
+    settings,
     projectId: project.id,
     sprintId: sprint.id,
     rangeLabel: dayRange,
@@ -64,6 +69,8 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
         }
       />
 
+      <SprintGoalForm projectId={project.id} sprintId={sprint.id} goal={sprint.goal} outcome={sprint.goalOutcome} />
+
       {!baseline ? (
         <section aria-labelledby="baseline-heading" className="space-y-3">
           <h2 id="baseline-heading" className="font-semibold">
@@ -73,7 +80,7 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
             Choose the stories the team committed to on day one, from the backlog or a CSV. Every later snapshot is
             compared against this baseline, so once it&apos;s locked it can&apos;t be edited or replaced.
           </p>
-          <SnapshotUploadForm mode="baseline" {...uploadProps} minDay={toDay(sprint.startDate)} />
+          <SnapshotUploadForm mode="baseline" {...uploadProps} capacity={capacity} minDay={toDay(sprint.startDate)} />
         </section>
       ) : (
         <>
@@ -103,10 +110,25 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
             {log.length === 0 ? (
               <p className="text-sm text-muted">No changes yet. The sprint matches its baseline.</p>
             ) : (
-              <ChangeTable caption="Every change since the baseline, newest first" rows={log} />
+              <ChangeTable
+                caption="Every change since the baseline, newest first"
+                rows={log}
+                reasons={(row) =>
+                  row.id && (
+                    <ReasonSelect
+                      projectId={project.id}
+                      sprintId={sprint.id}
+                      changeId={row.id}
+                      storyKey={row.key}
+                      reason={row.reason ?? null}
+                    />
+                  )
+                }
+              />
             )}
             <p className="text-xs text-muted">
-              CSV snapshots show between which two snapshots a change happened, not who made it.
+              Tag why each scope change happened; the report adds them up. Snapshots show between which two snapshots
+              a change happened, not who made it.
             </p>
           </section>
 

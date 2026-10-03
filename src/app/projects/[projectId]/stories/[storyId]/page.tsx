@@ -3,6 +3,8 @@ import { Pencil } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AiSuggestionPanel } from "@/app/projects/_components/ai-suggestion-panel";
+import { CopyStoryButton } from "@/app/projects/_components/copy-story";
+import { storyAsText } from "@/lib/csv/export";
 import { deleteStory } from "@/app/projects/actions";
 import { ConfirmButton } from "@/components/confirm-button";
 import { ReadinessBreakdown } from "@/components/readiness-breakdown";
@@ -53,6 +55,7 @@ export default async function StoryPage({ params, searchParams }: PageProps<"/pr
               confirmLabel="Delete story"
               action={deleteStory.bind(null, project.id, row.id)}
             />
+            <CopyStoryButton text={storyAsText(story)} />
             <Link href={`${base}/stories/${row.id}/edit`} className="btn-primary">
               <Pencil aria-hidden="true" className="h-4 w-4" />
               Edit story

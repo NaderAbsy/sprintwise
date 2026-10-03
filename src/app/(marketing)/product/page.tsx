@@ -1,4 +1,4 @@
-import { ArrowRight, BarChart3, ClipboardCheck, KeyRound, Printer, Settings2 } from "lucide-react";
+import { ArrowRight, BarChart3, ClipboardCheck, KeyRound, Printer, Settings2, TrendingUp } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHero } from "@/components/marketing/page-hero";
@@ -31,6 +31,7 @@ const SECTIONS = [
   { id: "rules", label: "The nine rules", Icon: Settings2 },
   { id: "scope", label: "Scope tracking", Icon: BarChart3 },
   { id: "report", label: "Sprint report", Icon: Printer },
+  { id: "planning", label: "Planning and trends", Icon: TrendingUp },
   { id: "privacy", label: "Accounts and data", Icon: KeyRound },
 ];
 
@@ -154,11 +155,48 @@ export default function ProductPage() {
                 Sprint report
               </h2>
               <p className="mt-4 text-muted">
-                One printable A4 page for the retrospective: the metrics, the biggest changes, the change log, and one plain
-                sentence on whether the stories that changed scored lower before planning.
+                One printable A4 page for the retrospective: the sprint goal and whether it was met, the metrics, why scope
+                changed (bugs, stakeholder requests, discovered work, tech debt), the change log, and one plain sentence on
+                whether the stories that changed scored lower before planning. Share it with stakeholders through a
+                read-only link you can turn off at any time.
               </p>
               <Link href="/demo/report" className="btn-secondary mt-5">
                 See the sample report
+                <ArrowRight aria-hidden="true" className="h-4 w-4" />
+              </Link>
+            </Reveal>
+          </section>
+
+          <section id="planning" aria-labelledby="planning-heading" className="scroll-mt-24">
+            <Reveal>
+              <h2 id="planning-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                Planning and trends
+              </h2>
+              <ul className="mt-4 space-y-2 text-muted">
+                <li>
+                  <strong className="text-foreground">Planning helper:</strong> while you pick the sprint, it shows each
+                  story&apos;s readiness, the team&apos;s usual velocity next to your total, and a warning before you commit
+                  stories that aren&apos;t Ready.
+                </li>
+                <li>
+                  <strong className="text-foreground">Trends:</strong> velocity, completion, churn and readiness at planning
+                  across every sprint, with plain-English insights such as whether more Ready sprints finished more.
+                </li>
+                <li>
+                  <strong className="text-foreground">Team checks:</strong> add your own Definition of Ready items; a story
+                  that fails one can&apos;t be Ready.
+                </li>
+                <li>
+                  <strong className="text-foreground">Writing help:</strong> a story template, Given / When / Then starters,
+                  measurable alternatives to vague words, and ways to split big stories. No AI needed.
+                </li>
+                <li>
+                  <strong className="text-foreground">Export:</strong> download the scored backlog as a CSV, or copy any
+                  story as text for Jira or Slack.
+                </li>
+              </ul>
+              <Link href="/demo#trends" className="btn-secondary mt-5">
+                See trends in the demo
                 <ArrowRight aria-hidden="true" className="h-4 w-4" />
               </Link>
             </Reveal>

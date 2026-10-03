@@ -16,6 +16,8 @@ const TERMS: [string, string][] = [
   ["Commitment", "The stories the team agrees to finish in a sprint, chosen in sprint planning."],
   ["Baseline", "Sprintwise's frozen copy of the commitment, taken on day one. It can't be edited, so every change is measured against it."],
   ["Snapshot", "A later copy of the sprint, taken while it runs. Sprintwise compares it with the baseline, story by story."],
+  ["Sprint goal", "One sentence on what the sprint should achieve. At the end, the team records whether it was met."],
+  ["Definition of Ready", "The team's agreed list of what a story needs before it can be planned. Sprintwise's rules are a starting point; team checks add your own."],
   ["Jira", "A popular tool for keeping the backlog. Sprintwise doesn't need it: you can type stories in, or upload a CSV exported from Jira or a spreadsheet."],
 ];
 
@@ -34,15 +36,19 @@ const STEPS = [
   },
   {
     title: "Create a sprint and lock the baseline",
-    text: "On day one, create the sprint and tick the stories the team committed to. Locking them makes the baseline.",
+    text: "On day one, create the sprint, write its goal, and tick the stories the team committed to. Sprintwise warns you about stories that aren't Ready and about planning more than the team usually finishes. Locking them makes the baseline.",
   },
   {
     title: "Save snapshots as the sprint runs",
-    text: "Update statuses (To Do, In Progress, Done) and points on your stories, then save a snapshot. Every change since the last one is listed before you save.",
+    text: "Update statuses (To Do, In Progress, Done) and points on your stories, then save a snapshot. Every change since the last one is listed before you save. Tag why each scope change happened: a bug, a stakeholder request, discovered work or tech debt.",
   },
   {
     title: "Open the report for the retrospective",
-    text: "One printable page: how much scope was added or removed, churn, completion, and whether the stories that changed scored low before planning.",
+    text: "One printable page: the goal and whether it was met, how much scope was added or removed and why, churn, completion, and whether the stories that changed scored low before planning. Share a read-only link with stakeholders.",
+  },
+  {
+    title: "Watch the trends",
+    text: "After a few sprints, the Trends tab shows velocity, completion, churn and readiness over time, with plain-English insights. The planning helper uses the same velocity.",
   },
 ];
 
@@ -51,13 +57,15 @@ const NUMBERS: [string, string][] = [
   ["Net change", "How much bigger or smaller the sprint got. +20% means 20% more work than the team committed to."],
   ["Churn", "How much work moved in, moved out or changed size, even if the total stayed the same. High churn means an unstable sprint."],
   ["Completion", "How much of the original commitment got done. Work added later doesn't count towards it."],
+  ["Velocity", "Points of the original commitment the team finished, averaged over the last three sprints. A planning guide, not a target."],
+  ["Team checks", "Your own Definition of Ready items, such as “has a design link”. They don't change the score, but a story that fails one can't be Ready."],
 ];
 
 export default function GuidePage() {
   return (
     <>
       <PageHero eyebrow="Guide" title="How to use Sprintwise">
-        <p>Six steps from a messy backlog to a one-page sprint report, plus every word you&apos;ll meet along the way.</p>
+        <p>Seven steps from a messy backlog to a one-page sprint report, plus every word you&apos;ll meet along the way.</p>
       </PageHero>
 
       <div className="mx-auto max-w-4xl space-y-20 px-4 py-16 sm:px-6">

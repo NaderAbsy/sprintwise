@@ -2,6 +2,29 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-03 — v1.2: features for a Product Owner's week
+
+- **Decision:** the owner picked seven additions from a list built around what a PO does each sprint:
+  - trends
+  - a planning helper
+  - scope-change reasons and a sprint goal
+  - a share link
+  - CSV export
+  - writing helpers
+  - team checks
+- **Everything stays rule-based:** no AI, no new services, no running costs.
+- **Trends:** velocity is the original commitment's points that are Done at the latest snapshot, averaged over the last three measured sprints. Sprints with only a baseline are listed but not counted. Insights need four or more sprints, and a difference of 5 points or more, so noise isn't presented as a finding.
+- **Planning helper:** it warns but never blocks. A PO may have good reasons to commit an unready story; the warning makes it a choice rather than an accident.
+- **Reasons:** they are tagged per stored change, after the snapshot is saved, because the cause usually isn't known when the CSV is exported. The report weighs each change by the points it moved.
+- **Share links:**
+  - The token is 32 random bytes, checked for shape before any query.
+  - The shared page is excluded from search engines and sends no referrer.
+  - Turning sharing off deletes the token, and sharing again creates a new one.
+  - The page shows only that one report, with nothing else from the project.
+- **Team checks:** pass/fail, capped at 10 per project, checked by plain case-insensitive "contains". They cap the band, not the score, so the score keeps exactly one reason per lost point.
+- **Export:** columns follow the import template, so an export re-imports as is. Cells that a spreadsheet would run as formulas are neutralized. A "- " list bullet is left alone, so acceptance criteria survive the round trip.
+- **Rejected for now:** teammates on a project, and a live Jira connection. Both are bigger and stay in v2.
+
 ## 2026-10-03 — Easier to use without Jira, and a security pass
 
 - **Usability review:** I walked through the app as a new user with no Jira and found four problems.
@@ -30,10 +53,7 @@ One entry per decision: date, decision, options considered, reason. Newest first
   - **A site-wide daily AI ceiling** (`AI_SITE_DAILY_LIMIT`, default 200), on top of the per-user cap.
   - **Dependencies:** patched versions of the Prisma CLI's `deepmerge-ts` and `mysql2` are pinned through pnpm overrides, so `pnpm audit --prod` is clean.
   - **CI:** a read-only token, and actions pinned to commit SHAs.
-- **Still open, and needing the owner:**
-  - give Preview its own database
-  - turn on Dependabot alerts
-  - protect `main` so CI must pass before a merge
+- **Since done:** Preview has its own database, Dependabot alerts and security updates are on, and `main` requires CI to pass before a merge.
 - **Not done:** a `script-src` CSP. Next's inline bootstrap scripts would need a per-request nonce, which makes every page dynamic. There's no user-supplied HTML on the site, so the risk it covers is small.
 
 ## 2026-10-03 — A real home page and public site
@@ -131,7 +151,7 @@ One entry per decision: date, decision, options considered, reason. Newest first
 
 - **Decision:** Vercel's build command is `pnpm build`, which runs `scripts/build.mjs`. That script runs `prisma migrate deploy` only when `VERCEL_ENV=production`, and preview builds skip it.
 - **Why:** `DATABASE_URL` is still shared by Production and Preview. Under the old build command, a pull request's preview build would have applied unmerged migrations to the live database.
-- **Still to do:** give Preview its own `DATABASE_URL` (the Neon `preview` branch). Until then, preview deploys read and write the live database at runtime.
+- **Done 2026-10-03:** Preview has its own `DATABASE_URL` (the Neon `preview` branch), so preview builds now migrate that branch, and preview deploys never touch the live database.
 
 ## 2026-10-02 — Sign-in is a server action
 

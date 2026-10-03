@@ -6,6 +6,7 @@ import type { Readiness } from "@/lib/readiness/rules";
 /** Score, band and every rule: what failed and why first, then the checks that passed. */
 export function ReadinessBreakdown({ readiness }: { readiness: Readiness }) {
   const failed = readiness.rules.filter((r) => !r.passed);
+  const custom = readiness.custom ?? [];
   const passed = readiness.rules.filter((r) => r.passed);
   return (
     <section aria-label="Readiness score" className="card p-5">
@@ -40,6 +41,27 @@ export function ReadinessBreakdown({ readiness }: { readiness: Readiness }) {
             </li>
           ))}
         </ul>
+      )}
+      {custom.length > 0 && (
+        <div className="mt-4 border-t border-border pt-4">
+          <p className="eyebrow">Your team&apos;s checks</p>
+          <ul className="mt-2 space-y-2 text-sm">
+            {custom.map((check) => (
+              <li key={check.name} className="flex gap-3">
+                <span
+                  className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full ${check.passed ? "bg-ready-bg text-ready" : "bg-not-ready-bg text-not-ready"}`}
+                >
+                  {check.passed ? <Check aria-hidden="true" className="h-3 w-3" /> : <X aria-hidden="true" className="h-3 w-3" />}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="font-medium">{check.name}</span>
+                  <span className="sr-only">{check.passed ? ": passed" : ": failed"}</span>
+                  {check.reason && <span className="text-muted"> {check.reason}</span>}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
       {passed.length > 0 && (
         <details className="mt-4 border-t border-border pt-3 text-sm">

@@ -14,6 +14,8 @@ export type SprintMetrics = {
   scopeAdded: number;
   scopeRemoved: number;
   reestimateTotal: number;
+  /** Points of the original commitment that are Done: the sprint's velocity. */
+  donePoints: number;
   /** Ratios (0.167 = 16.7%); null when the baseline total is 0. */
   netChange: number | null;
   churn: number | null;
@@ -58,6 +60,7 @@ export function computeMetrics(baseline: Story[], latest: Story[]): SprintMetric
     scopeAdded,
     scopeRemoved,
     reestimateTotal,
+    donePoints,
     netChange: ratio(latestTotal - baselineTotal),
     churn: ratio(scopeAdded + scopeRemoved + reestimateTotal),
     completion: ratio(donePoints),

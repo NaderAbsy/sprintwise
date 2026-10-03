@@ -14,7 +14,8 @@ import { normalizeKey, type Story } from "@/lib/stories/types";
 import { Prisma } from "@/generated/prisma/client";
 import { MAX_PROJECTS, MAX_STORIES_PER_PROJECT } from "@/lib/limits";
 import { demoBacklog } from "@/demo/backlog";
-import { DEFAULT_RULE_SETTINGS, parseRuleSettings } from "@/lib/readiness/settings";
+import type { RuleSettings } from "@/lib/readiness/rules";
+import { DEFAULT_RULE_SETTINGS, parseCustomChecks, parseRuleSettings } from "@/lib/readiness/settings";
 
 const projectName = z
   .string()
@@ -197,6 +198,19 @@ export async function deleteStory(projectId: string, storyId: string) {
 // Rule settings (story R-6)
 // ---------------------------------------------------------------------------
 
+/** Saves settings and re-scores every story in one transaction, so scores are never half old, half new. */
+async function rescoreProject(projectId: string, settings: RuleSettings, data: Prisma.ProjectUpdateInput) {
+  const stories = await db.story.findMany({ where: { projectId } });
+  await db.$transaction([
+    db.project.update({ where: { id: projectId }, data }),
+    ...stories.map((row) => {
+      const readiness = readinessData(toStory(row), settings);
+      return db.readinessResult.upsert({ where: { storyId: row.id }, create: { storyId: row.id, ...readiness }, update: readiness });
+    }),
+  ]);
+  return stories;
+}
+
 /** Saves the project's max points and vague words, then re-scores every story with them. */
 export async function updateRuleSettings(projectId: string, _prev: FormState, formData: FormData): Promise<FormState> {
   const project = await requireProject(projectId);
@@ -206,22 +220,29 @@ export async function updateRuleSettings(projectId: string, _prev: FormState, fo
       : parseRuleSettings(String(formData.get("maxPoints") ?? ""), String(formData.get("vagueWords") ?? ""));
   if (!parsed.ok) return { fieldErrors: parsed.errors };
 
-  const { settings } = parsed;
-  const stories = await db.story.findMany({ where: { projectId: project.id } });
-  // One transaction, so scores are never left half on the old settings and half on the new.
-  await db.$transaction([
-    db.project.update({ where: { id: project.id }, data: { maxPoints: settings.maxPoints, vagueWords: settings.vagueWords } }),
-    ...stories.map((row) => {
-      const readiness = readinessData(toStory(row), settings);
-      return db.readinessResult.upsert({
-        where: { storyId: row.id },
-        create: { storyId: row.id, ...readiness },
-        update: readiness,
-      });
-    }),
-  ]);
+  // The team's own checks are saved separately and kept as they are.
+  const settings = { ...parsed.settings, customChecks: settingsOf(project).customChecks };
+  const stories = await rescoreProject(project.id, settings, {
+    maxPoints: settings.maxPoints,
+    vagueWords: settings.vagueWords,
+  });
   revalidatePath(`/projects/${project.id}`, "layout");
   return {
     message: `Saved. ${stories.length} ${stories.length === 1 ? "story was" : "stories were"} re-scored with the new settings.`,
+  };
+}
+
+/** The team's own checks: pass/fail requirements such as "Has a design link". Saving re-scores the project. */
+export async function updateCustomChecks(projectId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  const project = await requireProject(projectId);
+  const list = (name: string) => formData.getAll(name).map((v) => String(v));
+  const parsed = parseCustomChecks(list("checkName"), list("checkField"), list("checkPhrase"));
+  if (!parsed.ok) return { fieldErrors: parsed.errors };
+
+  const settings = { ...settingsOf(project), customChecks: parsed.checks };
+  const stories = await rescoreProject(project.id, settings, { customChecks: parsed.checks as unknown as Prisma.InputJsonValue });
+  revalidatePath(`/projects/${project.id}`, "layout");
+  return {
+    message: `Saved ${parsed.checks.length} ${parsed.checks.length === 1 ? "check" : "checks"}. ${stories.length} ${stories.length === 1 ? "story was" : "stories were"} re-scored.`,
   };
 }

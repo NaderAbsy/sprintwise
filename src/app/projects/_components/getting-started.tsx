@@ -51,7 +51,7 @@ export function GettingStarted({ base, progress }: { base: string; progress: Pro
         </h2>
         <p className="text-sm text-muted">
           {doneCount} of {steps.length} done ·{" "}
-          <Link href="/guide" className="text-accent hover:underline">
+          <Link href="/guide" className="text-accent underline underline-offset-2">
             Read the guide
           </Link>
         </p>

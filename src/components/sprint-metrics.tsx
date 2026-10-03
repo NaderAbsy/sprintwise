@@ -17,7 +17,7 @@ export function SprintMetricsPanel({ metrics }: { metrics: SprintMetrics }) {
         </h2>
         <p className="text-sm text-muted">
           Baseline {metrics.baselineTotal} points · latest snapshot {metrics.latestTotal} points ·{" "}
-          <a href="/guide#numbers-heading" className="no-print text-accent hover:underline">
+          <a href="/guide#numbers-heading" className="no-print text-accent underline underline-offset-2">
             What these mean
           </a>
         </p>

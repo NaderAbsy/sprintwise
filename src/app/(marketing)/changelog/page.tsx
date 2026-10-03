@@ -12,7 +12,7 @@ export default function ChangelogPage() {
       <PageHero eyebrow="Changelog" title="What's new in Sprintwise">
         <p>
           Every release, newest first. Full notes are on{" "}
-          <a href={`${GITHUB_URL}/releases`} className="font-medium text-accent hover:underline">
+          <a href={`${GITHUB_URL}/releases`} className="font-medium text-accent underline underline-offset-2">
             GitHub releases
           </a>
           .

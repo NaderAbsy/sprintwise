@@ -64,6 +64,21 @@ test("F-2: the demo includes a sample sprint and its one-page report", async ({ 
   expect(pdf.toString("latin1").match(/\/Type\s*\/Page(?!s)/g)?.length).toBe(1);
 });
 
+test("the demo shows scope reasons and trends across sprints", async ({ page }) => {
+  await page.goto("/demo#trends");
+  const trends = page.getByRole("region", { name: "Trends across sprints" });
+  await expect(trends.getByRole("img", { name: /Bar chart of committed and done points/ })).toBeVisible();
+  await expect(trends.getByText(/a good sign\./).first()).toBeVisible();
+  await expect(page.getByRole("table", { name: "Every change in the sample sprint, newest first" })).toContainText("Bug or incident");
+  await page.goto("/demo/report");
+  await expect(page.getByRole("region", { name: "Why scope changed" })).toBeVisible();
+});
+
+test("a share link that doesn't exist is a 404", async ({ page }) => {
+  const response = await page.goto("/share/" + "x".repeat(43));
+  expect(response?.status()).toBe(404);
+});
+
 test("the first click on Sign in with GitHub is handled", async ({ page }) => {
   // With GitHub configured (a local .env) the click goes to GitHub; without it (CI) an error shows.
   // Either way one click is enough. Requests to github.com are stubbed so the test never leaves the machine.

@@ -5,10 +5,11 @@ import type { RuleSettings } from "@/lib/readiness/rules";
 import { formatDay } from "@/lib/sprint/dates";
 import { computeMetrics, formatPercent, type SprintMetrics } from "@/lib/sprint/metrics";
 import { compareReadiness, isScopeChange, readinessFinding, type LogRow } from "@/lib/sprint/report";
+import { GOAL_OUTCOMES, reasonFinding, summarizeReasons } from "@/lib/sprint/reasons";
 import type { Story } from "@/lib/stories/types";
 
 /** Rows that still fit one A4 page alongside the metrics; the sprint page has the full log. */
-const MAX_LOG_ROWS = 18;
+const MAX_LOG_ROWS = 15;
 
 function headline(m: SprintMetrics): string {
   if (m.netChange === null || m.churn === null || m.completion === null) {
@@ -25,20 +26,29 @@ const score = (value: number | null) => (value === null ? "—" : String(Math.ro
 
 export type SprintReportProps = {
   projectName: string;
-  sprint: { name: string; startDate: Date; endDate: Date };
+  sprint: { name: string; startDate: Date; endDate: Date; goal?: string; goalOutcome?: string | null };
   baseline: Story[];
   latest: Story[];
   latestAsOf: Date;
   log: LogRow[];
   settings: RuleSettings;
-  back: { href: string; label: string };
+  /** Absent on a shared, read-only report. */
+  back?: { href: string; label: string };
+  /** Extra controls for the owner, such as sharing. */
+  actions?: React.ReactNode;
 };
 
+const REASON_COLORS = ["bg-accent", "bg-fuchsia-500", "bg-sky-500", "bg-amber-500", "bg-emerald-500"];
+
 /** S-5: one printable A4 page. Used by real sprints and by the demo. */
-export function SprintReport({ projectName, sprint, baseline, latest, latestAsOf, log, settings, back }: SprintReportProps) {
+export function SprintReport({ projectName, sprint, baseline, latest, latestAsOf, log, settings, back, actions }: SprintReportProps) {
   const metrics = computeMetrics(baseline, latest);
   const readiness = compareReadiness(baseline, latest, settings);
   const scopeLog = log.filter(isScopeChange);
+  const reasons = summarizeReasons(scopeLog);
+  const reasonSentence = reasonFinding(reasons);
+  const tagged = reasons.rows.filter((r) => r.id !== null);
+  const outcome = GOAL_OUTCOMES.find((o) => o.id === sprint.goalOutcome)?.label;
   const statusChanges = log.filter((c) => c.type === "status-changed").length;
   const renames = log.filter((c) => c.type === "renamed").length;
   const notListed = [
@@ -56,10 +66,17 @@ export function SprintReport({ projectName, sprint, baseline, latest, latestAsOf
   return (
     <article className="report mx-auto max-w-3xl space-y-6">
       <div className="no-print flex flex-wrap items-center justify-between gap-3">
-        <Link href={back.href} className="text-sm text-muted hover:underline">
-          ← {back.label}
-        </Link>
-        <PrintButton />
+        {back ? (
+          <Link href={back.href} className="text-sm text-muted hover:underline">
+            ← {back.label}
+          </Link>
+        ) : (
+          <span className="text-sm text-muted">Shared read-only report</span>
+        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {actions}
+          <PrintButton />
+        </div>
       </div>
 
       <header className="border-b border-border pb-4">
@@ -69,6 +86,24 @@ export function SprintReport({ projectName, sprint, baseline, latest, latestAsOf
           {formatDay(sprint.startDate)} to {formatDay(sprint.endDate)} · baseline {metrics.baselineTotal} pts, latest
           snapshot ({formatDay(latestAsOf)}) {metrics.latestTotal} pts
         </p>
+        {sprint.goal && (
+          <p className="mt-3 text-sm">
+            <span className="font-medium">Goal:</span> {sprint.goal}
+            {outcome && (
+              <span
+                className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium ${
+                  sprint.goalOutcome === "met"
+                    ? "bg-ready-bg text-ready"
+                    : sprint.goalOutcome === "partly"
+                      ? "bg-needs-work-bg text-needs-work"
+                      : "bg-not-ready-bg text-not-ready"
+                }`}
+              >
+                {outcome}
+              </span>
+            )}
+          </p>
+        )}
         <p className="mt-3 text-lg font-medium">{headline(metrics)}</p>
       </header>
 
@@ -112,6 +147,35 @@ export function SprintReport({ projectName, sprint, baseline, latest, latestAsOf
         </p>
       </section>
 
+      {tagged.length > 0 && (
+        <section aria-labelledby="report-reasons" className="space-y-2">
+          <h2 id="report-reasons" className="font-semibold">
+            Why scope changed
+          </h2>
+          {reasonSentence && <p className="text-sm">{reasonSentence}</p>}
+          <div aria-hidden="true" className="flex h-2.5 overflow-hidden rounded-full bg-surface-2">
+            {reasons.rows.map((r, i) => (
+              <div
+                key={r.label}
+                className={r.id === null ? "bg-border-strong" : REASON_COLORS[i % REASON_COLORS.length]}
+                style={{ width: `${r.share * 100}%` }}
+              />
+            ))}
+          </div>
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+            {reasons.rows.map((r, i) => (
+              <li key={r.label} className="flex items-center gap-1.5">
+                <span
+                  aria-hidden="true"
+                  className={`h-2 w-2 rounded-full ${r.id === null ? "bg-border-strong" : REASON_COLORS[i % REASON_COLORS.length]}`}
+                />
+                {r.label}: {r.points} pts ({Math.round(r.share * 100)}%)
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section aria-labelledby="report-log" className="space-y-2">
         <h2 id="report-log" className="font-semibold">
           Scope changes
@@ -119,7 +183,11 @@ export function SprintReport({ projectName, sprint, baseline, latest, latestAsOf
         {scopeLog.length === 0 ? (
           <p className="text-sm text-muted">No scope changes since the baseline.</p>
         ) : (
-          <ChangeTable caption="Scope changes, newest first" rows={scopeLog.slice(0, MAX_LOG_ROWS)} />
+          <ChangeTable
+            caption="Scope changes, newest first"
+            rows={scopeLog.slice(0, MAX_LOG_ROWS)}
+            reasons={tagged.length > 0 ? "text" : undefined}
+          />
         )}
         <p className="text-xs text-muted">
           {scopeLog.length > MAX_LOG_ROWS &&

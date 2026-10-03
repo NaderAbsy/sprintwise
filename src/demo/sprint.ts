@@ -1,4 +1,6 @@
 import { demoBacklog } from "@/demo/backlog";
+import type { ReasonId } from "@/lib/sprint/reasons";
+import { changeLog, isScopeChange, type LogRow } from "@/lib/sprint/report";
 import type { Story } from "@/lib/stories/types";
 
 /**
@@ -25,6 +27,8 @@ const doubleBookingBug: Story = {
 
 export const demoSprint = {
   name: "Sprint 12 (sample data)",
+  goal: "Customers can book, cancel and rate a cleaner without calling support",
+  goalOutcome: "partly",
   startDate: new Date("2026-10-05T00:00:00Z"),
   endDate: new Date("2026-10-16T00:00:00Z"),
   snapshots: [
@@ -80,3 +84,18 @@ export const demoSprint = {
     },
   ],
 };
+
+/** Why each scope change happened, as the PO tagged it. */
+const DEMO_REASONS: Record<string, ReasonId> = {
+  "TIDY-110": "stakeholder",
+  "TIDY-114": "bug",
+  "TIDY-103": "discovered",
+  "TIDY-104": "stakeholder",
+};
+
+/** The sample sprint's change log, with the PO's reason on each scope change. */
+export function demoLog(): LogRow[] {
+  return changeLog(demoSprint.snapshots).map((row) =>
+    isScopeChange(row) ? { ...row, reason: DEMO_REASONS[row.key] ?? null } : row,
+  );
+}
