@@ -4,6 +4,7 @@ import {
   findVagueWords,
   readySummary,
   RULES,
+  DEFAULT_SETTINGS,
   scoreStory,
   type RuleId,
 } from "@/lib/readiness/rules";
@@ -156,5 +157,39 @@ describe("readySummary", () => {
   it("counts Ready stories", () => {
     const results = [scoreStory(story()), scoreStory(story({ acceptanceCriteria: "" }))];
     expect(readySummary(results)).toBe("1 of 2 stories ready");
+  });
+});
+
+describe("custom checks", () => {
+  const ready = {
+    key: "A-1",
+    title: "Refund a payment",
+    description: "As an agent I want to refund a payment so that the customer is paid back",
+    acceptanceCriteria: "- A refund email is sent within 1 minute",
+    storyPoints: 3,
+    status: "",
+  };
+  const settings = {
+    ...DEFAULT_SETTINGS,
+    customChecks: [{ name: "Has a design link", field: "any" as const, phrase: "Figma.com" }],
+  };
+
+  it("caps an otherwise Ready story without changing its score", () => {
+    const result = scoreStory(ready, settings);
+    expect(result.score).toBe(100);
+    expect(result.band).toBe("Needs work");
+    expect(result.bandCap).toBe("Can't be Ready until it passes your team's checks: Has a design link.");
+    expect(result.custom).toEqual([{ name: "Has a design link", passed: false, reason: 'Add "Figma.com" to the story.' }]);
+  });
+
+  it("passes, ignoring case, when the phrase is present", () => {
+    const result = scoreStory({ ...ready, description: `${ready.description}. Design: https://figma.com/x` }, settings);
+    expect(result.band).toBe("Ready");
+    expect(result.custom[0].passed).toBe(true);
+  });
+
+  it("only looks in the chosen field", () => {
+    const criteriaOnly = { ...DEFAULT_SETTINGS, customChecks: [{ name: "Event", field: "criteria" as const, phrase: "event:" }] };
+    expect(scoreStory({ ...ready, description: "event: refund" }, criteriaOnly).custom[0].passed).toBe(false);
   });
 });

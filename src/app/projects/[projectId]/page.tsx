@@ -1,4 +1,4 @@
-import { CircleCheck, CircleDashed, CircleX, FileUp, ListChecks, Plus, Sparkles } from "lucide-react";
+import { CircleCheck, CircleDashed, CircleX, Download, FileUp, ListChecks, Plus, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { addSampleStories } from "@/app/projects/actions";
@@ -50,6 +50,12 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
   const shown = filter ? stories.filter((s) => s.readiness?.band === filter.band) : stories;
   const actions = (
     <>
+      {stories.length > 0 && (
+        <a href={`${base}/export.csv`} className="btn-ghost" download>
+          <Download aria-hidden="true" className="h-4 w-4" />
+          Export CSV
+        </a>
+      )}
       <Link href={`${base}/import`} className="btn-secondary">
         <FileUp aria-hidden="true" className="h-4 w-4" />
         Import CSV

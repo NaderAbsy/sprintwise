@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DeleteProjectButton, RenameProjectForm } from "@/app/projects/_components/project-forms";
 import { SectionHeader } from "@/components/section-header";
+import { CustomChecksForm } from "@/app/projects/_components/custom-checks-form";
 import { RuleSettingsForm } from "@/app/projects/_components/rule-settings-form";
 import { isDefault } from "@/lib/readiness/settings";
 import { settingsOf } from "@/lib/server/readiness";
@@ -36,6 +37,19 @@ export default async function ProjectSettingsPage({ params }: PageProps<"/projec
             vagueWords={project.vagueWords}
             isDefault={isDefault(settingsOf(project))}
           />
+        </section>
+
+        <section aria-labelledby="checks-heading" className="card space-y-4 p-5">
+          <div>
+            <h2 id="checks-heading" className="font-semibold">
+              Your team&apos;s checks
+            </h2>
+            <p className="mt-0.5 text-sm text-muted">
+              Add your own Definition of Ready items. They don&apos;t change the score, but a story that fails one
+              can&apos;t be Ready. Matching ignores case.
+            </p>
+          </div>
+          <CustomChecksForm projectId={project.id} checks={settingsOf(project).customChecks ?? []} />
         </section>
 
         <section aria-labelledby="danger-heading" className="card space-y-3 border-not-ready/30 p-5">

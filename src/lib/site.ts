@@ -15,6 +15,19 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v1.2",
+    date: "2026-10-03",
+    title: "Built for Product Owners",
+    summary: "Plan with your team's real velocity, see why scope changed, watch trends, and share reports with stakeholders.",
+    items: [
+      "Trends: velocity, completion, churn and readiness across sprints, with plain-English insights.",
+      "Planning helper: readiness per story, your usual velocity, and a warning before committing unready stories.",
+      "Sprint goals, and a reason on every scope change; the report adds them up.",
+      "Share a read-only report link with stakeholders, and turn it off any time.",
+      "Your team's own readiness checks, writing help without AI, CSV export and copy as text.",
+    ],
+  },
+  {
     version: "v1.1",
     date: "2026-10-03",
     title: "Easier without Jira, and safer",

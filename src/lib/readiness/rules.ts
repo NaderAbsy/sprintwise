@@ -28,10 +28,17 @@ export const DEFAULT_VAGUE_WORDS = [
   "etc",
 ];
 
+/** A team's own requirement, e.g. "Has a design link": the story must contain a phrase. */
+export type CustomCheck = { name: string; field: "description" | "criteria" | "any"; phrase: string };
+
 export type RuleSettings = {
   maxPoints: number;
   vagueWords: string[];
+  /** Pass/fail only: they never change the score, but a failed one keeps the story from being Ready. */
+  customChecks?: CustomCheck[];
 };
+
+export type CustomCheckResult = { name: string; passed: boolean; reason?: string };
 
 export const DEFAULT_SETTINGS: RuleSettings = {
   maxPoints: DEFAULT_MAX_POINTS,
@@ -58,6 +65,8 @@ export type Readiness = {
   /** Why the band is lower than the score alone would give; absent when it isn't capped. */
   bandCap?: string;
   rules: RuleResult[];
+  /** The project's own checks, if it has any. */
+  custom: CustomCheckResult[];
   rulesVersion: number;
 };
 
@@ -119,6 +128,28 @@ const STORY_FORMAT = new RegExp(
 
 function quoteList(words: string[]): string {
   return words.map((w) => `"${w}"`).join(", ");
+}
+
+const FIELD_LABEL: Record<CustomCheck["field"], string> = {
+  description: "the title or description",
+  criteria: "the acceptance criteria",
+  any: "the story",
+};
+
+/** Case-insensitive "contains". A plain substring, so a link like "figma.com" works. */
+function checkCustom(story: Story, checks: CustomCheck[]): CustomCheckResult[] {
+  return checks.map((check) => {
+    const text =
+      check.field === "description"
+        ? `${story.title}\n${story.description}`
+        : check.field === "criteria"
+          ? story.acceptanceCriteria
+          : `${story.title}\n${story.description}\n${story.acceptanceCriteria}`;
+    const passed = text.toLowerCase().includes(check.phrase.toLowerCase());
+    return passed
+      ? { name: check.name, passed }
+      : { name: check.name, passed, reason: `Add "${check.phrase}" to ${FIELD_LABEL[check.field]}.` };
+  });
 }
 
 /** Scores one story against the fixed rules. Pure: same story + settings → same result. */
@@ -207,13 +238,18 @@ export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTIN
       : { id, check, points, earned: 0, passed, reason };
   });
 
+  const custom = checkCustom(story, settings.customChecks ?? []);
+  const failedCustom = custom.filter((c) => !c.passed).map((c) => c.name);
+
   const score = rules.reduce((sum, r) => sum + r.earned, 0);
-  const cap = bandCapFor(rules);
+  const cap =
+    bandCapFor(rules) ??
+    (failedCustom.length > 0 ? `Can't be Ready until it passes your team's checks: ${failedCustom.join(", ")}.` : undefined);
   const scoreBand = bandFor(score);
   if (cap && scoreBand === "Ready") {
-    return { score, band: "Needs work", bandCap: cap, rules, rulesVersion: RULES_VERSION };
+    return { score, band: "Needs work", bandCap: cap, rules, custom, rulesVersion: RULES_VERSION };
   }
-  return { score, band: scoreBand, rules, rulesVersion: RULES_VERSION };
+  return { score, band: scoreBand, rules, custom, rulesVersion: RULES_VERSION };
 }
 
 /** "7 of 12 stories ready" */

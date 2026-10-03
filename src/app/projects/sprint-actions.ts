@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -10,12 +11,14 @@ import { MAX_SNAPSHOTS_PER_SPRINT, MAX_SPRINTS_PER_PROJECT } from "@/lib/limits"
 import type { FormState } from "@/lib/form-state";
 import { validateSnapshotDate, validateSprintDates } from "@/lib/sprint/dates";
 import { diffSnapshots } from "@/lib/sprint/diff";
+import { isGoalOutcome, isReason } from "@/lib/sprint/reasons";
 import { db } from "@/lib/server/db";
 import { requireProject, requireSprint } from "@/lib/server/dal";
 import { toStory } from "@/lib/server/readiness";
 import type { Story } from "@/lib/stories/types";
 
 const sprintName = z.string().trim().min(1, "Give the sprint a name.").max(80, "Keep the name under 80 characters.");
+const sprintGoal = z.string().trim().max(300, "Keep the goal under 300 characters.");
 
 const sprintPath = (projectId: string, sprintId: string) => `/projects/${projectId}/sprints/${sprintId}`;
 
@@ -46,12 +49,14 @@ async function readSnapshotStories(projectId: string, formData: FormData): Promi
 export async function createSprint(projectId: string, _prev: FormState, formData: FormData): Promise<FormState> {
   const project = await requireProject(projectId);
   const name = sprintName.safeParse(formData.get("name"));
+  const goal = sprintGoal.safeParse(formData.get("goal") ?? "");
   const dates = validateSprintDates(String(formData.get("startDate") ?? ""), String(formData.get("endDate") ?? ""));
-  if (!name.success || !dates.ok) {
+  if (!name.success || !goal.success || !dates.ok) {
     return {
       fieldErrors: {
         ...(dates.ok ? {} : dates.errors),
         ...(name.success ? {} : { name: name.error.issues[0].message }),
+        ...(goal.success ? {} : { goal: goal.error.issues[0].message }),
       },
     };
   }
@@ -61,7 +66,7 @@ export async function createSprint(projectId: string, _prev: FormState, formData
   }
 
   const sprint = await db.sprint.create({
-    data: { projectId: project.id, name: name.data, startDate: dates.startDate, endDate: dates.endDate },
+    data: { projectId: project.id, name: name.data, goal: goal.data, startDate: dates.startDate, endDate: dates.endDate },
   });
   revalidatePath(`/projects/${project.id}/sprints`);
   redirect(sprintPath(project.id, sprint.id));
@@ -159,4 +164,53 @@ export async function deleteSprint(projectId: string, sprintId: string) {
   await db.sprint.delete({ where: { id: sprint.id } });
   revalidatePath(`/projects/${project.id}/sprints`);
   redirect(`/projects/${project.id}/sprints`);
+}
+
+/** The sprint goal and, once the sprint is over, whether it was met. */
+export async function updateSprintGoal(
+  projectId: string,
+  sprintId: string,
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const { project, sprint } = await requireSprint(projectId, sprintId);
+  const goal = sprintGoal.safeParse(formData.get("goal") ?? "");
+  if (!goal.success) return { fieldErrors: { goal: goal.error.issues[0].message } };
+  const outcome = formData.get("goalOutcome");
+  await db.sprint.update({
+    where: { id: sprint.id },
+    data: { goal: goal.data, goalOutcome: isGoalOutcome(outcome) ? outcome : null },
+  });
+  revalidatePath(sprintPath(project.id, sprint.id), "layout");
+  return { message: "Goal saved." };
+}
+
+/** Tags one scope change with why it happened, for the report's breakdown. */
+export async function setChangeReason(projectId: string, sprintId: string, changeId: string, reason: string) {
+  const { project, sprint } = await requireSprint(projectId, sprintId);
+  // The change must belong to this sprint; the where clause enforces it.
+  await db.change.updateMany({
+    where: { id: changeId, sprintId: sprint.id },
+    data: { reason: isReason(reason) ? reason : null },
+  });
+  revalidatePath(sprintPath(project.id, sprint.id), "layout");
+}
+
+/**
+ * Turns the read-only report link on. The token is 32 random bytes, so the
+ * link can't be guessed; turning sharing off deletes it, and a new link is
+ * different from the old one.
+ */
+export async function enableReportShare(projectId: string, sprintId: string) {
+  const { project, sprint } = await requireSprint(projectId, sprintId);
+  if (!sprint.shareToken) {
+    await db.sprint.update({ where: { id: sprint.id }, data: { shareToken: randomBytes(32).toString("base64url") } });
+  }
+  revalidatePath(`${sprintPath(project.id, sprint.id)}/report`);
+}
+
+export async function disableReportShare(projectId: string, sprintId: string) {
+  const { project, sprint } = await requireSprint(projectId, sprintId);
+  await db.sprint.update({ where: { id: sprint.id }, data: { shareToken: null } });
+  revalidatePath(`${sprintPath(project.id, sprint.id)}/report`);
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ShareReport } from "@/app/projects/_components/share-report";
 import { SprintReport } from "@/components/sprint-report";
 import { requireSprint } from "@/lib/server/dal";
 import { settingsOf } from "@/lib/server/readiness";
@@ -37,6 +38,7 @@ export default async function SprintReportPage({ params }: PageProps<"/projects/
       log={log}
       settings={settingsOf(project)}
       back={{ href: back, label: `Back to ${sprint.name}` }}
+      actions={<ShareReport projectId={project.id} sprintId={sprint.id} token={sprint.shareToken} />}
     />
   );
 }

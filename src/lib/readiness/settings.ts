@@ -1,6 +1,48 @@
-import { DEFAULT_MAX_POINTS, DEFAULT_VAGUE_WORDS, type RuleSettings } from "@/lib/readiness/rules";
+import { DEFAULT_MAX_POINTS, DEFAULT_VAGUE_WORDS, type CustomCheck, type RuleSettings } from "@/lib/readiness/rules";
 
-export const SETTINGS_LIMITS = { minPoints: 1, maxPoints: 100, words: 100, wordLength: 40 };
+export const SETTINGS_LIMITS = { minPoints: 1, maxPoints: 100, words: 100, wordLength: 40, checks: 10, checkName: 60, phrase: 60 };
+
+const FIELDS: CustomCheck["field"][] = ["description", "criteria", "any"];
+
+/** Reads stored custom checks defensively: anything malformed is dropped. */
+export function readCustomChecks(value: unknown): CustomCheck[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter(
+      (c): c is CustomCheck =>
+        typeof c === "object" &&
+        c !== null &&
+        typeof c.name === "string" &&
+        typeof c.phrase === "string" &&
+        FIELDS.includes(c.field) &&
+        c.name.trim() !== "" &&
+        c.phrase.trim() !== "",
+    )
+    .slice(0, SETTINGS_LIMITS.checks)
+    .map(({ name, field, phrase }) => ({ name, field, phrase }));
+}
+
+export type CustomChecksCheck = { ok: true; checks: CustomCheck[] } | { ok: false; errors: Record<string, string> };
+
+/** Turns the custom-checks form (parallel name / field / phrase lists) into checks. Blank rows are skipped. */
+export function parseCustomChecks(names: string[], fields: string[], phrases: string[]): CustomChecksCheck {
+  const errors: Record<string, string> = {};
+  const checks: CustomCheck[] = [];
+  names.forEach((rawName, i) => {
+    const name = rawName.trim();
+    const phrase = (phrases[i] ?? "").trim();
+    const field = fields[i] as CustomCheck["field"];
+    if (name === "" && phrase === "") return;
+    if (name === "") errors[`check-${i}`] = "Give this check a name.";
+    else if (phrase === "") errors[`check-${i}`] = `Say what "${name.slice(0, 30)}" must contain.`;
+    else if (name.length > SETTINGS_LIMITS.checkName || phrase.length > SETTINGS_LIMITS.phrase) {
+      errors[`check-${i}`] = `Keep the name and phrase under ${SETTINGS_LIMITS.phrase} characters each.`;
+    } else if (!FIELDS.includes(field)) errors[`check-${i}`] = "Choose where to look.";
+    else checks.push({ name, field, phrase });
+  });
+  if (checks.length > SETTINGS_LIMITS.checks) errors.checks = `Keep to ${SETTINGS_LIMITS.checks} checks or fewer.`;
+  return Object.keys(errors).length > 0 ? { ok: false, errors } : { ok: true, checks };
+}
 
 export type SettingsCheck = { ok: true; settings: RuleSettings } | { ok: false; errors: Record<string, string> };
 

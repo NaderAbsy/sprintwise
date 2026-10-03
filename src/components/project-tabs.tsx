@@ -1,5 +1,5 @@
 "use client";
-import { FileUp, ListChecks, Settings, Timer } from "lucide-react";
+import { FileUp, LineChart, ListChecks, Settings, Timer } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -10,6 +10,7 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
   const tabs = [
     { href: base, label: "Backlog", Icon: ListChecks, active: pathname === base || pathname.startsWith(`${base}/stories`) },
     { href: `${base}/sprints`, label: "Sprints", Icon: Timer, active: pathname.startsWith(`${base}/sprints`) },
+    { href: `${base}/trends`, label: "Trends", Icon: LineChart, active: pathname.startsWith(`${base}/trends`) },
     { href: `${base}/import`, label: "Import", Icon: FileUp, active: pathname.startsWith(`${base}/import`) },
     { href: `${base}/settings`, label: "Settings", Icon: Settings, active: pathname.startsWith(`${base}/settings`) },
   ];
