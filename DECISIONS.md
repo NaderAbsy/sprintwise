@@ -53,10 +53,7 @@ One entry per decision: date, decision, options considered, reason. Newest first
   - **A site-wide daily AI ceiling** (`AI_SITE_DAILY_LIMIT`, default 200), on top of the per-user cap.
   - **Dependencies:** patched versions of the Prisma CLI's `deepmerge-ts` and `mysql2` are pinned through pnpm overrides, so `pnpm audit --prod` is clean.
   - **CI:** a read-only token, and actions pinned to commit SHAs.
-- **Still open, and needing the owner:**
-  - give Preview its own database
-  - turn on Dependabot alerts
-  - protect `main` so CI must pass before a merge
+- **Since done:** Preview has its own database, Dependabot alerts and security updates are on, and `main` requires CI to pass before a merge.
 - **Not done:** a `script-src` CSP. Next's inline bootstrap scripts would need a per-request nonce, which makes every page dynamic. There's no user-supplied HTML on the site, so the risk it covers is small.
 
 ## 2026-10-03 — A real home page and public site
@@ -154,7 +151,7 @@ One entry per decision: date, decision, options considered, reason. Newest first
 
 - **Decision:** Vercel's build command is `pnpm build`, which runs `scripts/build.mjs`. That script runs `prisma migrate deploy` only when `VERCEL_ENV=production`, and preview builds skip it.
 - **Why:** `DATABASE_URL` is still shared by Production and Preview. Under the old build command, a pull request's preview build would have applied unmerged migrations to the live database.
-- **Still to do:** give Preview its own `DATABASE_URL` (the Neon `preview` branch). Until then, preview deploys read and write the live database at runtime.
+- **Done 2026-10-03:** Preview has its own `DATABASE_URL` (the Neon `preview` branch), so preview builds now migrate that branch, and preview deploys never touch the live database.
 
 ## 2026-10-02 — Sign-in is a server action
 
