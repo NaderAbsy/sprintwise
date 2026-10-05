@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { addSampleStories } from "@/app/projects/actions";
 import { GettingStarted } from "@/app/projects/_components/getting-started";
+import { QuickField, StatusOptions } from "@/app/projects/_components/quick-field";
 import { BandBadge } from "@/components/band-badge";
 import { EmptyState } from "@/components/empty-state";
 import { ScoreRing } from "@/components/score-ring";
@@ -11,6 +12,7 @@ import type { Band } from "@/lib/readiness/rules";
 import { db } from "@/lib/server/db";
 import { requireProject } from "@/lib/server/dal";
 import { refreshStaleScores } from "@/lib/server/readiness";
+import { doneStatusesOf } from "@/lib/server/sprint";
 
 const FILTERS: { slug: string; band: Band; Icon: typeof CircleCheck; tone: string }[] = [
   { slug: "ready", band: "Ready", Icon: CircleCheck, tone: "text-ready-dot" },
@@ -124,6 +126,7 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
             ))}
           </nav>
 
+          <StatusOptions id="quick-status-options" doneStatuses={doneStatusesOf(project)} />
           <div className="card overflow-x-auto">
             <table className="data-table">
               <caption className="sr-only">Stories sorted by readiness score, lowest first</caption>
@@ -131,8 +134,10 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
                 <tr>
                   <th scope="col" className="w-16">Score</th>
                   <th scope="col">Story</th>
-                  <th scope="col" className="w-32">Band</th>
-                  <th scope="col" className="w-20 text-right">Points</th>
+                  {/* On phones the score ring's colour shows the band, and points are edited on the story. */}
+                  <th scope="col" className="hidden w-32 sm:table-cell">Band</th>
+                  <th scope="col" className="w-40">Status</th>
+                  <th scope="col" className="hidden w-24 sm:table-cell">Points</th>
                 </tr>
               </thead>
               <tbody>
@@ -145,8 +150,26 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
                         <span className="font-medium group-hover:text-accent group-hover:underline">{story.title}</span>
                       </Link>
                     </td>
-                    <td>{story.readiness && <BandBadge band={story.readiness.band as Band} />}</td>
-                    <td className="text-right tabular-nums text-muted">{story.storyPoints ?? "—"}</td>
+                    <td className="hidden sm:table-cell">{story.readiness && <BandBadge band={story.readiness.band as Band} />}</td>
+                    <td>
+                      <QuickField
+                        projectId={project.id}
+                        storyId={story.id}
+                        storyKey={story.key}
+                        field="status"
+                        value={story.status}
+                        listId="quick-status-options"
+                      />
+                    </td>
+                    <td className="hidden sm:table-cell">
+                      <QuickField
+                        projectId={project.id}
+                        storyId={story.id}
+                        storyKey={story.key}
+                        field="storyPoints"
+                        value={story.storyPoints === null ? "" : String(story.storyPoints)}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>

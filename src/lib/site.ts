@@ -15,6 +15,18 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v1.5",
+    date: "2026-10-05",
+    title: "Sprints that keep themselves up to date",
+    summary: "Change a status or estimate in a click, and a sprint built from the backlog records it for you.",
+    items: [
+      "Change status and points straight from the backlog list and the sprint page.",
+      "Sprints built from the backlog record each change by themselves: no Save snapshot step.",
+      "One automatic snapshot per day; undoing an edit the same day removes it, and reasons you tagged are kept.",
+      "Sprints kept with CSVs remind you when the last snapshot is 3 or more days old.",
+    ],
+  },
+  {
     version: "v1.4",
     date: "2026-10-05",
     title: "A score that's harder to fool",

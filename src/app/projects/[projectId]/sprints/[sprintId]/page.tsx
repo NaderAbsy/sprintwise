@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { FileText, Lock } from "lucide-react";
 import Link from "next/link";
 import { ReasonSelect, SprintGoalForm } from "@/app/projects/_components/sprint-goal";
+import { QuickField, StatusOptions } from "@/app/projects/_components/quick-field";
 import { SnapshotUploadForm } from "@/app/projects/_components/sprint-forms";
 import { deleteSprint, undoBaseline } from "@/app/projects/sprint-actions";
 import { ChangeTable } from "@/components/change-table";
@@ -14,7 +15,9 @@ import { db } from "@/lib/server/db";
 import { requireSprint } from "@/lib/server/dal";
 import { settingsOf, toStory } from "@/lib/server/readiness";
 import { doneStatusesOf, loadProjectTrends, loadSprint } from "@/lib/server/sprint";
+import { daysBetween, utcToday } from "@/lib/sprint/tracking";
 import { averageVelocity } from "@/lib/sprint/trends";
+import { normalizeKey } from "@/lib/stories/types";
 
 export const metadata: Metadata = { title: "Sprint" };
 
@@ -31,6 +34,13 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
     ...toStory(row),
   }));
   const settings = settingsOf(project);
+  const today = utcToday();
+  // A day's leeway at each end, because "today" here is the UTC day and the user may be ahead or behind it.
+  const running = daysBetween(today, sprint.startDate) <= 1 && daysBetween(sprint.endDate, today) <= 1;
+  // The sprint's stories now: the latest snapshot's keys, matched to the backlog for editing.
+  const byKey = new Map(backlog.map((s) => [normalizeKey(s.key), s]));
+  const inSprint = latest?.items.map((item) => ({ item, story: byKey.get(normalizeKey(item.key)) })) ?? [];
+  const staleDays = latest && !sprint.tracksBacklog && running ? daysBetween(latest.asOfDate, today) : 0;
   const capacity = baseline ? null : averageVelocity(await loadProjectTrends(project, sprint.id));
   const uploadProps = {
     backlog,
@@ -96,16 +106,97 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
         </section>
       ) : (
         <>
+          {staleDays >= 3 && (
+            <p role="status" className="rounded-lg bg-needs-work-bg px-4 py-3 text-sm text-needs-work">
+              The last snapshot is from {formatDay(latest!.asOfDate)}, {staleDays} days ago. Save a fresh one below so the
+              metrics and report show where the sprint is now.
+            </p>
+          )}
+
           {metrics && <SprintMetricsPanel metrics={metrics} />}
+
+          {sprint.tracksBacklog && (
+            <section aria-labelledby="in-sprint-heading" className="space-y-3">
+              <div>
+                <h2 id="in-sprint-heading" className="font-semibold">
+                  In this sprint
+                </h2>
+                <p className="mt-0.5 max-w-2xl text-sm text-muted">
+                  {running
+                    ? "Change a status or estimate here or in the backlog, and it's recorded in today's snapshot. No need to save one."
+                    : "Changes were recorded automatically while the sprint ran."}
+                </p>
+              </div>
+              <StatusOptions id="sprint-status-options" doneStatuses={doneStatusesOf(project)} />
+              <div className="card overflow-x-auto">
+                <table className="data-table">
+                  <caption className="sr-only">Stories in the sprint now</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Story</th>
+                      <th scope="col" className="sm:w-40">Status</th>
+                      <th scope="col" className="hidden sm:table-cell sm:w-24">Points</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inSprint.map(({ item, story }) => (
+                      <tr key={item.key}>
+                        <td>
+                          <span className="font-mono text-xs text-subtle">{item.key}</span>{" "}
+                          {story ? (
+                            <Link href={`/projects/${project.id}/stories/${story.id}`} className="font-medium hover:text-accent hover:underline">
+                              {story.title}
+                            </Link>
+                          ) : (
+                            <span className="font-medium">
+                              {item.title} <span className="text-xs font-normal text-subtle">(deleted from the backlog)</span>
+                            </span>
+                          )}
+                        </td>
+                        {story && running ? (
+                          <>
+                            <td>
+                              <QuickField
+                                projectId={project.id}
+                                storyId={story.id}
+                                storyKey={story.key}
+                                field="status"
+                                value={story.status}
+                                listId="sprint-status-options"
+                              />
+                            </td>
+                            <td className="hidden sm:table-cell">
+                              <QuickField
+                                projectId={project.id}
+                                storyId={story.id}
+                                storyKey={story.key}
+                                field="storyPoints"
+                                value={story.storyPoints === null ? "" : String(story.storyPoints)}
+                              />
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td className="text-muted">{item.status || "—"}</td>
+                            <td className="hidden tabular-nums text-muted sm:table-cell">{item.storyPoints ?? "—"}</td>
+                          </>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
 
           <section aria-labelledby="upload-heading" className="space-y-3">
             <h2 id="upload-heading" className="font-semibold">
-              Save a later snapshot
+              {sprint.tracksBacklog ? "Add or remove stories" : "Save a later snapshot"}
             </h2>
             <p className="max-w-2xl text-sm text-muted">
-              As the sprint runs, record where it stands: pick the stories from the backlog, or upload a fresh export.
-              You&apos;ll see what changed before saving. Stories are matched by key, so a renamed story isn&apos;t
-              counted as removed and added.
+              {sprint.tracksBacklog
+                ? "When work joins or leaves the sprint, tick the stories in it now and save. Status and points changes don't need this; they're recorded as you make them."
+                : "As the sprint runs, record where it stands: pick the stories from the backlog, or upload a fresh export. You'll see what changed before saving. Stories are matched by key, so a renamed story isn't counted as removed and added."}
             </p>
             <SnapshotUploadForm
               mode="snapshot"
@@ -152,6 +243,7 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
               {snapshots.map((s) => (
                 <li key={s.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2">
                   <span className="w-28 font-medium">{formatDay(s.asOfDate)}</span>
+                  {s.auto && <span className="text-xs text-subtle">Recorded automatically</span>}
                   {s.isBaseline && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent-soft-foreground">
                       <Lock aria-hidden="true" className="h-3 w-3" />

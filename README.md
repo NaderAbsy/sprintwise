@@ -3,7 +3,7 @@
 Teams often start sprints with vague stories, and mid-sprint scope changes go unmeasured. Sprintwise scores every user story for readiness before planning, then measures how much the sprint changes after the team commits.
 
 - **Readiness check:** nine fixed rules (C1–C9) give each story a score out of 100. Every point lost comes with a plain-English reason, one per missing thing. A story that isn't estimated, or is too big, can't be Ready. The score never uses AI.
-- **Scope tracking:** lock the day-one sprint as a baseline, upload later snapshots, and see scope added, removed, net change, churn and completion.
+- **Scope tracking:** lock the day-one sprint as a baseline and see scope added, removed, net change, churn and completion. A sprint built from the backlog records status and points changes as they're made; a sprint kept with Jira CSVs takes a fresh export as a snapshot.
 
 No Jira setup in v1: paste a story or upload a CSV. Light and dark themes. All sample data is invented.
 
@@ -71,6 +71,7 @@ The calls that shaped v1, with the reasoning in [DECISIONS.md](DECISIONS.md):
 - **Built around a PO's week.** Plan with the team's real velocity and a warning before committing unready stories; tag why scope changed; share the report with stakeholders by link; watch trends across sprints. All rule-based, no AI and no running costs.
 - **Rules v3: harder to fool.** A story with the right shape but vague content ("As a user … so that I can see stuff", "Then it works") scored 95 under v2. v3 asks for a named user, more criteria for bigger stories, and more vague words. A rule that fails only because another did is folded into that one's reason, so seven failed checks on a bare story read as four things to fix.
 - **Team checks cap the band, not the score.** A team's own Definition of Ready items are pass/fail. Adding points would break "100 points from nine rules", so a failed check keeps a story from being Ready instead, like an oversized story does.
+- **Changes are recorded as they happen.** In a sprint built from the backlog, editing a story's status or points (from the backlog, the sprint page or the story) updates that day's automatic snapshot. One automatic snapshot per day keeps the change log readable, and editing back to the old value removes it. Snapshots saved by hand are never rewritten.
 - **No Jira? No CSV needed.** Stories can be typed in and edited with a live score, and a sprint's baseline and snapshots can be picked straight from the backlog. CSV stays for teams that export from Jira.
 
 ## Tech stack
