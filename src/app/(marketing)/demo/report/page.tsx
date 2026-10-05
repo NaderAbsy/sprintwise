@@ -19,6 +19,7 @@ export default function DemoReportPage() {
       latestAsOf={latest.asOfDate}
       log={demoLog()}
       settings={DEFAULT_SETTINGS}
+      snapshots={snapshots.map((s) => ({ asOfDate: s.asOfDate, items: s.stories }))}
         back={{ href: "/demo#sample-sprint", label: "Back to the demo" }}
       />
     </div>

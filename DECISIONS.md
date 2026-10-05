@@ -2,6 +2,21 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-05 — v1.7: see the sprint move
+
+- **Why:** the sprint page showed totals only, so there was no way to see when scope moved or whether work was being finished. Trends said nothing until four sprints had run, so the first two months showed almost nothing.
+- **Burn-up, not burn-down:** a burn-down hides scope changes inside a single line. Sprintwise is about scope change, so the burn-up shows scope and done as separate lines, plus the day-one commitment as a dashed line.
+- **What "done" means here:** the points of every story in the sprint with a done status, including work added later. The two lines meet when everything is finished. This differs on purpose from Completion, which counts only the original commitment; the chart's caption says which is which.
+- **Drawing:**
+  - Step lines: a value holds until the next snapshot, because nothing in between is known. When a day has several snapshots, the last one counts.
+  - While the sprint runs, the lines carry on to a "Today" marker.
+  - The chart has a text summary for screen readers, which is also the caption.
+- **On the report:** a shorter chart, and the scope-change list shows 10 rows instead of 15 so the page still prints on one A4 sheet. The sprint page keeps the full log.
+- **Trends from sprint two:**
+  - With two or three measured sprints, insights compare the latest with the one before, and say so: "a hint", not a trend.
+  - From four sprints, insights compare averages, as before.
+  - Differences under 5 points are still left out.
+
 ## 2026-10-05 — v1.6: a backlog you can run
 
 - **Why:** ordering the backlog is a Product Owner's main job, but Sprintwise could only sort by score. There was also no search, no status filter, and no way to change more than one story at a time.

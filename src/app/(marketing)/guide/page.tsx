@@ -55,6 +55,7 @@ const STEPS = [
 const NUMBERS: [string, string][] = [
   ["Readiness score", "Out of 100, from nine fixed rules. 80 or more is Ready, 50 to 79 needs work, below 50 isn't ready."],
   ["Net change", "How much bigger or smaller the sprint got. +20% means 20% more work than the team committed to."],
+  ["Burn-up", "The sprint page's chart of scope and work done on each snapshot day, against the day-one commitment. When the two lines meet, everything in the sprint is done."],
   ["Churn", "How much work moved in, moved out or changed size, even if the total stayed the same. High churn means an unstable sprint."],
   ["Completion", "How much of the original commitment got done. Work added later doesn't count towards it. Which statuses count as done is set in project settings."],
   ["Velocity", "Points of the original commitment the team finished, averaged over the last three sprints. A planning guide, not a target."],

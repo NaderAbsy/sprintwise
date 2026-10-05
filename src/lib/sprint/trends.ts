@@ -70,6 +70,11 @@ export type TrendSummary = {
   readyAtBaseline: number | null;
   /** Plain-English observations, only when there are enough sprints to compare. */
   insights: string[];
+  /**
+   * What the insights compare: the latest sprint with the one before (2–3 sprints),
+   * or the last three with the ones before (4 or more). Null when there are none.
+   */
+  basis: "previous" | "trend" | null;
 };
 
 /** Averages over the last three sprints, and what changed against the ones before. */
@@ -79,6 +84,25 @@ export function summarizeTrends(allRows: SprintTrendRow[]): TrendSummary {
   const avg = (pick: (r: SprintTrendRow) => number | null, list = recent) =>
     mean(list.map(pick).filter((v): v is number => v !== null));
   const insights: string[] = [];
+
+  // With two or three sprints, compare the latest with the one before; from four, compare averages.
+  if (rows.length >= 2 && rows.length < 4) {
+    const [before, after] = rows.slice(-2);
+    const compare = (label: string, pick: (r: SprintTrendRow) => number | null, higherIsBetter: boolean) => {
+      const a = pick(before);
+      const b = pick(after);
+      if (a === null || b === null) return;
+      const diff = Math.round((b - a) * 100);
+      if (Math.abs(diff) < 5) return;
+      const better = diff > 0 === higherIsBetter;
+      insights.push(
+        `${label} ${diff > 0 ? "rose" : "fell"} from ${Math.round(a * 100)}% to ${Math.round(b * 100)}% since ${before.name}${better ? ", a good sign." : "."}`,
+      );
+    };
+    compare("Completion", (r) => r.completion, true);
+    compare("Churn", (r) => r.churn, false);
+    compare("Stories Ready at planning", (r) => r.readyAtBaseline, true);
+  }
 
   if (rows.length >= 4) {
     const earlier = rows.slice(0, -3);
@@ -118,5 +142,6 @@ export function summarizeTrends(allRows: SprintTrendRow[]): TrendSummary {
     churn: avg((r) => r.churn),
     readyAtBaseline: avg((r) => r.readyAtBaseline),
     insights,
+    basis: insights.length === 0 ? null : rows.length < 4 ? "previous" : "trend",
   };
 }

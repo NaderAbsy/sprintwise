@@ -5,6 +5,7 @@ import { ReasonSelect, SprintGoalForm } from "@/app/projects/_components/sprint-
 import { QuickField, StatusOptions } from "@/app/projects/_components/quick-field";
 import { SnapshotUploadForm } from "@/app/projects/_components/sprint-forms";
 import { deleteSprint, undoBaseline } from "@/app/projects/sprint-actions";
+import { BurnupChart } from "@/components/burnup-chart";
 import { ChangeTable } from "@/components/change-table";
 import { ConfirmButton } from "@/components/confirm-button";
 import { RemoveSection } from "@/components/remove-section";
@@ -15,6 +16,7 @@ import { db } from "@/lib/server/db";
 import { requireSprint } from "@/lib/server/dal";
 import { settingsOf, toStory } from "@/lib/server/readiness";
 import { doneStatusesOf, loadProjectTrends, loadSprint } from "@/lib/server/sprint";
+import { burnupSeries } from "@/lib/sprint/burnup";
 import { daysBetween, utcToday } from "@/lib/sprint/tracking";
 import { averageVelocity } from "@/lib/sprint/trends";
 import { normalizeKey } from "@/lib/stories/types";
@@ -114,6 +116,24 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
           )}
 
           {metrics && <SprintMetricsPanel metrics={metrics} />}
+
+          {metrics && (
+            <section aria-labelledby="burnup-heading" className="card space-y-2 p-4">
+              <h2 id="burnup-heading" className="font-semibold">
+                Scope and work done
+              </h2>
+              <BurnupChart
+                series={burnupSeries(
+                  snapshots.map((s) => ({ asOfDate: s.asOfDate, items: s.items.map(toStory) })),
+                  doneStatusesOf(project),
+                )}
+                committed={metrics.baselineTotal}
+                start={sprint.startDate}
+                end={sprint.endDate}
+                today={running ? today : undefined}
+              />
+            </section>
+          )}
 
           {sprint.tracksBacklog && (
             <section aria-labelledby="in-sprint-heading" className="space-y-3">

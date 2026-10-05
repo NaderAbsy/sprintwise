@@ -3,7 +3,7 @@
 Teams often start sprints with vague stories, and mid-sprint scope changes go unmeasured. Sprintwise scores every user story for readiness before planning, then measures how much the sprint changes after the team commits.
 
 - **Readiness check:** nine fixed rules (C1–C9) give each story a score out of 100. Every point lost comes with a plain-English reason, one per missing thing. A story that isn't estimated, or is too big, can't be Ready. The score never uses AI.
-- **Scope tracking:** lock the day-one sprint as a baseline and see scope added, removed, net change, churn and completion. A sprint built from the backlog records status and points changes as they're made; a sprint kept with Jira CSVs takes a fresh export as a snapshot.
+- **Scope tracking:** lock the day-one sprint as a baseline and see scope added, removed, net change, churn and completion. A sprint built from the backlog records status and points changes as they're made; a sprint kept with Jira CSVs takes a fresh export as a snapshot. A burn-up chart shows scope against work done, day by day.
 
 No Jira setup in v1: paste a story or upload a CSV. Light and dark themes. All sample data is invented.
 
