@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { aiConfigured } from "@/lib/server/ai";
+import { GITHUB_URL } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Privacy" };
 
@@ -47,6 +48,21 @@ export default function PrivacyPage() {
         <p className="mt-2">
           Deleting a project removes everything in it. Deleting your account on the Account page removes your account
           and all your data at once.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-base font-semibold text-foreground">Reporting a security problem</h2>
+        <p className="mt-2">
+          Please report it privately through{" "}
+          <a href={`${GITHUB_URL}/security/advisories/new`} className="text-accent underline underline-offset-2">
+            GitHub&apos;s vulnerability reporting
+          </a>
+          , not in a public issue. The{" "}
+          <a href={`${GITHUB_URL}/blob/main/SECURITY.md`} className="text-accent underline underline-offset-2">
+            security policy
+          </a>{" "}
+          says what&apos;s in scope and what to expect.
         </p>
       </section>
     </article>
