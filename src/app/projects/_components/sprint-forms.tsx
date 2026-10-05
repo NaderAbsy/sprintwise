@@ -229,7 +229,7 @@ export function SnapshotUploadForm(props: UploadProps) {
               <p className="text-sm text-muted">
                 {props.mode === "baseline"
                   ? "Tick the stories the team committed to."
-                  : "Tick the stories in the sprint now. Update their status and points in the backlog first; stories with a done status count towards completion."}
+                  : "Tick the stories in the sprint now. Their current status and points are saved with them."}
               </p>
               <div className="flex gap-2">
                 <button type="button" className="btn-ghost btn-sm" onClick={() => setPicked(new Set(backlog.map((s) => s.id)))}>

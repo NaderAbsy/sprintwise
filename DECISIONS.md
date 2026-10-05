@@ -2,6 +2,22 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-05 — v1.5: sprints that keep themselves up to date
+
+- **Why:** the critique found keeping a sprint current was the most likely reason to stop after one sprint. Marking a story Done meant opening it, editing it, saving it, going to the sprint and saving a snapshot. Nothing reminded you, so a forgotten snapshot meant an empty report.
+- **Quick edits:** status and points can be changed in place on the backlog list and on the sprint page. Each saves on Enter or when you leave the field, Escape puts it back, and points re-score the story. On phones only status is shown, so the table fits.
+- **Automatic recording:**
+  - A sprint "follows the backlog" (`sprints.tracksBacklog`) when its latest snapshot was picked from the backlog. A CSV snapshot turns it off, because the team has switched to exports.
+  - Its stories are the latest snapshot's keys. Any story edit (quick edit, story page, CSV import) re-reads those stories from the backlog and records the difference in that day's automatic snapshot (`snapshots.auto`).
+  - One automatic snapshot per day: later edits that day update it in place, compared again with the snapshot before it. If the edits are undone, it's deleted. Reasons already tagged are carried over by key and change type.
+  - Snapshots saved by hand are never rewritten. Adding or removing stories still goes through "Add or remove stories", because membership is a decision, not an edit.
+  - The planner is a pure function (`planTracking`). The write runs in a transaction that locks the sprint row, so two quick edits can't both create the day's snapshot.
+- **Dates:** "today" is the UTC day. The snapshot is never dated before the latest one or after the sprint's end, and edits up to a day after the end still count, so users east or west of UTC aren't cut off.
+- **At the 30-snapshot cap,** edits stop being recorded rather than overwrite history.
+- **Existing sprints:** they start following the backlog the next time a snapshot is saved from it. They weren't switched on silently, because a sprint built from CSVs would suddenly start recording backlog edits.
+- **Reminder:** a running sprint that doesn't follow the backlog shows a banner once its latest snapshot is 3 or more days old.
+- **Rejected:** a full event log of every edit with timestamps. It would show who changed what and when, but it needs a new model and a new report. The daily snapshot fits the existing metrics, report and trends unchanged.
+
 ## 2026-10-05 — v1.4: rules v3, a score that's harder to fool
 
 - **Why:** in the critique walkthrough, "As a user I want a dashboard so that I can see stuff" with the criterion "Then it works" scored 95 and was Ready. A score that can be met by shape alone stops being trusted, and trust is the product. A bare story also showed "7 checks failed" when only four things were missing.

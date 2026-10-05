@@ -95,9 +95,9 @@ test("capacity from past sprints, and the Trends tab", async ({ page }) => {
   await page.getByLabel("Status").fill("Done");
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByRole("status")).toBeVisible();
+  // The sprint follows the backlog, so the edit is already recorded.
   await page.goto(sprint1);
-  await page.getByRole("button", { name: "Save snapshot" }).click();
-  await expect(page.getByText("Snapshot saved with 1 change.")).toBeVisible();
+  await expect(page.getByText("Recorded automatically")).toBeVisible();
 
   // Sprint 2: the helper knows the team finished 3 points.
   await page.goto(`${project}/sprints/new`);

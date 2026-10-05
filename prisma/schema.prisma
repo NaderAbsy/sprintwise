@@ -149,20 +149,22 @@ model ReadinessResult {
 }
 
 model Sprint {
-  id          String     @id @default(cuid())
-  projectId   String
-  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  name        String
-  startDate   DateTime   @db.Date
-  endDate     DateTime   @db.Date
+  id            String     @id @default(cuid())
+  projectId     String
+  project       Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name          String
+  startDate     DateTime   @db.Date
+  endDate       DateTime   @db.Date
   /// What the team set out to achieve, and whether it did: "met", "partly", "missed" or null.
-  goal        String     @default("")
-  goalOutcome String?
+  goal          String     @default("")
+  goalOutcome   String?
   /// Read-only report link for stakeholders; null when sharing is off.
-  shareToken  String?    @unique
-  createdAt   DateTime   @default(now())
-  snapshots   Snapshot[]
-  changes     Change[]
+  shareToken    String?    @unique
+  /// True when the latest snapshot came from the backlog: later backlog edits are recorded automatically.
+  tracksBacklog Boolean    @default(false)
+  createdAt     DateTime   @default(now())
+  snapshots     Snapshot[]
+  changes       Change[]
 
   @@index([projectId])
   @@map("sprints")
@@ -178,6 +180,8 @@ model Snapshot {
   uploadedAt  DateTime       @default(now())
   isBaseline  Boolean        @default(false)
   locked      Boolean        @default(false)
+  /// Recorded from backlog edits rather than saved by hand; the day's automatic snapshot is updated in place.
+  auto        Boolean        @default(false)
   items       SnapshotItem[]
   changesFrom Change[]       @relation("fromSnapshot")
   changesTo   Change[]       @relation("toSnapshot")

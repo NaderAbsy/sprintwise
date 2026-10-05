@@ -85,16 +85,21 @@ export async function lockBaseline(
   const csv = await readSnapshotStories(project.id, formData);
   if (!("stories" in csv)) return csv;
 
+  const tracksBacklog = formData.get("source") === "backlog";
   try {
-    await db.snapshot.create({
-      data: {
-        sprintId: sprint.id,
-        asOfDate: date.asOfDate,
-        isBaseline: true,
-        locked: true,
-        items: { create: csv.stories },
-      },
-    });
+    await db.$transaction([
+      db.snapshot.create({
+        data: {
+          sprintId: sprint.id,
+          asOfDate: date.asOfDate,
+          isBaseline: true,
+          locked: true,
+          items: { create: csv.stories },
+        },
+      }),
+      // A sprint built from the backlog records later backlog edits by itself.
+      db.sprint.update({ where: { id: sprint.id }, data: { tracksBacklog } }),
+    ]);
   } catch (error) {
     // The partial unique index allows one baseline per sprint, even under a double submit.
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
@@ -103,7 +108,11 @@ export async function lockBaseline(
     throw error;
   }
   revalidatePath(sprintPath(project.id, sprint.id));
-  return { message: "Baseline locked." };
+  return {
+    message: tracksBacklog
+      ? "Baseline locked. From now on, status and points changes to these stories are recorded automatically."
+      : "Baseline locked.",
+  };
 }
 
 /** S-3: save a later snapshot (CSV or backlog); changes since the previous snapshot are stored for the change log. */
@@ -134,6 +143,8 @@ export async function uploadSnapshot(
     const snapshot = await tx.snapshot.create({
       data: { sprintId: sprint.id, asOfDate: date.asOfDate, locked: true, items: { create: csv.stories } },
     });
+    // Picking from the backlog turns automatic recording on; a CSV upload turns it off.
+    await tx.sprint.update({ where: { id: sprint.id }, data: { tracksBacklog: formData.get("source") === "backlog" } });
     if (changes.length > 0) {
       await tx.change.createMany({
         data: changes.map((c) => ({

@@ -39,8 +39,8 @@ const STEPS = [
     text: "On day one, create the sprint, write its goal, and tick the stories the team committed to. Sprintwise warns you about stories that aren't Ready and about planning more than the team usually finishes. Locking them makes the baseline.",
   },
   {
-    title: "Save snapshots as the sprint runs",
-    text: "Update statuses (To Do, In Progress, Done) and points on your stories, then save a snapshot. Every change since the last one is listed before you save. Tag why each scope change happened: a bug, a stakeholder request, discovered work or tech debt.",
+    title: "Keep it up to date as the sprint runs",
+    text: "Update statuses (To Do, In Progress, Done) and points straight from the backlog or the sprint page. A sprint built from the backlog records each change by itself; one built from CSVs needs a fresh export saved as a snapshot. Tag why each scope change happened: a bug, a stakeholder request, discovered work or tech debt.",
   },
   {
     title: "Open the report for the retrospective",

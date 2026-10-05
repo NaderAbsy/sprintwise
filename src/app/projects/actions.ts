@@ -8,9 +8,10 @@ import type { FormState } from "@/lib/form-state";
 import { db } from "@/lib/server/db";
 import { requireProject, requireUser } from "@/lib/server/dal";
 import { projectDefaults, readinessData, settingsOf, toStory } from "@/lib/server/readiness";
+import { recordSprintChanges } from "@/lib/server/tracking";
 import { recordUsage } from "@/lib/server/usage";
-import { readStoryForm } from "@/lib/stories/form";
-import { normalizeKey, type Story } from "@/lib/stories/types";
+import { readStoryForm, STORY_LIMITS } from "@/lib/stories/form";
+import { normalizeKey, parsePoints, type Story } from "@/lib/stories/types";
 import { Prisma } from "@/generated/prisma/client";
 import { MAX_PROJECTS, MAX_STORIES_PER_PROJECT } from "@/lib/limits";
 import { demoBacklog } from "@/demo/backlog";
@@ -120,8 +121,9 @@ export async function updateStory(projectId: string, storyId: string, _prev: For
       readiness: { upsert: { create: readiness, update: { ...readiness, aiSuggestion: Prisma.DbNull } } },
     },
   });
+  await recordSprintChanges(project.id);
   await recordUsage("check_run");
-  revalidatePath(`/projects/${project.id}`);
+  revalidatePath(`/projects/${project.id}`, "layout");
   redirect(`/projects/${project.id}/stories/${existing.id}?saved=1`);
 }
 
@@ -164,8 +166,9 @@ export async function importStories(projectId: string, _prev: FormState, formDat
       });
     }),
   );
+  await recordSprintChanges(project.id);
   await recordUsage("import");
-  revalidatePath(`/projects/${project.id}`);
+  revalidatePath(`/projects/${project.id}`, "layout");
   redirect(`/projects/${project.id}?imported=${parsed.stories.length}`);
 }
 
@@ -255,4 +258,43 @@ export async function updateDoneStatuses(projectId: string, _prev: FormState, fo
   await db.project.update({ where: { id: project.id }, data: { doneStatuses: parsed.statuses } });
   revalidatePath(`/projects/${project.id}`, "layout");
   return { message: `Saved. Stories marked ${parsed.statuses.join(", ")} now count as done.` };
+}
+
+/**
+ * Changes one story's status or points from a list, without opening it.
+ * Points re-score the story; either can be recorded in a sprint that follows the backlog.
+ */
+export async function quickUpdateStory(projectId: string, storyId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  const project = await requireProject(projectId);
+  const row = await db.story.findFirst({ where: { id: storyId, projectId: project.id } });
+  if (!row) return { error: "This story no longer exists." };
+
+  const field = formData.get("field");
+  const value = String(formData.get("value") ?? "").trim();
+  let data: { status: string } | { storyPoints: number | null };
+  if (field === "status") {
+    if (value.length > STORY_LIMITS.status) return { error: `Keep the status under ${STORY_LIMITS.status} characters.` };
+    data = { status: value };
+  } else if (field === "storyPoints") {
+    const points = parsePoints(value);
+    if (!points.valid) return { error: "Points must be a number of 0 or more." };
+    if (points.points !== null && points.points > STORY_LIMITS.points) return { error: `Points can't be more than ${STORY_LIMITS.points}.` };
+    data = { storyPoints: points.points };
+  } else {
+    return { error: "Choose status or points." };
+  }
+
+  const story = { ...toStory(row), ...data };
+  await db.story.update({
+    where: { id: row.id },
+    data: {
+      ...data,
+      ...("storyPoints" in data && {
+        readiness: { upsert: { create: readinessData(story, settingsOf(project)), update: readinessData(story, settingsOf(project)) } },
+      }),
+    },
+  });
+  await recordSprintChanges(project.id);
+  revalidatePath(`/projects/${project.id}`, "layout");
+  return { message: "Saved" };
 }

@@ -64,7 +64,7 @@ test("a new user can run a whole sprint without a CSV, guided by the checklist",
   await expect(page.getByText("Baseline 10 points · latest snapshot 10 points")).toBeVisible();
   const sprintUrl = page.url();
 
-  // Mark one story Done in the backlog, then save a snapshot from the backlog.
+  // Mark one story Done in the backlog: the sprint records it by itself.
   await page.goto(sprintUrl.replace(/\/sprints\/.*/, ""));
   await page.getByRole("link", { name: /TIDY-102/ }).click();
   await page.getByRole("link", { name: "Edit story" }).click();
@@ -73,12 +73,15 @@ test("a new user can run a whole sprint without a CSV, guided by the checklist",
   await expect(page.getByRole("status")).toBeVisible();
 
   await page.goto(sprintUrl);
+  await expect(page.getByRole("region", { name: "Change log" })).toContainText("TIDY-102");
+  await expect(page.getByRole("region", { name: "Sprint metrics" }).getByText("30.0%")).toBeVisible();
+
+  // Adding a story still goes through "Add or remove stories".
   await expect(page.getByRole("checkbox", { name: /TIDY-102/ })).toBeChecked();
-  await expect(page.getByRole("checkbox", { name: /TIDY-103/ })).not.toBeChecked();
-  await expect(page.getByRole("table", { name: "Changes since the previous snapshot" })).toContainText("TIDY-102");
+  await page.getByRole("checkbox", { name: /TIDY-103/ }).check();
+  await expect(page.getByRole("table", { name: "Changes since the previous snapshot" })).toContainText("TIDY-103");
   await page.getByRole("button", { name: "Save snapshot" }).click();
   await expect(page.getByText("Snapshot saved with 1 change.")).toBeVisible();
-  await expect(page.getByRole("region", { name: "Sprint metrics" }).getByText("30.0%")).toBeVisible();
 
   // Every step done: the checklist steps aside.
   await page.goto(sprintUrl.replace(/\/sprints\/.*/, ""));

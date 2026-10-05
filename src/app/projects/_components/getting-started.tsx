@@ -31,8 +31,8 @@ export function GettingStarted({ base, progress }: { base: string; progress: Pro
       cta: "Open the sprint",
     },
     {
-      title: "Save a snapshot, then read the report",
-      text: "Later in the sprint, update statuses and points, save a snapshot, and open the one-page report.",
+      title: "Update as work moves, then read the report",
+      text: "Change statuses and points as the sprint runs; a sprint built from the backlog records each change. Then open the one-page report.",
       done: progress.snapshotSaved,
       href: sprint ?? `${base}/sprints`,
       cta: "Open the sprint",

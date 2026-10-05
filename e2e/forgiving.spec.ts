@@ -80,9 +80,7 @@ test("a project's own done statuses count towards completion", async ({ page }) 
 
   await setStatus(page, project, "Cancel a booking", "Released");
   await page.goto(sprint);
-  await page.getByRole("checkbox", { name: /TIDY-102/ }).check();
-  await page.getByRole("button", { name: "Save snapshot" }).click();
-  await expect(page.getByText(/Snapshot saved with 1 change/)).toBeVisible();
+  await expect(page.getByRole("region", { name: "Change log" })).toContainText("Released");
   await expect(page.getByRole("region", { name: "Sprint metrics" })).toContainText("Completion0.0%");
 
   await page.goto(`${project}/settings`);
