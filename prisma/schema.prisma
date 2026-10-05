@@ -135,7 +135,7 @@ model ReadinessResult {
   story        Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
   score        Int
   band         String
-  /// RuleResult[] for the failed rules: id, check, reason.
+  /// What to fix (Finding[]: id, check, reason, points), then failed team checks.
   failedRules  Json
   /// The last AI suggestion (rewrite + scenarios), if one was asked for.
   aiSuggestion Json?

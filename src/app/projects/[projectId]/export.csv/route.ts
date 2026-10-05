@@ -1,7 +1,7 @@
 import { backlogCsv } from "@/lib/csv/export";
 import { db } from "@/lib/server/db";
 import { getSession } from "@/lib/server/dal";
-import { toStory } from "@/lib/server/readiness";
+import { refreshStaleScores, toStory } from "@/lib/server/readiness";
 
 /** The scored backlog as CSV, for the owner only. Re-imports cleanly, so it also works as a backup. */
 export async function GET(_request: Request, { params }: RouteContext<"/projects/[projectId]/export.csv">) {
@@ -10,6 +10,7 @@ export async function GET(_request: Request, { params }: RouteContext<"/projects
   const { projectId } = await params;
   const project = await db.project.findFirst({ where: { id: projectId, userId: session.user.id } });
   if (!project) return new Response("Not found.", { status: 404 });
+  await refreshStaleScores([project.id]);
 
   const stories = await db.story.findMany({ where: { projectId: project.id }, include: { readiness: true }, orderBy: { key: "asc" } });
   const csv = backlogCsv(

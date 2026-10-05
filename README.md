@@ -2,7 +2,7 @@
 
 Teams often start sprints with vague stories, and mid-sprint scope changes go unmeasured. Sprintwise scores every user story for readiness before planning, then measures how much the sprint changes after the team commits.
 
-- **Readiness check:** nine fixed rules (C1–C9) give each story a score out of 100. Every point lost comes with a plain-English reason. A story that isn't estimated, or is too big, can't be Ready. The score never uses AI.
+- **Readiness check:** nine fixed rules (C1–C9) give each story a score out of 100. Every point lost comes with a plain-English reason, one per missing thing. A story that isn't estimated, or is too big, can't be Ready. The score never uses AI.
 - **Scope tracking:** lock the day-one sprint as a baseline, upload later snapshots, and see scope added, removed, net change, churn and completion.
 
 No Jira setup in v1: paste a story or upload a CSV. Light and dark themes. All sample data is invented.
@@ -69,6 +69,7 @@ The calls that shaped v1, with the reasoning in [DECISIONS.md](DECISIONS.md):
 - **An unestimated or oversized story can't be Ready.** Under the first version of the rules, a story with no estimate scored 80 and passed. The fix caps the band rather than changing the score, so every point lost still has exactly one reason.
 - **The baseline can't be edited.** If it could, every scope metric would be meaningless. A baseline locked by mistake can be undone until the first later snapshot is saved; after that, the only way to redo it is to delete the sprint.
 - **Built around a PO's week.** Plan with the team's real velocity and a warning before committing unready stories; tag why scope changed; share the report with stakeholders by link; watch trends across sprints. All rule-based, no AI and no running costs.
+- **Rules v3: harder to fool.** A story with the right shape but vague content ("As a user … so that I can see stuff", "Then it works") scored 95 under v2. v3 asks for a named user, more criteria for bigger stories, and more vague words. A rule that fails only because another did is folded into that one's reason, so seven failed checks on a bare story read as four things to fix.
 - **Team checks cap the band, not the score.** A team's own Definition of Ready items are pass/fail. Adding points would break "100 points from nine rules", so a failed check keeps a story from being Ready instead, like an oversized story does.
 - **No Jira? No CSV needed.** Stories can be typed in and edited with a live score, and a sprint's baseline and snapshots can be picked straight from the backlog. CSV stays for teams that export from Jira.
 

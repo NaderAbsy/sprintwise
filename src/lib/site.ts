@@ -15,6 +15,19 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v1.4",
+    date: "2026-10-05",
+    title: "A score that's harder to fool",
+    summary: "Stories with the right shape but vague content no longer pass, and each thing to fix is listed once.",
+    items: [
+      "“As a user” no longer counts: name who the story is for.",
+      "Bigger stories need more acceptance criteria: 2 from 5 points, 3 from 13.",
+      "More vague words, such as works, properly, better and stuff, each with a plain alternative.",
+      "One reason per missing thing: no criteria shows as one line, not two.",
+      "Existing scores update on their own; custom vague-word lists are kept.",
+    ],
+  },
+  {
     version: "v1.3",
     date: "2026-10-05",
     title: "More forgiving",

@@ -66,7 +66,7 @@ export function StoryEditor({ projectId, settings, story }: { projectId: string;
       settings,
     ),
   );
-  const failed = readiness.rules.filter((r) => !r.passed);
+  const failed = readiness.findings;
   const failedCustom = readiness.custom.filter((c) => !c.passed);
 
   return (

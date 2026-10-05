@@ -9,11 +9,11 @@ export const metadata: Metadata = { title: "Product" };
 
 /** How each rule is checked, in the words the app uses when a rule fails. */
 const HOW: Record<string, string> = {
-  C1: "At least one criterion, one per line. Leading dashes, bullets and numbers are ignored.",
-  C2: "The title or description reads “As a … I want … so that …”, in that order.",
-  C3: "The criteria contain none of the project's vague words, so each one can be tested.",
+  C1: "One criterion per line, and more for bigger stories: 1 up to 3 points, 2 from 5 points, 3 from 13. Leading dashes, bullets and numbers are ignored.",
+  C2: "The title or description reads “As a … I want … so that …”, in that order, and names who it's for. “As a user” could be anyone, so it doesn't count.",
+  C3: "The criteria contain none of the project's vague words, such as works or properly, so each one can be tested.",
   C4: "There's something after “so that”: what the user gains.",
-  C5: "The title and description avoid words like fast, easy, simple and user-friendly.",
+  C5: "The title and description avoid words like fast, easy, better and user-friendly.",
   C6: "The story has story points. A story that isn't estimated can't be Ready.",
   C7: "No more than the project's maximum points (8 by default). A bigger story can't be Ready.",
   C8: "One “I want” and no “and also”, which usually joins two features.",
@@ -96,7 +96,8 @@ export default function ProductPage() {
               </h2>
               <p className="mt-4 text-muted">
                 Each project can change the maximum story size and the vague-word list. Saving the settings re-scores every
-                story.
+                story. When one missing thing fails two rules, such as no criteria (so nothing to test), it shows as one
+                reason with both rules&apos; points.
               </p>
             </Reveal>
             <Reveal delay={80} className="card mt-6 overflow-x-auto p-0">

@@ -8,9 +8,13 @@ const SUGGESTIONS: [string[], string][] = [
   [["easy", "easily", "simple", "intuitive", "user-friendly"], "Count it: “in 3 steps or fewer”, “without help on the first try”."],
   [["secure"], "Say who and how: “only admins can see it”, “stored encrypted”."],
   [["efficient"], "Give a limit: “uses at most 1 API call per page”."],
-  [["flexible", "robust", "scalable"], "Give the case: “handles 500 bookings a day”, “works offline”."],
+  [["flexible", "robust", "scalable"], "Give the case: “takes 500 bookings a day”, “opens with no internet connection”."],
   [["seamless", "seamlessly"], "Say what doesn't happen: “without re-entering their card”."],
-  [["appropriate", "adequate", "as needed", "and/or", "etc"], "List exactly which ones, or split them into separate criteria."],
+  [["appropriate", "adequate", "as needed", "and/or", "etc", "relevant", "various"], "List exactly which ones, or split them into separate criteria."],
+  [["works", "properly", "correctly", "as expected"], "Say what the user sees when it works: “the order shows as Paid”, “a receipt email arrives”."],
+  [["better", "improve", "improved", "optimize", "optimise", "nice", "good"], "Say by how much, against what: “search returns the right cleaner in the top 3”."],
+  [["handle"], "Say what happens in each case: “an expired card shows ‘Card expired’ and keeps the basket”."],
+  [["stuff", "things", "something", "somehow"], "Name the actual items or steps."],
 ];
 
 /** One suggestion per vague word found, grouped so similar words share a tip. */
