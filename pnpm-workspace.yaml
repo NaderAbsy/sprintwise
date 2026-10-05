@@ -4,7 +4,10 @@ ignoredBuiltDependencies:
 onlyBuiltDependencies:
   - "@prisma/engines"
   - prisma
-# Patched versions of the Prisma CLI's transitive dependencies (security advisories).
+# Patched versions of transitive dependencies (security advisories):
+# the Prisma CLI's deepmerge-ts and mysql2, and the sharp that kokoro-js
+# (demo voice, dev only) pulls in through @huggingface/transformers 3.
 overrides:
   deepmerge-ts: ^8.0.2
   mysql2: ^3.24.5
+  sharp@<0.35.5: ^0.35.5
