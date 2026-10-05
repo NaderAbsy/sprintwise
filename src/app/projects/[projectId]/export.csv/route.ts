@@ -12,7 +12,7 @@ export async function GET(_request: Request, { params }: RouteContext<"/projects
   if (!project) return new Response("Not found.", { status: 404 });
   await refreshStaleScores([project.id]);
 
-  const stories = await db.story.findMany({ where: { projectId: project.id }, include: { readiness: true }, orderBy: { key: "asc" } });
+  const stories = await db.story.findMany({ where: { projectId: project.id }, include: { readiness: true }, orderBy: [{ rank: "asc" }, { key: "asc" }] });
   const csv = backlogCsv(
     stories.map((s) => ({
       ...toStory(s),

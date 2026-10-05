@@ -29,7 +29,7 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
   const total = (items: { storyPoints: number | null }[]) => items.reduce((sum, i) => sum + (i.storyPoints ?? 0), 0);
 
   const dayRange = `${formatDay(sprint.startDate)} to ${formatDay(sprint.endDate)}`;
-  const backlog = (await db.story.findMany({ where: { projectId: project.id }, orderBy: { key: "asc" } })).map((row) => ({
+  const backlog = (await db.story.findMany({ where: { projectId: project.id }, orderBy: [{ rank: "asc" }, { key: "asc" }] })).map((row) => ({
     id: row.id,
     ...toStory(row),
   }));

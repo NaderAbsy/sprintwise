@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Pencil } from "lucide-react";
+import { ArrowRight, Pencil } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AiSuggestionPanel } from "@/app/projects/_components/ai-suggestion-panel";
@@ -38,6 +38,15 @@ export default async function StoryPage({ params, searchParams }: PageProps<"/pr
 
   const base = `/projects/${project.id}`;
 
+  // "Next to fix": the next weakest story that isn't Ready, in the same order as the backlog's "weakest first".
+  const unready = await db.story.findMany({
+    where: { projectId: project.id, readiness: { is: { band: { not: "Ready" } } } },
+    select: { id: true, key: true, title: true, rank: true, readiness: { select: { score: true } } },
+  });
+  unready.sort((a, b) => (a.readiness?.score ?? 0) - (b.readiness?.score ?? 0) || a.rank - b.rank);
+  const here = unready.findIndex((s) => s.id === row.id);
+  const next = [...unready.slice(here + 1), ...unready.slice(0, Math.max(here, 0))].find((s) => s.id !== row.id);
+
   return (
     <>
       <SectionHeader
@@ -49,6 +58,17 @@ export default async function StoryPage({ params, searchParams }: PageProps<"/pr
         }
         actions={
           <>
+            {next && (
+              <Link
+                href={`${base}/stories/${next.id}`}
+                className="btn-ghost"
+                title={`${next.key} ${next.title}`}
+                aria-label={`Next to fix: ${next.key}`}
+              >
+                Next to fix
+                <ArrowRight aria-hidden="true" className="h-4 w-4" />
+              </Link>
+            )}
             <CopyStoryButton text={storyAsText(story)} />
             <Link href={`${base}/stories/${row.id}/edit`} className="btn-primary">
               <Pencil aria-hidden="true" className="h-4 w-4" />

@@ -78,7 +78,7 @@ export default async function Home() {
       id: "readiness",
       label: "Readiness",
       title: "Know which stories aren't ready, and why",
-      body: "Every story gets a score out of 100 and a band. The weakest come first, so refinement time goes where it matters.",
+      body: "Every story gets a score out of 100 and a band. Keep the backlog in priority order, or list the weakest first so refinement time goes where it matters.",
       points: [
         "Nine fixed rules, from acceptance criteria to vague words",
         "A plain-English reason for every point lost",

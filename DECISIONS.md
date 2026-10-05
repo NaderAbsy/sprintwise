@@ -2,6 +2,24 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-05 — v1.6: a backlog you can run
+
+- **Why:** ordering the backlog is a Product Owner's main job, but Sprintwise could only sort by score. There was also no search, no status filter, and no way to change more than one story at a time.
+- **Priority order:**
+  - A fractional `stories.rank`, so a move changes one row. When neighbours get within 1e-6, the backlog is renumbered.
+  - Existing backlogs start in key order, comparing numbers as numbers (PROJ-2 before PROJ-10). New stories join the bottom, and imports add new keys in file order.
+  - The CSV export follows priority, so importing it into a new project keeps the order.
+  - Priority is the default view; weakest first is one select away. Reordering is only offered in priority order with no filters, because moving within a filtered list has no clear meaning.
+- **Reordering:**
+  - Drag by a handle, so text in the row's fields stays selectable.
+  - Or focus the handle and use Up, Down, Home and End. Focus follows the story, and the new position is announced.
+  - The table shows "Saving the new order…" then "Order saved.", and leaving mid-save asks first.
+  - Not on phones: HTML drag-and-drop doesn't work with touch, so the handle is hidden there.
+- **Search and filters:** a GET form, so the view lives in the URL and works without JavaScript. They cover key or title, status (including "no status") and band. Status options come from the statuses actually used.
+- **Changing several at once:** tick boxes (including "all shown") to set a status or delete. A status set this way is recorded in sprints that follow the backlog, like any other edit.
+- **Next to fix:** a link on the story page to the next story that isn't Ready, in "weakest first" order, wrapping around to the start.
+- **Phones:** the table drops band, points and the handle, and the filter cards sit two by two.
+
 ## 2026-10-05 — v1.5: sprints that keep themselves up to date
 
 - **Why:** the critique found keeping a sprint current was the most likely reason to stop after one sprint. Marking a story Done meant opening it, editing it, saving it, going to the sprint and saving a snapshot. Nothing reminded you, so a forgotten snapshot meant an empty report.

@@ -120,11 +120,14 @@ model Story {
   acceptanceCriteria String           @default("")
   storyPoints        Float?
   status             String           @default("")
+  /// Priority order in the backlog, lowest first. Fractional so a move changes one row.
+  rank               Float            @default(0)
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
   readiness          ReadinessResult?
 
   @@unique([projectId, key])
+  @@index([projectId, rank])
   @@map("stories")
 }
 

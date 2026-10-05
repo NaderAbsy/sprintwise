@@ -40,7 +40,7 @@ async function readSnapshotStories(projectId: string, formData: FormData): Promi
   const ids = [...new Set(formData.getAll("storyId").filter((v): v is string => typeof v === "string"))];
   if (ids.length === 0) return { error: "Choose at least one story from the backlog." };
   if (ids.length > MAX_ROWS) return { error: `Choose up to ${MAX_ROWS} stories.` };
-  const rows = await db.story.findMany({ where: { projectId, id: { in: ids } }, orderBy: { key: "asc" } });
+  const rows = await db.story.findMany({ where: { projectId, id: { in: ids } }, orderBy: [{ rank: "asc" }, { key: "asc" }] });
   if (rows.length === 0) return { error: "Those stories are no longer in the backlog. Reload the page and try again." };
   return { stories: rows.map(toStory) };
 }

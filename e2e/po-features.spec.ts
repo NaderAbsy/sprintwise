@@ -138,7 +138,7 @@ test("team checks cap a story at Needs work until it passes them", async ({ page
   await expectAccessible(page);
 
   await page.goto(`${project}?band=ready`);
-  await expect(page.getByText("No stories in this band.")).toBeVisible();
+  await expect(page.getByText("No stories match.")).toBeVisible();
   await page.goto(project);
   await page.getByRole("link", { name: /TIDY-101/ }).click();
   await expect(page.getByText("Has a design link: failed")).toBeAttached();
