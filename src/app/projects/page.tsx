@@ -8,11 +8,13 @@ import { MAX_PROJECTS } from "@/lib/limits";
 import { formatDay } from "@/lib/sprint/dates";
 import { db } from "@/lib/server/db";
 import { requireUser } from "@/lib/server/dal";
+import { refreshStaleScores } from "@/lib/server/readiness";
 
 export const metadata: Metadata = { title: "Projects" };
 
 export default async function ProjectsPage() {
   const user = await requireUser();
+  await refreshStaleScores((await db.project.findMany({ where: { userId: user.id }, select: { id: true } })).map((p) => p.id));
   const projects = await db.project.findMany({
     where: { userId: user.id },
     orderBy: { updatedAt: "desc" },

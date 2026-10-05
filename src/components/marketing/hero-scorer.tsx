@@ -1,5 +1,5 @@
 "use client";
-import { Check, Sparkles, X } from "lucide-react";
+import { Check, Minus, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { BandBadge } from "@/components/band-badge";
@@ -49,7 +49,7 @@ export function HeroScorer() {
       }),
     [title, description, criteria],
   );
-  const failed = readiness.rules.filter((r) => !r.passed);
+  const failed = readiness.findings;
 
   return (
     <div className="card relative overflow-hidden p-0 shadow-2xl shadow-accent/10">
@@ -131,7 +131,7 @@ export function HeroScorer() {
             <div className="space-y-1">
               <BandBadge band={readiness.band} />
               <p className="text-xs text-muted">
-                {failed.length === 0 ? "Every check passed" : `${failed.length} ${failed.length === 1 ? "check" : "checks"} failed`}
+                {failed.length === 0 ? "Every check passed" : `${failed.length} ${failed.length === 1 ? "thing" : "things"} to fix`}
               </p>
             </div>
           </div>
@@ -140,12 +140,17 @@ export function HeroScorer() {
               <li key={rule.id} className="flex items-start gap-2">
                 {rule.passed ? (
                   <Check aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ready-dot" />
+                ) : rule.coveredBy ? (
+                  // Fails only because another rule did; counted in that rule's reason.
+                  <Minus aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-subtle" />
                 ) : (
                   <X aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-not-ready-dot" />
                 )}
-                <span className={rule.passed ? "text-subtle" : "text-foreground"}>
+                <span className={rule.passed || rule.coveredBy ? "text-subtle" : "text-foreground"}>
                   {rule.check}
-                  <span className="sr-only">{rule.passed ? ": passed" : ": failed"}</span>
+                  <span className="sr-only">
+                    {rule.passed ? ": passed" : rule.coveredBy ? ": follows from an earlier check" : ": failed"}
+                  </span>
                 </span>
               </li>
             ))}

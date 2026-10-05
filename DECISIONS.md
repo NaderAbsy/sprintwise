@@ -2,6 +2,20 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-05 — v1.4: rules v3, a score that's harder to fool
+
+- **Why:** in the critique walkthrough, "As a user I want a dashboard so that I can see stuff" with the criterion "Then it works" scored 95 and was Ready. A score that can be met by shape alone stops being trusted, and trust is the product. A bare story also showed "7 checks failed" when only four things were missing.
+- **Changes (RULES_VERSION 3):**
+  - **C2 names the user.** "As a user", "users", "end user", "person", "people", "someone", "somebody", "anyone" and "everyone" fail. Qualified roles such as "logged-in user" pass; the list is fixed, not a setting.
+  - **C1 scales with size.** 1 criterion up to 3 points, 2 from 5 points, 3 from 13. Unestimated stories need 1. A fixed count is crude, but it's explainable and it stops one line covering an 8-point story.
+  - **19 more default vague words,** such as works, properly, correctly, as expected, better, improve, handle, stuff and things. Each gets a plain-English alternative. "Working" was left out, because "3 working days" is measurable.
+  - **Covered rules:** C3 is covered by C1 when there are no criteria, C7 by C6 when there's no estimate, and C4 by C2 when there's no "so that". A covered rule still fails and still loses its points, but it's reported on the covering rule's line with the combined points. The score is unchanged for these cases; only the explanation is shorter. Findings always add up to 100 minus the score.
+- **Kept:** nine rules, 100 points, the same weights, and the bands.
+- **Existing data:**
+  - Projects still on the exact old default word list get the new one, through a SQL migration. Edited lists are left alone.
+  - Stored scores with an older rules version are re-scored the next time the projects list, the backlog or the CSV export is opened.
+- **Demo:** the two weak samples (TIDY-103, TIDY-110) each gained a second, equally vague criterion. Otherwise the new size rule would have moved their scores and made the recorded demo video's numbers wrong. They still score 50.
+
 ## 2026-10-05 — v1.3: more forgiving
 
 - **Why:** a walkthrough as a new Product Owner found places where one slip cost real work, and a critique ranked them first because they're small to fix. The owner agreed the order: forgiving and wording fixes first, then scoring rules, then faster sprint updates, then backlog ordering, then a sprint chart, then usage numbers.

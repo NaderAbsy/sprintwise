@@ -10,6 +10,7 @@ import { SectionHeader } from "@/components/section-header";
 import type { Band } from "@/lib/readiness/rules";
 import { db } from "@/lib/server/db";
 import { requireProject } from "@/lib/server/dal";
+import { refreshStaleScores } from "@/lib/server/readiness";
 
 const FILTERS: { slug: string; band: Band; Icon: typeof CircleCheck; tone: string }[] = [
   { slug: "ready", band: "Ready", Icon: CircleCheck, tone: "text-ready-dot" },
@@ -28,6 +29,7 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
   const project = await requireProject(projectId);
   const filter = FILTERS.find((f) => f.slug === bandParam);
   const base = `/projects/${project.id}`;
+  await refreshStaleScores([project.id]);
 
   const [stories, latestSprint] = await Promise.all([
     db.story.findMany({ where: { projectId: project.id }, include: { readiness: true } }),

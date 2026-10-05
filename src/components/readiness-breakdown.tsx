@@ -3,9 +3,9 @@ import { BandBadge } from "@/components/band-badge";
 import { ScoreRing } from "@/components/score-ring";
 import type { Readiness } from "@/lib/readiness/rules";
 
-/** Score, band and every rule: what failed and why first, then the checks that passed. */
+/** Score, band and every rule: what to fix and why first (one line per missing thing), then the checks that passed. */
 export function ReadinessBreakdown({ readiness }: { readiness: Readiness }) {
-  const failed = readiness.rules.filter((r) => !r.passed);
+  const failed = readiness.findings;
   const custom = readiness.custom ?? [];
   const passed = readiness.rules.filter((r) => r.passed);
   return (
@@ -18,7 +18,7 @@ export function ReadinessBreakdown({ readiness }: { readiness: Readiness }) {
           <p className="text-sm text-muted">
             {failed.length === 0
               ? "Every check passed."
-              : `${failed.length} ${failed.length === 1 ? "check" : "checks"} failed`}
+              : `${failed.length} ${failed.length === 1 ? "thing" : "things"} to fix`}
           </p>
         </div>
       </div>

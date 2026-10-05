@@ -1,7 +1,7 @@
 import { splitCriteria, type Story } from "@/lib/stories/types";
 
 /** Bump whenever a rule, weight or default changes, so old scores stay explainable. */
-export const RULES_VERSION = 2;
+export const RULES_VERSION = 3;
 
 export const DEFAULT_MAX_POINTS = 8;
 
@@ -26,7 +26,37 @@ export const DEFAULT_VAGUE_WORDS = [
   "as needed",
   "and/or",
   "etc",
+  // Rules v3: words that let a story or criterion sound finished without saying what "done" looks like.
+  "works",
+  "properly",
+  "correctly",
+  "as expected",
+  "better",
+  "improve",
+  "improved",
+  "optimize",
+  "optimise",
+  "handle",
+  "stuff",
+  "things",
+  "something",
+  "somehow",
+  "nice",
+  "good",
+  "various",
+  "relevant",
 ];
+
+/** Rules v3 (C2): roles that could be anyone, so they don't say who the story is for. */
+export const GENERIC_ROLES = ["user", "users", "end user", "end-user", "person", "people", "someone", "somebody", "anyone", "everyone"];
+
+/** Rules v3 (C1): bigger stories need more acceptance criteria. Unestimated stories need one. */
+export function criteriaNeeded(points: number | null): number {
+  if (points === null) return 1;
+  if (points >= 13) return 3;
+  if (points >= 5) return 2;
+  return 1;
+}
 
 /** A team's own requirement, e.g. "Has a design link": the story must contain a phrase. */
 export type CustomCheck = { name: string; field: "description" | "criteria" | "any"; phrase: string };
@@ -55,7 +85,16 @@ export type RuleResult = {
   passed: boolean;
   /** Plain-English reason, present only when the rule failed. */
   reason?: string;
+  /**
+   * Set when this rule failed only because another one did, e.g. criteria can't
+   * be testable when there are none. Its points are reported on that rule's
+   * finding, so one missing thing is one reason to fix.
+   */
+  coveredBy?: RuleId;
 };
+
+/** One thing to fix: a failed rule plus the rules that failed because of it. */
+export type Finding = { id: RuleId; check: string; reason: string; points: number };
 
 export type Band = "Ready" | "Needs work" | "Not ready";
 
@@ -65,14 +104,16 @@ export type Readiness = {
   /** Why the band is lower than the score alone would give; absent when it isn't capped. */
   bandCap?: string;
   rules: RuleResult[];
+  /** What to fix, one entry per missing thing, in rule order. Their points add up to 100 − score. */
+  findings: Finding[];
   /** The project's own checks, if it has any. */
   custom: CustomCheckResult[];
   rulesVersion: number;
 };
 
 export const RULES: ReadonlyArray<{ id: RuleId; check: string; points: number }> = [
-  { id: "C1", check: "Has acceptance criteria", points: 20 },
-  { id: "C2", check: "Follows story format", points: 15 },
+  { id: "C1", check: "Has enough acceptance criteria", points: 20 },
+  { id: "C2", check: "Follows story format for a named user", points: 15 },
   { id: "C3", check: "Acceptance criteria are testable", points: 15 },
   { id: "C4", check: "States a benefit", points: 10 },
   { id: "C5", check: "No vague words in the story", points: 10 },
@@ -152,6 +193,18 @@ function checkCustom(story: Story, checks: CustomCheck[]): CustomCheckResult[] {
   });
 }
 
+/** Failed rules as things to fix: covered rules fold their points into the rule that covers them. */
+function toFindings(rules: RuleResult[]): Finding[] {
+  return rules
+    .filter((r) => !r.passed && !r.coveredBy)
+    .map((r) => ({
+      id: r.id,
+      check: r.check,
+      reason: r.reason ?? "",
+      points: r.points + rules.filter((c) => !c.passed && c.coveredBy === r.id).reduce((sum, c) => sum + c.points, 0),
+    }));
+}
+
 /** Scores one story against the fixed rules. Pure: same story + settings → same result. */
 export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTINGS): Readiness {
   const storyText = `${story.title}\n${story.description}`;
@@ -159,6 +212,7 @@ export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTIN
   const criteriaText = criteria.join("\n");
 
   const hasCriteria = criteria.length > 0;
+  const needed = criteriaNeeded(story.storyPoints);
   const criteriaVague = findVagueWords(criteriaText, settings.vagueWords);
   const storyVague = findVagueWords(storyText, settings.vagueWords);
 
@@ -167,6 +221,12 @@ export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTIN
   const iWantAt = afterAsA.search(phrasePattern("i want"));
   const soThatAt = iWantAt >= 0 ? afterAsA.slice(iWantAt).search(phrasePattern("so that")) : -1;
   const followsFormat = asA !== null && iWantAt >= 0 && soThatAt >= 0;
+  // The words between "As a" and "I want", e.g. "returning customer".
+  const role =
+    asA && iWantAt >= 0
+      ? afterAsA.slice(asA[0].length, iWantAt).trim().replace(/[,.]+$/, "").replace(/\s+/g, " ").toLowerCase()
+      : "";
+  const genericRole = followsFormat && (role === "" || GENERIC_ROLES.includes(role));
 
   const soThat = phrasePattern("so that").exec(storyText);
   const benefit = soThat ? storyText.slice(soThat.index + soThat[0].length) : "";
@@ -181,26 +241,35 @@ export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTIN
 
   const descriptionLength = story.description.trim().length;
 
-  const outcomes: Record<RuleId, { passed: boolean; reason: string }> = {
+  // A rule that fails only because another did is covered by it: one missing thing, one reason.
+  const outcomes: Record<RuleId, { passed: boolean; reason: string; coveredBy?: RuleId }> = {
     C1: {
-      passed: hasCriteria,
-      reason: "No acceptance criteria. Add at least one, one per line.",
+      passed: criteria.length >= needed,
+      reason: !hasCriteria
+        ? "No acceptance criteria, so nothing can be tested. Add at least one, one per line."
+        : `A ${story.storyPoints}-point story needs at least ${needed} acceptance criteria; this has ${criteria.length}. Add one line for each thing the team must build.`,
     },
     C2: {
-      passed: followsFormat,
-      reason: 'Doesn\'t follow "As a … I want … so that …" in the title or description.',
+      passed: followsFormat && !genericRole,
+      reason: !followsFormat
+        ? soThat
+          ? 'Doesn\'t follow "As a … I want … so that …" in the title or description.'
+          : 'Doesn\'t follow "As a … I want … so that …", so no benefit is stated either.'
+        : `"As a ${role || "…"}" could be anyone. Name who it's for, such as "As a returning customer" or "As a support agent".`,
     },
     C3: {
       passed: hasCriteria && criteriaVague.length === 0,
       reason: hasCriteria
         ? `Acceptance criteria use vague words that can't be tested: ${quoteList(criteriaVague)}.`
         : "No acceptance criteria to test, so this check can't pass.",
+      coveredBy: hasCriteria ? undefined : "C1",
     },
     C4: {
       passed: statesBenefit,
       reason: soThat
         ? 'The "so that" part is empty. Say what the user gains.'
         : 'No benefit stated. Add a "so that …" part.',
+      coveredBy: soThat ? undefined : "C2",
     },
     C5: {
       passed: storyVague.length === 0,
@@ -208,13 +277,14 @@ export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTIN
     },
     C6: {
       passed: estimated,
-      reason: "Not estimated. Add story points.",
+      reason: "Not estimated, so its size can't be checked either. Add story points.",
     },
     C7: {
       passed: smallEnough,
       reason: estimated
         ? `${story.storyPoints} points is more than the maximum of ${settings.maxPoints}. Split the story.`
         : "Not estimated, so its size can't be checked.",
+      coveredBy: estimated ? undefined : "C6",
     },
     C8: {
       passed: singleStory,
@@ -232,11 +302,11 @@ export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTIN
   };
 
   const rules: RuleResult[] = RULES.map(({ id, check, points }) => {
-    const { passed, reason } = outcomes[id];
-    return passed
-      ? { id, check, points, earned: points, passed }
-      : { id, check, points, earned: 0, passed, reason };
+    const { passed, reason, coveredBy } = outcomes[id];
+    if (passed) return { id, check, points, earned: points, passed };
+    return coveredBy ? { id, check, points, earned: 0, passed, reason, coveredBy } : { id, check, points, earned: 0, passed, reason };
   });
+  const findings = toFindings(rules);
 
   const custom = checkCustom(story, settings.customChecks ?? []);
   const failedCustom = custom.filter((c) => !c.passed).map((c) => c.name);
@@ -247,9 +317,9 @@ export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTIN
     (failedCustom.length > 0 ? `Can't be Ready until it passes your team's checks: ${failedCustom.join(", ")}.` : undefined);
   const scoreBand = bandFor(score);
   if (cap && scoreBand === "Ready") {
-    return { score, band: "Needs work", bandCap: cap, rules, custom, rulesVersion: RULES_VERSION };
+    return { score, band: "Needs work", bandCap: cap, rules, findings, custom, rulesVersion: RULES_VERSION };
   }
-  return { score, band: scoreBand, rules, custom, rulesVersion: RULES_VERSION };
+  return { score, band: scoreBand, rules, findings, custom, rulesVersion: RULES_VERSION };
 }
 
 /** "7 of 12 stories ready" */
