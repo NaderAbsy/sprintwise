@@ -158,6 +158,10 @@ CI runs all of these on every push and pull request (`.github/workflows/ci.yml`)
 
 **Usage counts (L-3):** `pnpm usage` prints anonymous event counts by month: checks run, imports, reports and AI suggestions. Point it at production with `DATABASE_URL="<Neon connection string>" pnpm usage`. The events table holds only an event type and a time: no user ids and no story text.
 
+## Security
+
+Report security problems privately through [GitHub's vulnerability reporting](https://github.com/NaderAbsy/sprintwise/security/advisories/new), not in a public issue. [SECURITY.md](SECURITY.md) covers scope, response times and safe testing. The live site also serves [`/.well-known/security.txt`](https://sprintwise-omega.vercel.app/.well-known/security.txt).
+
 ## Known limits in v1
 
 - CSV snapshots can't show who made a change, only between which two snapshots it happened. Who changed what arrives with the Jira integration in v2.
