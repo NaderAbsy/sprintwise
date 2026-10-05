@@ -5,7 +5,7 @@ import { Logo } from "@/components/logo";
 import { SprintReport } from "@/components/sprint-report";
 import { db } from "@/lib/server/db";
 import { settingsOf } from "@/lib/server/readiness";
-import { loadSprint } from "@/lib/server/sprint";
+import { doneStatusesOf, loadSprint } from "@/lib/server/sprint";
 
 // Shared links stay out of search engines and never send the token on to other sites.
 export const metadata: Metadata = { title: "Shared sprint report", robots: { index: false, follow: false }, referrer: "no-referrer" };
@@ -18,7 +18,7 @@ export default async function SharedReportPage({ params }: PageProps<"/share/[to
   const sprint = await db.sprint.findUnique({ where: { shareToken: token }, include: { project: true } });
   if (!sprint) notFound();
 
-  const { baseline, latest, latestRow, log } = await loadSprint(sprint);
+  const { baseline, latest, latestRow, log } = await loadSprint(sprint, doneStatusesOf(sprint.project));
   if (!baseline || !latest || !latestRow) notFound();
 
   return (
@@ -38,6 +38,7 @@ export default async function SharedReportPage({ params }: PageProps<"/share/[to
           latestAsOf={latestRow.asOfDate}
           log={log}
           settings={settingsOf(sprint.project)}
+          doneStatuses={doneStatusesOf(sprint.project)}
         />
       </main>
     </div>

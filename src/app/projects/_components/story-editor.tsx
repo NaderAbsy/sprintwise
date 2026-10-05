@@ -7,6 +7,7 @@ import { BandBadge } from "@/components/band-badge";
 import { FormAlert } from "@/components/form-feedback";
 import { ScoreRing } from "@/components/score-ring";
 import { StoryFields, type StoryDefaults } from "@/components/story-fields";
+import { useLeaveWarning } from "@/components/use-leave-warning";
 import { emptyFormState } from "@/lib/form-state";
 import { findVagueWords, scoreStory, type Readiness, type RuleSettings } from "@/lib/readiness/rules";
 import { hasPlaceholders, SCENARIO_TEMPLATE, SPLIT_PATTERNS, STORY_TEMPLATE, vagueWordTips } from "@/lib/stories/helpers";
@@ -47,6 +48,8 @@ export function StoryEditor({ projectId, settings, story }: { projectId: string;
   const [state, action, pending] = useActionState(serverAction, emptyFormState);
   const form = useRef<HTMLFormElement>(null);
   const [placeholders, setPlaceholders] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  useLeaveWarning(dirty);
   const [vague, setVague] = useState<string[]>(() =>
     findVagueWords(`${story?.title ?? ""}\n${story?.description ?? ""}\n${story?.acceptanceCriteria ?? ""}`, settings.vagueWords),
   );
@@ -71,6 +74,7 @@ export function StoryEditor({ projectId, settings, story }: { projectId: string;
       action={action}
       ref={form}
       onInput={(event) => {
+        setDirty(true);
         const next = preview(new FormData(event.currentTarget), settings);
         setReadiness(next.readiness);
         setVague(next.vague);

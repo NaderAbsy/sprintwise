@@ -1,5 +1,5 @@
 import { Lightbulb } from "lucide-react";
-import { formatPercent } from "@/lib/sprint/metrics";
+import { formatPercent, formatPoints } from "@/lib/sprint/metrics";
 import type { SprintTrendRow, TrendSummary } from "@/lib/sprint/trends";
 
 const pct = (v: number | null) => (v === null ? "—" : `${Math.round(v * 100)}%`);
@@ -8,7 +8,7 @@ const pct = (v: number | null) => (v === null ? "—" : `${Math.round(v * 100)}%
 export function Trends({ rows, summary }: { rows: SprintTrendRow[]; summary: TrendSummary }) {
   const measured = rows.filter((r) => r.measured);
   const cards = [
-    { label: "Velocity", value: summary.velocity ? `${summary.velocity.points} pts` : "—", note: "Points done per sprint, last 3" },
+    { label: "Velocity", value: summary.velocity ? formatPoints(summary.velocity.points) : "—", note: "Points done per sprint, last 3" },
     { label: "Completion", value: pct(summary.completion), note: "Of the commitment, last 3" },
     { label: "Churn", value: pct(summary.churn), note: "Lower is steadier, last 3" },
     { label: "Ready at planning", value: pct(summary.readyAtBaseline), note: "Stories Ready when committed" },
@@ -133,10 +133,10 @@ function BarChart({ rows }: { rows: SprintTrendRow[] }) {
         return (
           <g key={r.id}>
             <rect x={x - bw - 1} y={y(r.committed)} width={bw} height={y(0) - y(r.committed)} rx={3} className="fill-border-strong">
-              <title>{`${r.name}: committed ${r.committed} pts`}</title>
+              <title>{`${r.name}: committed ${formatPoints(r.committed)}`}</title>
             </rect>
             <rect x={x + 1} y={y(r.done)} width={bw} height={y(0) - y(r.done)} rx={3} className="fill-accent">
-              <title>{`${r.name}: done ${r.done} pts`}</title>
+              <title>{`${r.name}: done ${formatPoints(r.done)}`}</title>
             </rect>
             <text x={x} y={H - 10} textAnchor="middle" className="fill-muted text-[10px]">
               {short(r.name)}

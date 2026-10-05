@@ -1,6 +1,16 @@
 import { DEFAULT_MAX_POINTS, DEFAULT_VAGUE_WORDS, type CustomCheck, type RuleSettings } from "@/lib/readiness/rules";
 
-export const SETTINGS_LIMITS = { minPoints: 1, maxPoints: 100, words: 100, wordLength: 40, checks: 10, checkName: 60, phrase: 60 };
+export const SETTINGS_LIMITS = {
+  minPoints: 1,
+  maxPoints: 100,
+  words: 100,
+  wordLength: 40,
+  checks: 10,
+  checkName: 60,
+  phrase: 60,
+  doneStatuses: 10,
+  statusLength: 50,
+};
 
 const FIELDS: CustomCheck["field"][] = ["description", "criteria", "any"];
 
@@ -81,4 +91,26 @@ export function isDefault(settings: RuleSettings): boolean {
     settings.vagueWords.length === DEFAULT_VAGUE_WORDS.length &&
     settings.vagueWords.every((w, i) => w === DEFAULT_VAGUE_WORDS[i])
   );
+}
+
+export type DoneStatusesCheck = { ok: true; statuses: string[] } | { ok: false; error: string };
+
+/** The statuses that count as Done: comma- or line-separated, trimmed, de-duplicated ignoring case, in the order typed. */
+export function parseDoneStatuses(text: string): DoneStatusesCheck {
+  const seen = new Set<string>();
+  const statuses: string[] = [];
+  for (const raw of text.split(/[\n,]/)) {
+    const status = raw.trim().replace(/\s+/g, " ");
+    if (status === "" || seen.has(status.toLowerCase())) continue;
+    seen.add(status.toLowerCase());
+    statuses.push(status);
+  }
+  if (statuses.length === 0) return { ok: false, error: "Add at least one status, such as Done." };
+  if (statuses.some((s) => s.length > SETTINGS_LIMITS.statusLength)) {
+    return { ok: false, error: `Keep each status under ${SETTINGS_LIMITS.statusLength} characters.` };
+  }
+  if (statuses.length > SETTINGS_LIMITS.doneStatuses) {
+    return { ok: false, error: `Keep to ${SETTINGS_LIMITS.doneStatuses} statuses or fewer.` };
+  }
+  return { ok: true, statuses };
 }

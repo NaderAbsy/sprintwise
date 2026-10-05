@@ -1,5 +1,5 @@
 import { scoreStory, type RuleSettings } from "@/lib/readiness/rules";
-import { computeMetrics } from "@/lib/sprint/metrics";
+import { computeMetrics, DONE_STATUSES } from "@/lib/sprint/metrics";
 import type { Story } from "@/lib/stories/types";
 
 export type SprintTrendInput = {
@@ -28,11 +28,15 @@ export type SprintTrendRow = {
 };
 
 /** One row per sprint that has a baseline, oldest first. */
-export function trendRows(sprints: SprintTrendInput[], settings: RuleSettings): SprintTrendRow[] {
+export function trendRows(
+  sprints: SprintTrendInput[],
+  settings: RuleSettings,
+  doneStatuses: readonly string[] = DONE_STATUSES,
+): SprintTrendRow[] {
   return [...sprints]
     .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
     .map((s) => {
-      const m = computeMetrics(s.baseline, s.latest);
+      const m = computeMetrics(s.baseline, s.latest, doneStatuses);
       const scores = s.baseline.map((story) => scoreStory(story, settings));
       return {
         id: s.id,

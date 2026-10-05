@@ -158,7 +158,20 @@ export async function uploadSnapshot(
   };
 }
 
-/** S-6: the only way to redo a wrong baseline. Backlog stories are untouched. */
+/**
+ * Takes back a baseline locked by mistake, as long as nothing has been measured
+ * against it yet. Once a later snapshot exists the baseline is fixed for good.
+ * One statement, so a snapshot saved at the same moment can't slip in between.
+ */
+export async function undoBaseline(projectId: string, sprintId: string) {
+  const { project, sprint } = await requireSprint(projectId, sprintId);
+  await db.snapshot.deleteMany({
+    where: { sprintId: sprint.id, isBaseline: true, sprint: { snapshots: { every: { isBaseline: true } } } },
+  });
+  revalidatePath(sprintPath(project.id, sprint.id), "layout");
+}
+
+/** S-6: the way to start over once a baseline has later snapshots. Backlog stories are untouched. */
 export async function deleteSprint(projectId: string, sprintId: string) {
   const { project, sprint } = await requireSprint(projectId, sprintId);
   await db.sprint.delete({ where: { id: sprint.id } });

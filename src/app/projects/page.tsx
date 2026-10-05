@@ -30,9 +30,12 @@ export default async function ProjectsPage() {
       />
 
       {projects.length === 0 ? (
-        <EmptyState icon={FolderPlus} title="No projects yet.">
-          Create one below, then score a story or import your backlog.
-        </EmptyState>
+        <div id="new-project" className="scroll-mt-20">
+          <EmptyState icon={FolderPlus} title="No projects yet." action={<CreateProjectForm framed={false} />}>
+            Name your first one after the team or backlog it holds. Next you&apos;ll add its stories and see how ready
+            they are.
+          </EmptyState>
+        </div>
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {projects.map((project) => {
@@ -69,13 +72,15 @@ export default async function ProjectsPage() {
         </ul>
       )}
 
-      <div id="new-project" className="mt-8 scroll-mt-20">
-        {projects.length < MAX_PROJECTS ? (
-          <CreateProjectForm />
-        ) : (
-          <p className="text-sm text-muted">You have the maximum of {MAX_PROJECTS} projects.</p>
-        )}
-      </div>
+      {projects.length > 0 && (
+        <div id="new-project" className="mt-8 scroll-mt-20">
+          {projects.length < MAX_PROJECTS ? (
+            <CreateProjectForm />
+          ) : (
+            <p className="text-sm text-muted">You have the maximum of {MAX_PROJECTS} projects.</p>
+          )}
+        </div>
+      )}
     </>
   );
 }

@@ -3,7 +3,7 @@ import { ChangeTable } from "@/components/change-table";
 import { PrintButton } from "@/components/print-button";
 import type { RuleSettings } from "@/lib/readiness/rules";
 import { formatDay } from "@/lib/sprint/dates";
-import { computeMetrics, formatPercent, type SprintMetrics } from "@/lib/sprint/metrics";
+import { computeMetrics, formatPercent, formatPoints, type SprintMetrics } from "@/lib/sprint/metrics";
 import { compareReadiness, isScopeChange, readinessFinding, type LogRow } from "@/lib/sprint/report";
 import { GOAL_OUTCOMES, reasonFinding, summarizeReasons } from "@/lib/sprint/reasons";
 import type { Story } from "@/lib/stories/types";
@@ -32,6 +32,8 @@ export type SprintReportProps = {
   latestAsOf: Date;
   log: LogRow[];
   settings: RuleSettings;
+  /** The project's Done statuses; the defaults when absent. */
+  doneStatuses?: readonly string[];
   /** Absent on a shared, read-only report. */
   back?: { href: string; label: string };
   /** Extra controls for the owner, such as sharing. */
@@ -41,8 +43,19 @@ export type SprintReportProps = {
 const REASON_COLORS = ["bg-accent", "bg-fuchsia-500", "bg-sky-500", "bg-amber-500", "bg-emerald-500"];
 
 /** S-5: one printable A4 page. Used by real sprints and by the demo. */
-export function SprintReport({ projectName, sprint, baseline, latest, latestAsOf, log, settings, back, actions }: SprintReportProps) {
-  const metrics = computeMetrics(baseline, latest);
+export function SprintReport({
+  projectName,
+  sprint,
+  baseline,
+  latest,
+  latestAsOf,
+  log,
+  settings,
+  doneStatuses,
+  back,
+  actions,
+}: SprintReportProps) {
+  const metrics = computeMetrics(baseline, latest, doneStatuses);
   const readiness = compareReadiness(baseline, latest, settings);
   const scopeLog = log.filter(isScopeChange);
   const reasons = summarizeReasons(scopeLog);
@@ -56,8 +69,8 @@ export function SprintReport({ projectName, sprint, baseline, latest, latestAsOf
     renames > 0 && `${renames} ${renames === 1 ? "rename" : "renames"}`,
   ].filter(Boolean);
   const tiles = [
-    { label: "Scope added", value: `${metrics.scopeAdded} pts` },
-    { label: "Scope removed", value: `${metrics.scopeRemoved} pts` },
+    { label: "Scope added", value: formatPoints(metrics.scopeAdded) },
+    { label: "Scope removed", value: formatPoints(metrics.scopeRemoved) },
     { label: "Net change", value: formatPercent(metrics.netChange, { signed: true }) },
     { label: "Churn", value: formatPercent(metrics.churn) },
     { label: "Completion", value: formatPercent(metrics.completion) },

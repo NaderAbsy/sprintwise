@@ -3,16 +3,17 @@ import { FileText, Lock } from "lucide-react";
 import Link from "next/link";
 import { ReasonSelect, SprintGoalForm } from "@/app/projects/_components/sprint-goal";
 import { SnapshotUploadForm } from "@/app/projects/_components/sprint-forms";
-import { deleteSprint } from "@/app/projects/sprint-actions";
+import { deleteSprint, undoBaseline } from "@/app/projects/sprint-actions";
 import { ChangeTable } from "@/components/change-table";
 import { ConfirmButton } from "@/components/confirm-button";
+import { RemoveSection } from "@/components/remove-section";
 import { SectionHeader } from "@/components/section-header";
 import { SprintMetricsPanel } from "@/components/sprint-metrics";
 import { formatDay, toDay } from "@/lib/sprint/dates";
 import { db } from "@/lib/server/db";
 import { requireSprint } from "@/lib/server/dal";
 import { settingsOf, toStory } from "@/lib/server/readiness";
-import { loadProjectTrends, loadSprint } from "@/lib/server/sprint";
+import { doneStatusesOf, loadProjectTrends, loadSprint } from "@/lib/server/sprint";
 import { averageVelocity } from "@/lib/sprint/trends";
 
 export const metadata: Metadata = { title: "Sprint" };
@@ -21,7 +22,7 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
   const { projectId, sprintId } = await params;
   const { project, sprint } = await requireSprint(projectId, sprintId);
 
-  const { snapshots, baselineRow: baseline, latestRow: latest, metrics, log } = await loadSprint(sprint);
+  const { snapshots, baselineRow: baseline, latestRow: latest, metrics, log } = await loadSprint(sprint, doneStatusesOf(project));
   const total = (items: { storyPoints: number | null }[]) => items.reduce((sum, i) => sum + (i.storyPoints ?? 0), 0);
 
   const dayRange = `${formatDay(sprint.startDate)} to ${formatDay(sprint.endDate)}`;
@@ -30,7 +31,7 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
     ...toStory(row),
   }));
   const settings = settingsOf(project);
-  const capacity = baseline ? null : averageVelocity(await loadProjectTrends(project.id, settings, sprint.id));
+  const capacity = baseline ? null : averageVelocity(await loadProjectTrends(project, sprint.id));
   const uploadProps = {
     backlog,
     settings,
@@ -57,15 +58,25 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
         title={sprint.name}
         description={dayRange}
         actions={
-          <>
-            {deleteButton}
-            {baseline && (
+          baseline && (
+            <>
+              {/* Right after locking is when a wrong tick is noticed, so the undo sits at the top. */}
+              {snapshots.length === 1 && (
+                <ConfirmButton
+                  tone="quiet"
+                  label="Undo baseline"
+                  title="Undo this baseline?"
+                  body="The sprint goes back to step 1 so you can pick the committed stories again. Nothing has been measured against it yet, and backlog stories are untouched."
+                  confirmLabel="Undo baseline"
+                  action={undoBaseline.bind(null, project.id, sprint.id)}
+                />
+              )}
               <Link href={`/projects/${project.id}/sprints/${sprint.id}/report`} className="btn-primary">
                 <FileText aria-hidden="true" className="h-4 w-4" />
                 Open sprint report
               </Link>
-            )}
-          </>
+            </>
+          )
         }
       />
 
@@ -78,7 +89,8 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
           </h2>
           <p className="max-w-2xl text-sm text-muted">
             Choose the stories the team committed to on day one, from the backlog or a CSV. Every later snapshot is
-            compared against this baseline, so once it&apos;s locked it can&apos;t be edited or replaced.
+            compared against this baseline, so it can&apos;t be edited. If you lock the wrong stories, you can undo it
+            until you save the first later snapshot.
           </p>
           <SnapshotUploadForm mode="baseline" {...uploadProps} capacity={capacity} minDay={toDay(sprint.startDate)} />
         </section>
@@ -156,7 +168,9 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
         </>
       )}
 
-
+      <RemoveSection title="Delete this sprint" action={deleteButton}>
+        Removes the baseline, snapshots and change log. Backlog stories are untouched.
+      </RemoveSection>
     </div>
   );
 }
