@@ -6,14 +6,13 @@ import { SectionHeader } from "@/components/section-header";
 import { Trends } from "@/components/trends";
 import { summarizeTrends } from "@/lib/sprint/trends";
 import { requireProject } from "@/lib/server/dal";
-import { settingsOf } from "@/lib/server/readiness";
 import { loadProjectTrends } from "@/lib/server/sprint";
 
 export const metadata: Metadata = { title: "Trends" };
 
 export default async function TrendsPage({ params }: PageProps<"/projects/[projectId]/trends">) {
   const project = await requireProject((await params).projectId);
-  const rows = await loadProjectTrends(project.id, settingsOf(project));
+  const rows = await loadProjectTrends(project);
   const measured = rows.filter((r) => r.measured);
 
   return (

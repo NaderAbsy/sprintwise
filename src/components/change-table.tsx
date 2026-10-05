@@ -1,4 +1,5 @@
 import type { Change, ChangeType } from "@/lib/sprint/diff";
+import { formatPoints } from "@/lib/sprint/metrics";
 import { reasonLabel } from "@/lib/sprint/reasons";
 import { isScopeChange } from "@/lib/sprint/report";
 
@@ -14,9 +15,9 @@ const LABELS: Record<ChangeType, string> = {
 function describe(change: Change): string {
   switch (change.type) {
     case "added":
-      return change.newValue === null ? "No points" : `${change.newValue} pts`;
+      return change.newValue === null ? "No points" : formatPoints(change.newValue);
     case "removed":
-      return change.oldValue === null ? "No points" : `${change.oldValue} pts`;
+      return change.oldValue === null ? "No points" : formatPoints(change.oldValue);
     case "re-estimated":
       return `${change.oldValue ?? "none"} → ${change.newValue ?? "none"} pts`;
     case "status-changed":

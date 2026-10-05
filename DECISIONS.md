@@ -2,6 +2,15 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-05 — v1.3: more forgiving
+
+- **Why:** a walkthrough as a new Product Owner found places where one slip cost real work, and a critique ranked them first because they're small to fix. The owner agreed the order: forgiving and wording fixes first, then scoring rules, then faster sprint updates, then backlog ordering, then a sprint chart, then usage numbers.
+- **Undo a baseline:** allowed only while it's the sprint's only snapshot. Nothing has been measured against it yet, so undoing it can't rewrite any number. After the first later snapshot it's fixed, as before. The delete is one statement that checks the condition, so a snapshot saved at the same moment can't slip in. Rejected: editing a locked baseline (it would make every metric meaningless), and a time window such as 24 hours (the snapshot rule is easier to explain).
+- **Unsaved changes:** the story editor asks before leaving once anything has been typed. The browser's own prompt covers reload, close and other sites. A capture-phase click listener covers links inside the app, because Next's router has no "before leave" hook. Saving isn't a link click, so it never asks. The browser Back button isn't covered; that would need a history hack.
+- **Done statuses:** a per-project list, default Done, Closed and Resolved, matched ignoring case. They replace the defaults rather than add to them, so a team can drop "Closed" if it means "won't do". They change completion, velocity and trends, but not readiness scores, so saving doesn't re-score. They're kept apart from the rule settings, which are stored with each score.
+- **Delete placement:** Delete story and Delete sprint moved from beside Edit and Open report to a section at the foot of the page.
+- **Wording:** stale CSV-only copy on the New sprint and Sprints pages, "1 pts", and the empty project and empty projects pages, which showed two "add" prompts each.
+
 ## 2026-10-03 — v1.2: features for a Product Owner's week
 
 - **Decision:** the owner picked seven additions from a list built around what a PO does each sprint:

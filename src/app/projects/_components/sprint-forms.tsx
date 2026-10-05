@@ -8,6 +8,7 @@ import { MAX_BYTES } from "@/lib/csv/template";
 import { emptyFormState } from "@/lib/form-state";
 import { localToday } from "@/lib/sprint/dates";
 import { diffSnapshots } from "@/lib/sprint/diff";
+import { formatPoints } from "@/lib/sprint/metrics";
 import type { Story } from "@/lib/stories/types";
 import { BandBadge } from "@/components/band-badge";
 import { scoreStory, type RuleSettings } from "@/lib/readiness/rules";
@@ -228,7 +229,7 @@ export function SnapshotUploadForm(props: UploadProps) {
               <p className="text-sm text-muted">
                 {props.mode === "baseline"
                   ? "Tick the stories the team committed to."
-                  : "Tick the stories in the sprint now. Update their status and points in the backlog first; Done stories count towards completion."}
+                  : "Tick the stories in the sprint now. Update their status and points in the backlog first; stories with a done status count towards completion."}
               </p>
               <div className="flex gap-2">
                 <button type="button" className="btn-ghost btn-sm" onClick={() => setPicked(new Set(backlog.map((s) => s.id)))}>
@@ -261,7 +262,7 @@ export function SnapshotUploadForm(props: UploadProps) {
                       <span className="hidden text-xs text-muted sm:inline">{s.status || "No status"}</span>
                     )}
                     <span className="w-14 text-right text-xs tabular-nums text-muted">
-                      {s.storyPoints === null ? "—" : `${s.storyPoints} pts`}
+                      {s.storyPoints === null ? "—" : formatPoints(s.storyPoints)}
                     </span>
                   </label>
                 </li>
@@ -403,8 +404,8 @@ export function SnapshotUploadForm(props: UploadProps) {
                 </h2>
                 <p className="mt-2 text-sm text-muted">
                   {totalPoints(stories)} points across {stories.length} stories become the commitment every later
-                  snapshot is measured against. Once locked it can&apos;t be edited or replaced; to redo it, delete the
-                  sprint.
+                  snapshot is measured against. Once locked it can&apos;t be edited. You can undo it until you save
+                  the first later snapshot.
                 </p>
                 {(notReady.length > 0 || overCapacity) && (
                   <ul className="mt-3 list-disc space-y-1 rounded-lg bg-needs-work-bg py-2 pr-3 pl-7 text-sm text-needs-work">

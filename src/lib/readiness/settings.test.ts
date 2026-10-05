@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_VAGUE_WORDS, scoreStory } from "@/lib/readiness/rules";
-import { DEFAULT_RULE_SETTINGS, isDefault, parseCustomChecks, parseRuleSettings, readCustomChecks } from "@/lib/readiness/settings";
+import {
+  DEFAULT_RULE_SETTINGS,
+  isDefault,
+  parseCustomChecks,
+  parseDoneStatuses,
+  parseRuleSettings,
+  readCustomChecks,
+  SETTINGS_LIMITS,
+} from "@/lib/readiness/settings";
 import { story } from "@/test/story";
 
 describe("parseRuleSettings (R-6)", () => {
@@ -64,5 +72,28 @@ describe("parseCustomChecks", () => {
       { name: "A", field: "any", phrase: "b" },
     ]);
     expect(readCustomChecks("nope")).toEqual([]);
+  });
+});
+
+describe("parseDoneStatuses", () => {
+  it("splits on commas and lines, trims and keeps the order typed", () => {
+    expect(parseDoneStatuses(" Released,\nAccepted ,  Ready  for QA ")).toEqual({
+      ok: true,
+      statuses: ["Released", "Accepted", "Ready for QA"],
+    });
+  });
+
+  it("drops duplicates ignoring case, keeping the first spelling", () => {
+    expect(parseDoneStatuses("Done, done, DONE, Closed")).toEqual({ ok: true, statuses: ["Done", "Closed"] });
+  });
+
+  it("needs at least one status", () => {
+    expect(parseDoneStatuses(" , \n ")).toEqual({ ok: false, error: "Add at least one status, such as Done." });
+  });
+
+  it("limits the length and the count", () => {
+    expect(parseDoneStatuses("x".repeat(SETTINGS_LIMITS.statusLength + 1)).ok).toBe(false);
+    const many = Array.from({ length: SETTINGS_LIMITS.doneStatuses + 1 }, (_, i) => `S${i}`).join(",");
+    expect(parseDoneStatuses(many).ok).toBe(false);
   });
 });

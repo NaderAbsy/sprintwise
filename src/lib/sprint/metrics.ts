@@ -1,11 +1,12 @@
 import { indexByKey } from "@/lib/sprint/diff";
 import type { Story } from "@/lib/stories/types";
 
-/** Statuses that count as Done, ignoring case. One constant so it can become a project setting later. */
-export const DONE_STATUSES = ["done", "closed", "resolved"];
+/** Statuses that count as Done unless a project sets its own. Matching ignores case and spaces at the ends. */
+export const DONE_STATUSES = ["Done", "Closed", "Resolved"];
 
-export function isDone(status: string): boolean {
-  return DONE_STATUSES.includes(status.trim().toLowerCase());
+export function isDone(status: string, doneStatuses: readonly string[] = DONE_STATUSES): boolean {
+  const s = status.trim().toLowerCase();
+  return s !== "" && doneStatuses.some((d) => d.trim().toLowerCase() === s);
 }
 
 export type SprintMetrics = {
@@ -28,7 +29,11 @@ const points = (story: Story) => story.storyPoints ?? 0;
 const sum = (values: number[]) => values.reduce((total, v) => total + v, 0);
 
 /** Compares the locked baseline with the latest snapshot. Unrounded: round only for display. */
-export function computeMetrics(baseline: Story[], latest: Story[]): SprintMetrics {
+export function computeMetrics(
+  baseline: Story[],
+  latest: Story[],
+  doneStatuses: readonly string[] = DONE_STATUSES,
+): SprintMetrics {
   const before = indexByKey(baseline);
   const after = indexByKey(latest);
 
@@ -44,7 +49,7 @@ export function computeMetrics(baseline: Story[], latest: Story[]): SprintMetric
     const next = after.get(key);
     if (!next) continue;
     reestimateTotal += Math.abs(points(next) - points(old));
-    if (isDone(next.status)) donePoints += points(old);
+    if (isDone(next.status, doneStatuses)) donePoints += points(old);
   }
 
   const unestimated = new Set<string>();
@@ -74,4 +79,9 @@ export function formatPercent(value: number | null, { signed = false } = {}): st
   const text = `${Math.abs(value * 100).toFixed(1)}%`;
   if (value < 0) return `−${text}`;
   return signed && value > 0 ? `+${text}` : text;
+}
+
+/** 1 → "1 pt", 3 → "3 pts". */
+export function formatPoints(value: number | string): string {
+  return `${value} ${Number(value) === 1 ? "pt" : "pts"}`;
 }

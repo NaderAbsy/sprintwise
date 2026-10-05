@@ -15,6 +15,19 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v1.3",
+    date: "2026-10-05",
+    title: "More forgiving",
+    summary: "Fewer ways to lose work by accident, and completion that uses your team's own words for done.",
+    items: [
+      "Undo a baseline locked by mistake, until the first later snapshot is saved.",
+      "Leaving a story with unsaved changes asks first.",
+      "Choose which statuses count as done, such as Released or Accepted, in project settings.",
+      "Delete buttons moved to the foot of the story and sprint pages, away from Edit.",
+      "Clearer first steps for new projects, and tidier wording throughout.",
+    ],
+  },
+  {
     version: "v1.2",
     date: "2026-10-03",
     title: "Built for Product Owners",

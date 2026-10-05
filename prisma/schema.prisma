@@ -99,6 +99,8 @@ model Project {
   vagueWords   String[]
   /// The team's own checks (CustomCheck[]): a failed one keeps a story from being Ready.
   customChecks Json     @default("[]")
+  /// Statuses that count as finished in sprint metrics, matched ignoring case.
+  doneStatuses String[] @default(["Done", "Closed", "Resolved"])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   stories      Story[]

@@ -25,6 +25,11 @@ describe("trendRows", () => {
     expect(rows[0]).toMatchObject({ committed: 8, done: 4, completion: 0.5, readyAtBaseline: 0 });
     expect(rows[1]).toMatchObject({ committed: 5, done: 5, completion: 1, readyAtBaseline: 1 });
   });
+  it("counts the project's own done statuses", () => {
+    const sprint = { id: "a", name: "Sprint 1", startDate: new Date("2026-10-01"), baseline: [story("A", 5)], latest: [story("A", 5, "Released")] };
+    expect(trendRows([sprint], DEFAULT_SETTINGS)[0].done).toBe(0);
+    expect(trendRows([sprint], DEFAULT_SETTINGS, ["Released"])[0].done).toBe(5);
+  });
 });
 
 const row = (done: number, completion: number, churn: number, ready: number): SprintTrendRow => ({

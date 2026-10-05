@@ -8,6 +8,7 @@ import { computeMetrics, formatPercent } from "@/lib/sprint/metrics";
 import { db } from "@/lib/server/db";
 import { requireProject } from "@/lib/server/dal";
 import { toStory } from "@/lib/server/readiness";
+import { doneStatusesOf } from "@/lib/server/sprint";
 
 export const metadata: Metadata = { title: "Sprints" };
 
@@ -30,7 +31,7 @@ export default async function SprintsPage({ params }: PageProps<"/projects/[proj
     <>
       <SectionHeader
         title="Sprints"
-        description="Lock the day-one sprint as a baseline, then upload later snapshots to see how much it changed."
+        description="Lock the day-one sprint as a baseline, then save later snapshots to see how much it changed."
         actions={sprints.length > 0 ? newSprint : undefined}
       />
       {sprints.length === 0 ? (
@@ -42,7 +43,7 @@ export default async function SprintsPage({ params }: PageProps<"/projects/[proj
           {sprints.map((sprint) => {
             const baseline = sprint.snapshots.find((s) => s.isBaseline);
             const latest = sprint.snapshots.at(-1);
-            const m = baseline && latest ? computeMetrics(baseline.items.map(toStory), latest.items.map(toStory)) : null;
+            const m = baseline && latest ? computeMetrics(baseline.items.map(toStory), latest.items.map(toStory), doneStatusesOf(project)) : null;
             return (
               <li key={sprint.id}>
                 <Link

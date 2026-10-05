@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { diffSnapshots } from "@/lib/sprint/diff";
-import { computeMetrics, formatPercent, isDone } from "@/lib/sprint/metrics";
+import { computeMetrics, formatPercent, formatPoints, isDone } from "@/lib/sprint/metrics";
 import { story } from "@/test/story";
 import { baseline, latest } from "@/test/worked-example";
 
@@ -100,4 +100,39 @@ describe("computeMetrics edge cases", () => {
 describe("isDone", () => {
   it.each(["Done", " closed ", "RESOLVED"])("%s is done", (s) => expect(isDone(s)).toBe(true));
   it.each(["In progress", "To Do", ""])("%s is not done", (s) => expect(isDone(s)).toBe(false));
+});
+
+describe("a project's own done statuses", () => {
+  const released = ["Released", "Accepted"];
+
+  it("match ignoring case and spaces", () => {
+    expect(isDone(" released ", released)).toBe(true);
+    expect(isDone("ACCEPTED", released)).toBe(true);
+  });
+
+  it("replace the defaults rather than adding to them", () => {
+    expect(isDone("Done", released)).toBe(false);
+  });
+
+  it("never count an empty status as done", () => {
+    expect(isDone("", ["Done", ""])).toBe(false);
+  });
+
+  it("change completion and velocity", () => {
+    const before = [story({ key: "A", storyPoints: 5 }), story({ key: "B", storyPoints: 3 })];
+    const after = [story({ key: "A", storyPoints: 5, status: "Released" }), story({ key: "B", storyPoints: 3, status: "Done" })];
+    expect(computeMetrics(before, after).donePoints).toBe(3);
+    expect(computeMetrics(before, after, released).donePoints).toBe(5);
+    expect(computeMetrics(before, after, released).completion).toBeCloseTo(5 / 8, 10);
+  });
+});
+
+describe("formatPoints", () => {
+  it.each([
+    [0, "0 pts"],
+    [1, "1 pt"],
+    [1.5, "1.5 pts"],
+    ["1", "1 pt"],
+    [13, "13 pts"],
+  ] as const)("%s → %s", (value, text) => expect(formatPoints(value)).toBe(text));
 });

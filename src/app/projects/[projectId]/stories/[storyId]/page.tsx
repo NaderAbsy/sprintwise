@@ -8,6 +8,7 @@ import { storyAsText } from "@/lib/csv/export";
 import { deleteStory } from "@/app/projects/actions";
 import { ConfirmButton } from "@/components/confirm-button";
 import { ReadinessBreakdown } from "@/components/readiness-breakdown";
+import { RemoveSection } from "@/components/remove-section";
 import { SectionHeader } from "@/components/section-header";
 import { rewriteAsStory, SuggestionSchema } from "@/lib/ai/suggestion";
 import { scoreStory } from "@/lib/readiness/rules";
@@ -48,13 +49,6 @@ export default async function StoryPage({ params, searchParams }: PageProps<"/pr
         }
         actions={
           <>
-            <ConfirmButton
-              label="Delete story"
-              title={`Delete ${story.key}?`}
-              body="This removes the story and its score from the project."
-              confirmLabel="Delete story"
-              action={deleteStory.bind(null, project.id, row.id)}
-            />
             <CopyStoryButton text={storyAsText(story)} />
             <Link href={`${base}/stories/${row.id}/edit`} className="btn-primary">
               <Pencil aria-hidden="true" className="h-4 w-4" />
@@ -124,6 +118,21 @@ export default async function StoryPage({ params, searchParams }: PageProps<"/pr
           />
         </div>
       )}
+
+      <RemoveSection
+        title="Delete this story"
+        action={
+          <ConfirmButton
+            label="Delete story"
+            title={`Delete ${story.key}?`}
+            body="This removes the story and its score from the project."
+            confirmLabel="Delete story"
+            action={deleteStory.bind(null, project.id, row.id)}
+          />
+        }
+      >
+        Removes it from the backlog. Sprints that already include it keep their own copy.
+      </RemoveSection>
     </>
   );
 }

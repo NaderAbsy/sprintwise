@@ -1,17 +1,21 @@
 import "server-only";
-import type { Sprint } from "@/generated/prisma/client";
+import type { Project, Sprint } from "@/generated/prisma/client";
 import { formatDay } from "@/lib/sprint/dates";
 import type { ChangeType } from "@/lib/sprint/diff";
-import { computeMetrics } from "@/lib/sprint/metrics";
+import { computeMetrics, DONE_STATUSES } from "@/lib/sprint/metrics";
 import type { LogRow } from "@/lib/sprint/report";
-import type { RuleSettings } from "@/lib/readiness/rules";
 import { trendRows } from "@/lib/sprint/trends";
 import type { Story } from "@/lib/stories/types";
 import { db } from "@/lib/server/db";
-import { toStory } from "@/lib/server/readiness";
+import { settingsOf, toStory } from "@/lib/server/readiness";
+
+/** The project's own Done statuses; the defaults if none are stored. */
+export function doneStatusesOf(project: Pick<Project, "doneStatuses">): string[] {
+  return project.doneStatuses.length > 0 ? project.doneStatuses : DONE_STATUSES;
+}
 
 /** Everything the sprint page and the sprint report show. Callers check ownership first (dal.ts). */
-export async function loadSprint(sprint: Pick<Sprint, "id">) {
+export async function loadSprint(sprint: Pick<Sprint, "id">, doneStatuses: readonly string[] = DONE_STATUSES) {
   const [snapshots, changes] = await Promise.all([
     db.snapshot.findMany({
       where: { sprintId: sprint.id },
@@ -54,7 +58,7 @@ export async function loadSprint(sprint: Pick<Sprint, "id">) {
     latestRow,
     baseline,
     latest,
-    metrics: baseline && latest ? computeMetrics(baseline, latest) : null,
+    metrics: baseline && latest ? computeMetrics(baseline, latest, doneStatuses) : null,
     log,
   };
 }
@@ -63,9 +67,12 @@ export async function loadSprint(sprint: Pick<Sprint, "id">) {
  * Every sprint in a project that has a baseline, as trend rows (oldest first).
  * Loads only each sprint's baseline and latest snapshot items. Callers check ownership first.
  */
-export async function loadProjectTrends(projectId: string, settings: RuleSettings, exceptSprintId?: string) {
+export async function loadProjectTrends(
+  project: Pick<Project, "id" | "maxPoints" | "vagueWords" | "customChecks" | "doneStatuses">,
+  exceptSprintId?: string,
+) {
   const sprints = await db.sprint.findMany({
-    where: { projectId, ...(exceptSprintId ? { id: { not: exceptSprintId } } : {}) },
+    where: { projectId: project.id, ...(exceptSprintId ? { id: { not: exceptSprintId } } : {}) },
     select: {
       id: true,
       name: true,
@@ -93,6 +100,7 @@ export async function loadProjectTrends(projectId: string, settings: RuleSetting
       latest: bySnapshot.get(p.latestId) ?? [],
       measured: p.latestId !== p.baselineId,
     })),
-    settings,
+    settingsOf(project),
+    doneStatusesOf(project),
   );
 }

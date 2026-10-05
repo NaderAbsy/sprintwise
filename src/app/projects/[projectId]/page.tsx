@@ -103,8 +103,8 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
             </div>
           }
         >
-          Score one story by pasting it, or import your backlog from a CSV. Sample stories are invented, and you can
-          delete them any time.
+          Paste one story to score it, or bring in your whole backlog. Sample stories are invented, and you can delete
+          them any time.
         </EmptyState>
       ) : (
         <div className="space-y-4">

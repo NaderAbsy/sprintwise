@@ -15,7 +15,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { MAX_PROJECTS, MAX_STORIES_PER_PROJECT } from "@/lib/limits";
 import { demoBacklog } from "@/demo/backlog";
 import type { RuleSettings } from "@/lib/readiness/rules";
-import { DEFAULT_RULE_SETTINGS, parseCustomChecks, parseRuleSettings } from "@/lib/readiness/settings";
+import { DEFAULT_RULE_SETTINGS, parseCustomChecks, parseDoneStatuses, parseRuleSettings } from "@/lib/readiness/settings";
 
 const projectName = z
   .string()
@@ -245,4 +245,14 @@ export async function updateCustomChecks(projectId: string, _prev: FormState, fo
   return {
     message: `Saved ${parsed.checks.length} ${parsed.checks.length === 1 ? "check" : "checks"}. ${stories.length} ${stories.length === 1 ? "story was" : "stories were"} re-scored.`,
   };
+}
+
+/** The statuses that count as finished in this project's sprint metrics. Scores don't change, so nothing is re-scored. */
+export async function updateDoneStatuses(projectId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  const project = await requireProject(projectId);
+  const parsed = parseDoneStatuses(String(formData.get("doneStatuses") ?? ""));
+  if (!parsed.ok) return { fieldErrors: { doneStatuses: parsed.error } };
+  await db.project.update({ where: { id: project.id }, data: { doneStatuses: parsed.statuses } });
+  revalidatePath(`/projects/${project.id}`, "layout");
+  return { message: `Saved. Stories marked ${parsed.statuses.join(", ")} now count as done.` };
 }
