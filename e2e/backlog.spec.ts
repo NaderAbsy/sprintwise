@@ -44,11 +44,14 @@ test("a PO creates a project, scores a story and imports a backlog", async ({ pa
   await expectAccessible(page);
   await page.getByRole("button", { name: "Import 3 stories" }).click();
 
-  // R-3: lowest score first, a summary line, and a band filter.
+  // Priority order is the order stories arrived; R-3: "weakest first" puts the lowest score first.
   await expect(page.getByText("Imported and scored 3 stories.")).toBeVisible();
   await expect(page.getByText("1 of 4 stories ready")).toBeVisible();
-  const keys = page.locator("tbody tr td:nth-child(2) .font-mono");
-  await expect(keys).toHaveText(["PAY-2", "STORY-1", "PAY-3", "PAY-1"]);
+  const keys = page.locator("tbody tr .font-mono");
+  await expect(keys).toHaveText(["STORY-1", "PAY-1", "PAY-2", "PAY-3"]);
+  await page.getByLabel("Order").selectOption("weakest");
+  // PAY-2 and STORY-1 tie on score, so priority breaks the tie.
+  await expect(keys).toHaveText(["STORY-1", "PAY-2", "PAY-3", "PAY-1"]);
   // PAY-3 scores 80 but has no estimate, so it's capped at Needs work.
   await page.getByRole("link", { name: "Ready 1", exact: true }).click();
   await expect(keys).toHaveText(["PAY-1"]);

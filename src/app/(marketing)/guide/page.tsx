@@ -31,8 +31,8 @@ const STEPS = [
     text: "Score a story by typing it in; the score updates as you type. Or import a CSV, or load 12 sample stories to practise with.",
   },
   {
-    title: "Fix the weakest stories",
-    text: "The backlog lists the lowest scores first. Open a story, read why it lost points, and choose Edit story to fix it. Aim for Ready (80 or more) before planning.",
+    title: "Order the backlog and fix the weakest stories",
+    text: "Drag stories into priority order. Then list them weakest first, open a story, read why it lost points, and choose Edit story to fix it; Next to fix takes you to the next one. Aim for Ready (80 or more) before planning.",
   },
   {
     title: "Create a sprint and lock the baseline",

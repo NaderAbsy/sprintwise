@@ -70,7 +70,10 @@ export default function ProductPage() {
                   Paste a story or import a CSV, and each story gets a score out of 100 from nine fixed rules. No AI sets
                   the score: the same story always gets the same number, and every lost point comes with a reason.
                 </p>
-                <p>The backlog is sorted weakest first, with filters for each band.</p>
+                <p>
+                  The backlog keeps your priority order, which you set by dragging. You can also list it weakest first,
+                  search it, filter it by band or status, and change several stories at once.
+                </p>
               </div>
             </Reveal>
             <div className="mt-6 grid gap-3 sm:grid-cols-3">

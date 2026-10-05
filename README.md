@@ -31,7 +31,7 @@ All data shown is invented. The images follow your GitHub theme. Regenerate them
   <img alt="Home page with a live readiness check that scores a story as you type" src="docs/screenshots/landing-light.png">
 </picture>
 
-**Backlog**: every story scored and sorted weakest first, with band filters.
+**Backlog**: every story scored, in your priority order (drag to reorder) or weakest first, with search, band and status filters, and changes to several stories at once.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/backlog-dark.png">
