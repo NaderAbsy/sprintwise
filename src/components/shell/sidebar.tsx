@@ -1,11 +1,12 @@
 "use client";
-import { BookOpen, FolderKanban, LayoutGrid, LifeBuoy, LogOut, Menu, Plus, Shield, UserRound, X } from "lucide-react";
+import { BookOpen, FolderKanban, LayoutGrid, LifeBuoy, LogOut, Menu, MessageSquare, Plus, Shield, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme";
 import { authClient } from "@/lib/auth-client";
+import { FEEDBACK_URL } from "@/lib/site";
 
 type Props = {
   projects: { id: string; name: string }[];
@@ -149,6 +150,11 @@ function SidebarContent({ projects, user, pathname }: Props & { pathname: string
             <Shield aria-hidden="true" className="h-4 w-4" />
             Privacy
           </Link>
+          <a href={FEEDBACK_URL} target="_blank" rel="noopener noreferrer" className={item(false)}>
+            <MessageSquare aria-hidden="true" className="h-4 w-4" />
+            Send feedback
+            <span className="sr-only"> (opens GitHub in a new tab)</span>
+          </a>
         </div>
       </div>
 

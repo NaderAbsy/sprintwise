@@ -158,6 +158,10 @@ CI runs all of these on every push and pull request (`.github/workflows/ci.yml`)
 
 **Usage counts (L-3):** `pnpm usage` prints anonymous event counts by month: checks run, imports, reports and AI suggestions. Point it at production with `DATABASE_URL="<Neon connection string>" pnpm usage`. The events table holds only an event type and a time: no user ids and no story text.
 
+## Feedback and visit counts
+
+"Send feedback" (footer and sidebar) opens a [GitHub issue form](https://github.com/NaderAbsy/sprintwise/issues/new?template=feedback.yml). The live site counts page views with Vercel Web Analytics: no cookies, with ids, share tokens and query strings removed before sending (`src/lib/analytics.ts`).
+
 ## Security
 
 Report security problems privately through [GitHub's vulnerability reporting](https://github.com/NaderAbsy/sprintwise/security/advisories/new), not in a public issue. [SECURITY.md](SECURITY.md) covers scope, response times and safe testing. The live site also serves [`/.well-known/security.txt`](https://sprintwise-omega.vercel.app/.well-known/security.txt).

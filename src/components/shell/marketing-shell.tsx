@@ -4,7 +4,7 @@ import { Logo } from "@/components/logo";
 import { MarketingNav } from "@/components/shell/marketing-nav";
 import { ThemeToggle } from "@/components/theme";
 import { getSession } from "@/lib/server/dal";
-import { GITHUB_URL, MARKETING_LINKS } from "@/lib/site";
+import { FEEDBACK_URL, GITHUB_URL, MARKETING_LINKS } from "@/lib/site";
 
 /** Public pages: a sticky top bar with the site's tabs, the page, and a footer with every link. */
 export async function MarketingShell({ children }: { children: React.ReactNode }) {
@@ -83,6 +83,11 @@ export async function MarketingShell({ children }: { children: React.ReactNode }
                 <Link href="/privacy" className="hover:text-foreground">
                   Privacy
                 </Link>
+              </li>
+              <li>
+                <a href={FEEDBACK_URL} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">
+                  Send feedback<span className="sr-only"> (opens GitHub in a new tab)</span>
+                </a>
               </li>
             </ul>
           </div>

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./helpers";
+import { expectAccessible, signIn } from "./helpers";
 
 test("the demo opens without signing in and saves nothing", async ({ page }) => {
   await page.goto("/");
@@ -147,3 +147,16 @@ for (const path of ["/", "/product", "/guide", "/changelog", "/about", "/demo", 
     await expectAccessible(page);
   });
 }
+
+test("Send feedback opens the GitHub form from the footer and the app sidebar", async ({ page }) => {
+  const form = "https://github.com/NaderAbsy/sprintwise/issues/new?template=feedback.yml";
+  await page.goto("/privacy");
+  await expect(page.getByRole("contentinfo").getByRole("link", { name: /Send feedback/ })).toHaveAttribute("href", form);
+  await expect(page.getByRole("heading", { name: "Visit counts" })).toBeVisible();
+  // Analytics only runs on the live site, never locally or in tests.
+  expect(await page.locator('script[src*="/_vercel/insights"], script[src*="va.vercel-scripts"]').count()).toBe(0);
+
+  await signIn(page);
+  await page.goto("/projects");
+  await expect(page.getByRole("link", { name: /Send feedback/ }).first()).toHaveAttribute("href", form);
+});

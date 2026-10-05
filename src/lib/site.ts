@@ -1,5 +1,7 @@
 /** Facts the public pages share, kept in one place so they stay consistent. */
 export const GITHUB_URL = "https://github.com/NaderAbsy/sprintwise";
+/** A GitHub issue form for ideas and problems. Issues are public, so the form asks for no work data. */
+export const FEEDBACK_URL = `${GITHUB_URL}/issues/new?template=feedback.yml`;
 
 /** The public site's tabs, in the header and the footer. */
 export const MARKETING_LINKS = [
@@ -14,6 +16,17 @@ export type Release = { version: string; date: string; title: string; summary: s
 
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
+  {
+    version: "v1.8",
+    date: "2026-10-05",
+    title: "Listening",
+    summary: "Cookie-free visit counts, and a Send feedback link on every page.",
+    items: [
+      "Send feedback in the footer and the app sidebar opens a short GitHub form for ideas and problems.",
+      "The live site counts page views with Vercel Web Analytics: no cookies, and ids, share tokens and search terms are removed first.",
+      "The Privacy page says exactly what is counted.",
+    ],
+  },
   {
     version: "v1.7",
     date: "2026-10-05",
