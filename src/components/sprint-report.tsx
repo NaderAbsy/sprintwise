@@ -1,15 +1,17 @@
 import Link from "next/link";
+import { BurnupChart } from "@/components/burnup-chart";
 import { ChangeTable } from "@/components/change-table";
 import { PrintButton } from "@/components/print-button";
 import type { RuleSettings } from "@/lib/readiness/rules";
+import { burnupSeries } from "@/lib/sprint/burnup";
 import { formatDay } from "@/lib/sprint/dates";
 import { computeMetrics, formatPercent, formatPoints, type SprintMetrics } from "@/lib/sprint/metrics";
 import { compareReadiness, isScopeChange, readinessFinding, type LogRow } from "@/lib/sprint/report";
 import { GOAL_OUTCOMES, reasonFinding, summarizeReasons } from "@/lib/sprint/reasons";
 import type { Story } from "@/lib/stories/types";
 
-/** Rows that still fit one A4 page alongside the metrics; the sprint page has the full log. */
-const MAX_LOG_ROWS = 15;
+/** Rows that still fit one A4 page alongside the metrics and the chart; the sprint page has the full log. */
+const MAX_LOG_ROWS = 10;
 
 function headline(m: SprintMetrics): string {
   if (m.netChange === null || m.churn === null || m.completion === null) {
@@ -34,6 +36,8 @@ export type SprintReportProps = {
   settings: RuleSettings;
   /** The project's Done statuses; the defaults when absent. */
   doneStatuses?: readonly string[];
+  /** Every snapshot in date order, for the burn-up. Without them the chart is left out. */
+  snapshots?: { asOfDate: Date; items: Story[] }[];
   /** Absent on a shared, read-only report. */
   back?: { href: string; label: string };
   /** Extra controls for the owner, such as sharing. */
@@ -52,6 +56,7 @@ export function SprintReport({
   log,
   settings,
   doneStatuses,
+  snapshots,
   back,
   actions,
 }: SprintReportProps) {
@@ -138,6 +143,21 @@ export function SprintReport({
           </p>
         )}
       </section>
+
+      {snapshots && snapshots.length > 1 && (
+        <section aria-labelledby="report-burnup">
+          <h2 id="report-burnup" className="mb-2 font-semibold">
+            Scope and work done
+          </h2>
+          <BurnupChart
+            series={burnupSeries(snapshots, doneStatuses)}
+            committed={metrics.baselineTotal}
+            start={sprint.startDate}
+            end={sprint.endDate}
+            height={150}
+          />
+        </section>
+      )}
 
       <section aria-labelledby="report-readiness" className="space-y-2">
         <h2 id="report-readiness" className="font-semibold">

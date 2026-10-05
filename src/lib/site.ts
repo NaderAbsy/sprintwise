@@ -15,6 +15,17 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v1.7",
+    date: "2026-10-05",
+    title: "See the sprint move",
+    summary: "A burn-up chart on the sprint page and report, and trends that start talking from the second sprint.",
+    items: [
+      "A burn-up chart: scope and work done on each snapshot day, against what was committed on day one.",
+      "The chart is on the one-page report too; the report now lists the 10 most recent scope changes.",
+      "Trends compare the latest sprint with the one before from the second sprint, and averages from the fourth.",
+    ],
+  },
+  {
     version: "v1.6",
     date: "2026-10-05",
     title: "A backlog you can run",

@@ -33,6 +33,12 @@ export function Trends({ rows, summary }: { rows: SprintTrendRow[]; summary: Tre
               {text}
             </p>
           ))}
+          {summary.basis === "previous" && (
+            <p className="pl-6 text-xs text-muted">
+              This compares only the last two sprints, so treat it as a hint. From four sprints, Sprintwise compares
+              averages instead.
+            </p>
+          )}
         </section>
       )}
 
