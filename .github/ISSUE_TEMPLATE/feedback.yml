@@ -1,0 +1,59 @@
+name: Feedback
+description: An idea, something confusing, or something that didn't work.
+title: "Feedback: "
+labels: ["feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping make Sprintwise better. **This issue is public**, so please don't paste story text, project names or anything else from your work. Describe it in general terms instead.
+
+        Found a security problem? Don't report it here; use [private vulnerability reporting](https://github.com/NaderAbsy/sprintwise/security/advisories/new).
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of feedback is it?
+      options:
+        - An idea or a missing feature
+        - Something was confusing
+        - Something didn't work
+        - Something else
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where in Sprintwise?
+      options:
+        - Home page or demo
+        - Scoring stories
+        - Backlog
+        - Sprints and snapshots
+        - Report or share link
+        - Trends
+        - Settings or account
+        - Somewhere else
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: What happened, or what would help?
+      description: For a problem, say what you did, what you expected and what you saw instead.
+    validations:
+      required: true
+  - type: dropdown
+    id: impact
+    attributes:
+      label: How much does it matter to you?
+      options:
+        - Nice to have
+        - It slows me down
+        - It stops me using Sprintwise
+  - type: checkboxes
+    id: no-work-data
+    attributes:
+      label: Before you submit
+      options:
+        - label: I haven't included confidential, customer or work data.
+          required: true

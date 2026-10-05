@@ -2,6 +2,25 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-05 — v1.8: visit counts and feedback
+
+- **Why:** there was no way to tell whether anyone used Sprintwise, or to hear from people who did.
+- **Visit counts: Vercel Web Analytics.**
+  - It's free on Hobby (50,000 events a month, after which collection pauses with no charge), sets no cookies, and Vercel discards its visitor hash after 24 hours. No consent banner is needed, and no new service or account.
+  - Rejected: Google Analytics, because of cookies and a consent banner; self-hosted Plausible or Umami, because they're another service to run.
+  - Speed Insights is left for later.
+- **Scrubbing (`redactUrl`, pure and tested):**
+  - Project, story and sprint ids and share tokens become placeholders, such as `/projects/[project]/sprints/[sprint]/report`.
+  - Every query string is dropped, so search terms and filters never leave the browser.
+  - API calls aren't counted.
+- **Only the live site:** the script renders when `VERCEL_ENV` is `production`. Previews, local runs and tests send nothing.
+- **Feedback: a GitHub issue form,** linked as "Send feedback" from the public footer and the app sidebar.
+  - App users already sign in with GitHub, so there's no new account and no inbox to run.
+  - Issues are public, so the form says so, asks for no work data, and has a required checkbox confirming none is included.
+  - Its config points security reports to private vulnerability reporting.
+  - Rejected: an in-app form stored in the database, which would need moderation, spam protection and a way to reply.
+- **To finish in Vercel:** Web Analytics has to be switched on once in the project's Analytics tab. Until then the script loads but nothing is recorded.
+
 ## 2026-10-05 — v1.7: see the sprint move
 
 - **Why:** the sprint page showed totals only, so there was no way to see when scope moved or whether work was being finished. Trends said nothing until four sprints had run, so the first two months showed almost nothing.
