@@ -82,6 +82,43 @@ test("a CSV with a missing column is rejected with the column named, and can be 
   await expect(page.getByRole("button", { name: /^Remove/ })).toHaveCount(0);
 });
 
+test("a CSV can be dragged onto the picker, and other files are turned away", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/projects");
+  await page.getByLabel("Name").fill("Dropped");
+  await page.getByRole("button", { name: "Create project" }).click();
+  await page.getByRole("link", { name: "Import CSV" }).click();
+
+  await expect(page.getByText("Or drag a CSV file here.")).toBeVisible();
+  const zone = page.getByLabel("CSV file").locator("..");
+  const drop = async (name: string, text: string) => {
+    const files = await page.evaluateHandle(
+      ([n, t]) => {
+        const list = new DataTransfer();
+        list.items.add(new File([t], n, { type: n.endsWith(".csv") ? "text/csv" : "application/octet-stream" }));
+        return list;
+      },
+      [name, text],
+    );
+    await zone.dispatchEvent("dragover", { dataTransfer: files });
+    await expect(page.getByText("Drop the file to use it.")).toBeVisible();
+    await zone.dispatchEvent("drop", { dataTransfer: files });
+  };
+
+  await drop("stories.xlsx", "not a csv");
+  const turnedAway = page.getByText("stories.xlsx isn't a CSV file. Save it as .csv and try again.");
+  await expect(turnedAway).toHaveAttribute("role", "alert");
+  await expect(page.getByRole("button", { name: /^Remove/ })).toHaveCount(0);
+
+  await drop("dropped.csv", CSV);
+  await expect(page.getByText("Preview: 1 of 3 stories ready")).toBeVisible();
+  await expect(turnedAway).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Remove dropped.csv" })).toBeVisible();
+  await expectAccessible(page);
+  await page.getByRole("button", { name: "Import 3 stories" }).click();
+  await expect(page.getByText("Imported and scored 3 stories.")).toBeVisible();
+});
+
 test("users only see their own projects", async ({ browser }) => {
   const owner = await browser.newPage();
   await signIn(owner);
