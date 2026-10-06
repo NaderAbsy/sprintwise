@@ -5,6 +5,7 @@ import { ChangeTable } from "@/components/change-table";
 import { CsvFileInput } from "@/components/csv-file-input";
 import { FieldError, FormAlert } from "@/components/form-feedback";
 import { parseStoriesCsv, type CsvResult } from "@/lib/csv/parse";
+import { readCsvFile } from "@/lib/csv/read";
 import { MAX_BYTES } from "@/lib/csv/template";
 import { emptyFormState } from "@/lib/form-state";
 import { localToday } from "@/lib/sprint/dates";
@@ -154,7 +155,7 @@ export function SnapshotUploadForm(props: UploadProps) {
       setResult({ ok: false, errors: [{ message: "The file is larger than 1 MB." }] });
       return;
     }
-    const text = await file.text();
+    const text = await readCsvFile(file);
     setCsv(text);
     setResult(parseStoriesCsv(text));
   }

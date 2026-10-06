@@ -24,6 +24,18 @@ function canonicalHeader(header: string): string {
   return HEADER_ALIASES[cleaned] ?? `__ignored:${cleaned}`;
 }
 
+const HEADER_HELP =
+  'Sprintwise needs a key column (named "key" or "Issue key") and a title column ("title" or "Summary"). In Jira, show the Key and Summary columns before exporting, and set Jira\'s language to English.';
+
+/** Lists the column names the file has, so the person can see what to rename. */
+function foundColumns(headers: string[]): string {
+  const named = headers.filter(Boolean);
+  if (named.length === 0) return `The first row has no column names. ${HEADER_HELP}`;
+  const shown = named.slice(0, 12).map((h) => `"${h.length > 40 ? `${h.slice(0, 40)}…` : h}"`);
+  const more = named.length > shown.length ? ` and ${named.length - shown.length} more` : "";
+  return `The file's columns are ${shown.join(", ")}${more}. ${HEADER_HELP}`;
+}
+
 /**
  * Parses a CSV in the Sprintwise template (or a Jira export with matching
  * headers). File-level problems and row errors reject the whole file; points
@@ -35,10 +47,14 @@ export function parseStoriesCsv(text: string): CsvResult {
     return { ok: false, errors: [{ message: "The file is larger than 1 MB." }] };
   }
 
+  const headers: string[] = [];
   const parsed = Papa.parse<Record<string, string>>(text.replace(/^﻿/, ""), {
     header: true,
     skipEmptyLines: "greedy",
-    transformHeader: canonicalHeader,
+    transformHeader: (header) => {
+      headers.push(header.trim());
+      return canonicalHeader(header);
+    },
   });
 
   const columns = new Set(parsed.meta.fields ?? []);
@@ -47,9 +63,8 @@ export function parseStoriesCsv(text: string): CsvResult {
     return {
       ok: false,
       errors: [
-        {
-          message: `Missing required ${missing.length === 1 ? "column" : "columns"}: ${missing.join(", ")}.`,
-        },
+        { message: `Missing required ${missing.length === 1 ? "column" : "columns"}: ${missing.join(", ")}.` },
+        { message: foundColumns(headers) },
       ],
     };
   }

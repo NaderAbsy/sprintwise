@@ -5,6 +5,7 @@ import { BandBadge } from "@/components/band-badge";
 import { CsvFileInput } from "@/components/csv-file-input";
 import { FormAlert } from "@/components/form-feedback";
 import { parseStoriesCsv, type CsvResult } from "@/lib/csv/parse";
+import { readCsvFile } from "@/lib/csv/read";
 import { MAX_BYTES } from "@/lib/csv/template";
 import { emptyFormState } from "@/lib/form-state";
 import { readySummary, scoreStory, type RuleSettings } from "@/lib/readiness/rules";
@@ -23,7 +24,7 @@ export function ImportForm({ projectId, settings }: { projectId: string; setting
       setResult({ ok: false, errors: [{ message: "The file is larger than 1 MB." }] });
       return;
     }
-    const text = await file.text();
+    const text = await readCsvFile(file);
     setCsv(text);
     setResult(parseStoriesCsv(text));
   }
