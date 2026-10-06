@@ -66,7 +66,7 @@ describe("parseStoriesCsv", () => {
 
   it("rejects files over the row limit", () => {
     const rows = Array.from({ length: MAX_ROWS + 1 }, (_, i) => `K-${i},Story ${i}`);
-    expect(errors(["key,title", ...rows].join("\n"))).toEqual([`The file has ${MAX_ROWS + 1} stories; the maximum is 200.`]);
+    expect(errors(["key,title", ...rows].join("\n"))).toEqual([`The file has ${MAX_ROWS + 1} stories; the maximum is 200. Split it into smaller files, or narrow your Jira search before exporting.`]);
   });
 
   it("rejects files over 1 MB", () => {

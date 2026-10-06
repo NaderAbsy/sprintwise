@@ -2,6 +2,7 @@
 import { useActionState, useState } from "react";
 import { importStories } from "@/app/projects/actions";
 import { BandBadge } from "@/components/band-badge";
+import { CsvFileInput } from "@/components/csv-file-input";
 import { FormAlert } from "@/components/form-feedback";
 import { parseStoriesCsv, type CsvResult } from "@/lib/csv/parse";
 import { MAX_BYTES } from "@/lib/csv/template";
@@ -36,13 +37,7 @@ export function ImportForm({ projectId, settings }: { projectId: string; setting
         <label htmlFor="csv-file" className="label">
           CSV file
         </label>
-        <input
-          id="csv-file"
-          type="file"
-          accept=".csv,text/csv"
-          className="mt-2 block w-full rounded-lg border border-dashed border-border-strong bg-surface-2/50 p-3 text-sm text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent-foreground hover:file:bg-accent-hover"
-          onChange={(e) => onFile(e.target.files?.[0])}
-        />
+        <CsvFileInput id="csv-file" onFile={onFile} />
         <input type="hidden" name="csv" value={csv} />
       </div>
 

@@ -60,7 +60,7 @@ export function parseStoriesCsv(text: string): CsvResult {
   if (parsed.data.length > MAX_ROWS) {
     return {
       ok: false,
-      errors: [{ message: `The file has ${parsed.data.length} stories; the maximum is ${MAX_ROWS}.` }],
+      errors: [{ message: `The file has ${parsed.data.length} stories; the maximum is ${MAX_ROWS}. Split it into smaller files, or narrow your Jira search before exporting.` }],
     };
   }
 
