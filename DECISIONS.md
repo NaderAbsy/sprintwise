@@ -2,6 +2,14 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-06 — Deploys wait for a sleeping database
+
+- **What happened:** the v1.6 production deploy failed with Prisma P1001 ("can't reach database server") during `prisma migrate deploy`. Neon had suspended the idle database, and waking it took longer than Prisma's connect timeout. The next deploy, with the same migration, succeeded.
+- **Decision:** `scripts/build.mjs` retries the migration step up to 4 times, waiting 5, 10 and then 15 seconds, but only for P1001 and P1002. Any other error, such as a migration that fails, stops the build straight away, as before.
+- **Rejected:**
+  - A longer `connect_timeout` in `DATABASE_URL`: the URL is a secret held only in Vercel, so it can't be changed from the code.
+  - Turning off Neon's auto-suspend: it isn't adjustable on the free plan.
+
 ## 2026-10-05 — v1.8: visit counts and feedback
 
 - **Why:** there was no way to tell whether anyone used Sprintwise, or to hear from people who did.
