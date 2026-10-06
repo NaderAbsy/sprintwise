@@ -25,6 +25,9 @@ export const auth = betterAuth({
   emailAndPassword: { enabled: testSignIn },
   // The app never uses the GitHub tokens after sign-in; encrypted, a database leak doesn't expose them.
   account: { encryptOAuthTokens: true },
+  // Every page checks the session. A signed copy in a cookie saves a database round trip on each
+  // click; the cost is that a session ended elsewhere can keep working for up to five minutes.
+  session: { cookieCache: { enabled: true, maxAge: 5 * 60 } },
   // Parallel test sign-ups would trip the limiter; it stays on everywhere else. Counts live in the
   // database, so every serverless instance shares them.
   rateLimit: { enabled: testSignIn ? false : undefined, storage: "database" },

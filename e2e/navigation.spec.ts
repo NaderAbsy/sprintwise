@@ -66,3 +66,24 @@ test("on a phone, the logo in the app's top bar leads home", async ({ page }) =>
   await page.setViewportSize({ width: 390, height: 844 });
   await logoGoesHome(page, "/projects");
 });
+
+test("a click answers at once: the tab lights up and a placeholder shows while the page loads", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/projects");
+  await page.getByLabel("Name").fill("Quick clicks");
+  await page.getByRole("button", { name: "Create project" }).click();
+  await expect(page).toHaveURL(/\/projects\/[^/?]+/);
+  await page.waitForLoadState("networkidle");
+
+  // Hold the Trends page for two seconds, as a slow connection would (prefetches still go through).
+  await page.route(/\/trends/, async (route) => {
+    if (!route.request().headers()["next-router-prefetch"]) await new Promise((r) => setTimeout(r, 2000));
+    await route.continue();
+  });
+  const tabs = page.getByRole("navigation", { name: "Project sections" });
+  await tabs.getByRole("link", { name: "Trends" }).click();
+  await expect(page.getByRole("main").getByRole("status").filter({ hasText: "Loading…" })).toBeVisible({ timeout: 1000 });
+  await expect(tabs.getByRole("link", { name: "Trends" })).toHaveAttribute("aria-current", "page", { timeout: 1000 });
+  await expect(tabs.locator("[aria-current=page]")).toHaveCount(1);
+  await expect(page.getByRole("heading", { level: 1, name: "Trends" })).toBeVisible();
+});

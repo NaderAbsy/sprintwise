@@ -23,12 +23,12 @@ export default async function SharedReportPage({ params }: PageProps<"/share/[to
 
   return (
     <div className="min-h-screen px-4 py-8 sm:px-6">
-      <div className="no-print mx-auto mb-6 flex max-w-3xl items-center justify-between">
+      <header className="no-print mx-auto mb-6 flex max-w-3xl items-center justify-between">
         <Logo />
         <Link href="/" className="text-sm text-muted hover:text-foreground">
           What is Sprintwise?
         </Link>
-      </div>
+      </header>
       <main id="main">
         <SprintReport
           projectName={sprint.project.name}

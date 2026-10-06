@@ -2,6 +2,16 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-06 — v1.9: faster clicks
+
+- **Why:** the site felt slow when clicking. Measuring showed the app's functions ran in Vercel's default region, Washington D.C. (`iad1`), while the Neon database is in Frankfurt (`aws-eu-central-1`). Every query crossed the Atlantic, and a page makes several in a row (session, project, then the page's own data). Clicks also gave no feedback until the whole next page had arrived.
+- **Decisions:**
+  - **Functions run in Frankfurt** (`vercel.json` `"regions": ["fra1"]`), next to the database. Hobby allows one region, which is all that's needed.
+  - **Session cookie cache, five minutes** (Better Auth `session.cookieCache`). Every page checks the session; a signed copy in a cookie skips that database read. Trade-off: a session ended elsewhere (signing out on another device) keeps working for up to five minutes. Signing out on the same device clears the cookie at once.
+  - **Instant feedback:** a `loading.tsx` placeholder inside each project (and on Account), and the clicked project tab lights up straight away.
+- **Kept the 404 for other people's projects:** a placeholder around the whole projects area made the server start a 200 response before checking who owns the project (the e2e ownership test caught it). The placeholder sits inside the project layout instead, after the ownership check. A missing sprint or story inside your own project still shows "not found", but with a 200 status while streaming.
+- **Rejected:** moving the database to the US (a migration and new connection strings for no extra gain); making the public pages static (they check sign-in to show "Open app"; with the region fix they're quick enough).
+
 ## 2026-10-06 — Deploys wait for a sleeping database
 
 - **What happened:** the v1.6 production deploy failed with Prisma P1001 ("can't reach database server") during `prisma migrate deploy`. Neon had suspended the idle database, and waking it took longer than Prisma's connect timeout. The next deploy, with the same migration, succeeded.

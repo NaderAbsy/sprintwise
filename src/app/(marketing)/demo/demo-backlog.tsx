@@ -33,7 +33,8 @@ export function DemoBacklog({ scored }: { scored: { story: Story; readiness: Rea
                   <td>
                     <button
                       type="button"
-                      className="text-left"
+                      // At least 24px tall, so it's an easy target (WCAG 2.2 target size).
+                      className="min-h-6 rounded text-left"
                       aria-pressed={selected}
                       onClick={() => setOpenKey(story.key)}
                     >
