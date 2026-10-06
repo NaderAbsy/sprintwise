@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseStoriesCsv } from "@/lib/csv/parse";
+import { readCsvFile } from "@/lib/csv/read";
 import { MAX_ROWS, TEMPLATE_CSV } from "@/lib/csv/template";
 
 function ok(text: string) {
@@ -46,8 +47,8 @@ describe("parseStoriesCsv", () => {
   });
 
   it("names a missing required column", () => {
-    expect(errors("key,description\nA-1,x")).toEqual(["Missing required column: title."]);
-    expect(errors("description\nx")).toEqual(["Missing required columns: key, title."]);
+    expect(errors("key,description\nA-1,x")[0]).toBe("Missing required column: title.");
+    expect(errors("description\nx")[0]).toBe("Missing required columns: key, title.");
   });
 
   it("rejects empty keys, empty titles and duplicate keys with row numbers", () => {
@@ -67,6 +68,22 @@ describe("parseStoriesCsv", () => {
   it("rejects files over the row limit", () => {
     const rows = Array.from({ length: MAX_ROWS + 1 }, (_, i) => `K-${i},Story ${i}`);
     expect(errors(["key,title", ...rows].join("\n"))).toEqual([`The file has ${MAX_ROWS + 1} stories; the maximum is 200. Split it into smaller files, or narrow your Jira search before exporting.`]);
+  });
+
+  it("reads Jira's newer and all-fields header names", () => {
+    const { stories } = ok(
+      "Work item key,Summary,Custom field (Story point estimate),Custom field (Acceptance Criteria)\nA-1,One,3,- It works",
+    );
+    expect(stories[0]).toMatchObject({ key: "A-1", title: "One", storyPoints: 3, acceptanceCriteria: "- It works" });
+  });
+
+  it("names the columns it found when the required ones are missing", () => {
+    expect(errors("Clé,Résumé,Statut\nA-1,Un,À faire")).toEqual([
+      "Missing required columns: key, title.",
+      expect.stringMatching(/^The file's columns are "Clé", "Résumé", "Statut"\. Sprintwise needs a key column/),
+    ]);
+    const many = Array.from({ length: 15 }, (_, i) => `Field ${i + 1}`).join(",");
+    expect(errors(`${many}\n${"x,".repeat(14)}x`)[1]).toContain('"Field 12" and 3 more.');
   });
 
   it("rejects files over 1 MB", () => {
@@ -91,5 +108,22 @@ describe("parseStoriesCsv field limits", () => {
     const result = parseStoriesCsv(`${header}\nA-1,Title,,,5000,`);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.errors[0].message).toBe("Story points can't be more than 1000.");
+  });
+});
+
+describe("readCsvFile", () => {
+  const text = "key,title\nA-1,Café";
+  it("reads UTF-8, with or without a byte-order mark", async () => {
+    expect(await readCsvFile(new Blob([text]))).toBe(text);
+    expect(await readCsvFile(new Blob([new Uint8Array([0xef, 0xbb, 0xbf]), text]))).toBe(text);
+  });
+
+  it("reads the UTF-16 files Excel saves as Unicode text", async () => {
+    const le = new Uint8Array(2 + text.length * 2);
+    le.set([0xff, 0xfe]);
+    for (let i = 0; i < text.length; i++) le[2 + i * 2] = text.charCodeAt(i);
+    expect(await readCsvFile(new Blob([le]))).toBe(text);
+    const be = le.map((_, i) => (i < 2 ? [0xfe, 0xff][i] : le[i % 2 === 0 ? i + 1 : i - 1]));
+    expect(await readCsvFile(new Blob([be]))).toBe(text);
   });
 });

@@ -20,6 +20,7 @@ export const REQUIRED_COLUMNS: readonly TemplateColumn[] = ["key", "title"];
 export const HEADER_ALIASES: Record<string, TemplateColumn> = {
   key: "key",
   "issue key": "key",
+  "work item key": "key",
   title: "title",
   summary: "title",
   description: "description",
@@ -29,6 +30,10 @@ export const HEADER_ALIASES: Record<string, TemplateColumn> = {
   "story points": "story_points",
   "story point estimate": "story_points",
   status: "status",
+  // "Export CSV (all fields)" names custom fields like this.
+  "custom field (acceptance criteria)": "acceptance_criteria",
+  "custom field (story points)": "story_points",
+  "custom field (story point estimate)": "story_points",
 };
 
 export const MAX_ROWS = 200;
