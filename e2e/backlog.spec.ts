@@ -64,7 +64,7 @@ test("a PO creates a project, scores a story and imports a backlog", async ({ pa
   await expect(page.getByRole("main").getByText("No projects yet.")).toBeVisible();
 });
 
-test("a CSV with a missing column is rejected with the column named", async ({ page }) => {
+test("a CSV with a missing column is rejected with the column named, and can be removed", async ({ page }) => {
   await signIn(page);
   await page.goto("/projects");
   await page.getByLabel("Name").fill("Bad CSV");
@@ -73,6 +73,13 @@ test("a CSV with a missing column is rejected with the column named", async ({ p
   await page.getByLabel("CSV file").setInputFiles({ name: "bad.csv", mimeType: "text/csv", buffer: Buffer.from("key,points\nA-1,3") });
   await expect(page.getByText("Missing required column: title.")).toBeVisible();
   await expect(page.getByRole("button", { name: /Import/ })).toHaveCount(0);
+
+  // Remove clears the file and its errors, ready for another.
+  await page.getByRole("button", { name: "Remove bad.csv" }).click();
+  await expect(page.getByText("Missing required column: title.")).toHaveCount(0);
+  await expect(page.getByLabel("CSV file")).toBeFocused();
+  await expect(page.getByLabel("CSV file")).toHaveValue("");
+  await expect(page.getByRole("button", { name: /^Remove/ })).toHaveCount(0);
 });
 
 test("users only see their own projects", async ({ browser }) => {
