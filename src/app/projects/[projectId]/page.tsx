@@ -1,15 +1,18 @@
-import { CircleCheck, CircleDashed, CircleX, FileUp, ListChecks, Plus, Sparkles } from "lucide-react";
+import { CircleCheck, CircleDashed, CircleX, Download, FileUp, ListChecks, Plus, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { addSampleStories } from "@/app/projects/actions";
 import { GettingStarted } from "@/app/projects/_components/getting-started";
-import { BandBadge } from "@/components/band-badge";
+import { BacklogTable } from "@/app/projects/_components/backlog-table";
+import { BacklogToolbar, NO_STATUS } from "@/app/projects/_components/backlog-toolbar";
+import { StatusOptions } from "@/app/projects/_components/quick-field";
 import { EmptyState } from "@/components/empty-state";
-import { ScoreRing } from "@/components/score-ring";
 import { SectionHeader } from "@/components/section-header";
 import type { Band } from "@/lib/readiness/rules";
 import { db } from "@/lib/server/db";
 import { requireProject } from "@/lib/server/dal";
+import { refreshStaleScores } from "@/lib/server/readiness";
+import { doneStatusesOf } from "@/lib/server/sprint";
 
 const FILTERS: { slug: string; band: Band; Icon: typeof CircleCheck; tone: string }[] = [
   { slug: "ready", band: "Ready", Icon: CircleCheck, tone: "text-ready-dot" },
@@ -24,13 +27,22 @@ export async function generateMetadata({ params }: PageProps<"/projects/[project
 
 export default async function BacklogPage({ params, searchParams }: PageProps<"/projects/[projectId]">) {
   const { projectId } = await params;
-  const { band: bandParam, imported } = await searchParams;
+  const { band: bandParam, imported, q: qParam, status: statusParam, sort: sortParam } = await searchParams;
+  const text = (v: string | string[] | undefined) => (typeof v === "string" ? v.trim().slice(0, 100) : "");
+  const q = text(qParam);
+  const statusFilter = text(statusParam);
+  const sort = sortParam === "weakest" ? "weakest" : "priority";
   const project = await requireProject(projectId);
   const filter = FILTERS.find((f) => f.slug === bandParam);
   const base = `/projects/${project.id}`;
+  await refreshStaleScores([project.id]);
 
   const [stories, latestSprint] = await Promise.all([
-    db.story.findMany({ where: { projectId: project.id }, include: { readiness: true } }),
+    db.story.findMany({
+      where: { projectId: project.id },
+      include: { readiness: true },
+      orderBy: [{ rank: "asc" }, { key: "asc" }],
+    }),
     db.sprint.findFirst({
       where: { projectId: project.id },
       orderBy: { createdAt: "desc" },
@@ -43,13 +55,45 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
     baselineLocked: latestSprint?.snapshots.some((s) => s.isBaseline) ?? false,
     snapshotSaved: latestSprint?.snapshots.some((s) => !s.isBaseline) ?? false,
   };
-  // Lowest score first, so the weakest stories get fixed first (story R-3).
-  stories.sort((a, b) => (a.readiness?.score ?? 0) - (b.readiness?.score ?? 0) || a.key.localeCompare(b.key));
   const count = (band: Band) => stories.filter((s) => s.readiness?.band === band).length;
   const ready = count("Ready");
-  const shown = filter ? stories.filter((s) => s.readiness?.band === filter.band) : stories;
+
+  // Priority order by default; "weakest first" lists the lowest scores first, so they get fixed (story R-3).
+  const needle = q.toLowerCase();
+  const shown = stories
+    .filter((s) => !filter || s.readiness?.band === filter.band)
+    .filter((s) => !needle || s.key.toLowerCase().includes(needle) || s.title.toLowerCase().includes(needle))
+    .filter((s) =>
+      !statusFilter
+        ? true
+        : statusFilter === NO_STATUS
+          ? s.status.trim() === ""
+          : s.status.trim().toLowerCase() === statusFilter.toLowerCase(),
+    );
+  if (sort === "weakest") shown.sort((a, b) => (a.readiness?.score ?? 0) - (b.readiness?.score ?? 0) || a.rank - b.rank);
+  const filtered = Boolean(filter || q || statusFilter);
+  const statuses = [
+    ...new Set(stories.map((s) => s.status.trim()).filter(Boolean)),
+  ].sort((a, b) => a.localeCompare(b));
+  if (stories.some((s) => s.status.trim() === "")) statuses.push(NO_STATUS);
+  // Links keep the search, status and order; only the band changes.
+  const view = (band?: string) => {
+    const params = new URLSearchParams();
+    if (band) params.set("band", band);
+    if (q) params.set("q", q);
+    if (statusFilter) params.set("status", statusFilter);
+    if (sort !== "priority") params.set("sort", sort);
+    const query = params.toString();
+    return query ? `${base}?${query}` : base;
+  };
   const actions = (
     <>
+      {stories.length > 0 && (
+        <a href={`${base}/export.csv`} className="btn-ghost" download>
+          <Download aria-hidden="true" className="h-4 w-4" />
+          Export CSV
+        </a>
+      )}
       <Link href={`${base}/import`} className="btn-secondary">
         <FileUp aria-hidden="true" className="h-4 w-4" />
         Import CSV
@@ -67,7 +111,7 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
         title="Backlog"
         description={
           stories.length > 0
-            ? `${ready} of ${stories.length} ${stories.length === 1 ? "story" : "stories"} ready. Weakest first, so you know what to fix before planning.`
+            ? `${ready} of ${stories.length} ${stories.length === 1 ? "story" : "stories"} ready. Order them by priority, or list the weakest first to see what to fix before planning.`
             : "Score stories to see which are ready for planning."
         }
         actions={stories.length > 0 ? actions : undefined}
@@ -97,17 +141,25 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
             </div>
           }
         >
-          Score one story by pasting it, or import your backlog from a CSV. Sample stories are invented, and you can
-          delete them any time.
+          Paste one story to score it, or bring in your whole backlog. Sample stories are invented, and you can delete
+          them any time.
         </EmptyState>
       ) : (
         <div className="space-y-4">
-          <nav aria-label="Filter by band" className="grid gap-3 sm:grid-cols-4">
-            <FilterCard href={base} active={!filter} label="All" value={stories.length} />
+          <BacklogToolbar
+            action={base}
+            q={q}
+            status={statusFilter}
+            sort={sort}
+            band={filter?.slug}
+            statuses={statuses}
+          />
+          <nav aria-label="Filter by band" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <FilterCard href={view()} active={!filter} label="All" value={stories.length} />
             {FILTERS.map((f) => (
               <FilterCard
                 key={f.slug}
-                href={`${base}?band=${f.slug}`}
+                href={view(f.slug)}
                 active={filter?.slug === f.slug}
                 label={f.band}
                 value={count(f.band)}
@@ -116,35 +168,31 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
             ))}
           </nav>
 
-          <div className="card overflow-x-auto">
-            <table className="data-table">
-              <caption className="sr-only">Stories sorted by readiness score, lowest first</caption>
-              <thead>
-                <tr>
-                  <th scope="col" className="w-16">Score</th>
-                  <th scope="col">Story</th>
-                  <th scope="col" className="w-32">Band</th>
-                  <th scope="col" className="w-20 text-right">Points</th>
-                </tr>
-              </thead>
-              <tbody>
-                {shown.map((story) => (
-                  <tr key={story.id}>
-                    <td>{story.readiness && <ScoreRing score={story.readiness.score} band={story.readiness.band as Band} size="sm" />}</td>
-                    <td>
-                      <Link href={`${base}/stories/${story.id}`} className="group block">
-                        <span className="font-mono text-xs text-subtle">{story.key}</span>{" "}
-                        <span className="font-medium group-hover:text-accent group-hover:underline">{story.title}</span>
-                      </Link>
-                    </td>
-                    <td>{story.readiness && <BandBadge band={story.readiness.band as Band} />}</td>
-                    <td className="text-right tabular-nums text-muted">{story.storyPoints ?? "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {shown.length === 0 && <p className="p-6 text-center text-sm text-muted">No stories in this band.</p>}
-          </div>
+          {filtered && (
+            <p className="flex flex-wrap items-center gap-2 text-sm text-muted">
+              Showing {shown.length} of {stories.length} {stories.length === 1 ? "story" : "stories"}.
+              <Link href={sort === "priority" ? base : `${base}?sort=${sort}`} className="text-accent underline underline-offset-2">
+                Clear filters
+              </Link>
+            </p>
+          )}
+
+          <StatusOptions id="quick-status-options" doneStatuses={doneStatusesOf(project)} />
+          <BacklogTable
+            projectId={project.id}
+            reorderable={sort === "priority" && !filtered}
+            caption={sort === "priority" ? "Stories in priority order" : "Stories sorted by readiness score, lowest first"}
+            statusListId="quick-status-options"
+            rows={shown.map((s) => ({
+              id: s.id,
+              key: s.key,
+              title: s.title,
+              status: s.status,
+              storyPoints: s.storyPoints,
+              score: s.readiness?.score ?? null,
+              band: (s.readiness?.band as Band | undefined) ?? null,
+            }))}
+          />
         </div>
       )}
     </>

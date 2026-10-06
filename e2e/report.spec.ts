@@ -52,6 +52,12 @@ test("the sprint report shows the worked example on one page", async ({ page }) 
     page.getByText("Scope grew 16.7%, churn was 36.7%, and 70.0% of the original commitment was done."),
   ).toBeVisible();
 
+  // The burn-up: done counts finished work, including stories added later (A, C, D and F).
+  await expect(page.getByRole("region", { name: "Scope and work done" })).toContainText(
+    "Scope went from 30 to 35 points, and 29 points are done (83%).",
+  );
+  await expect(page.getByRole("img", { name: /^Burn-up chart\./ })).toBeVisible();
+
   // Only scope changes are listed; status changes and the rename are counted instead.
   const log = page.getByRole("region", { name: "Scope changes" });
   await expect(log.getByRole("row")).toHaveCount(1 + 3);
@@ -74,6 +80,6 @@ test("a long change log still prints on one page", async ({ page }) => {
   await uploadSnapshot(page, csv(stories.slice(0, 5)), "2026-10-09");
 
   await page.getByRole("link", { name: "Open sprint report" }).click();
-  await expect(page.getByText(/Showing the 18 most recent of 25/)).toBeVisible();
+  await expect(page.getByText(/Showing the 10 most recent of 25/)).toBeVisible();
   expect(await printedPages(page)).toBe(1);
 });

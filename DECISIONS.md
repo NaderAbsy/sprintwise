@@ -2,6 +2,128 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-06 — Deploys wait for a sleeping database
+
+- **What happened:** the v1.6 production deploy failed with Prisma P1001 ("can't reach database server") during `prisma migrate deploy`. Neon had suspended the idle database, and waking it took longer than Prisma's connect timeout. The next deploy, with the same migration, succeeded.
+- **Decision:** `scripts/build.mjs` retries the migration step up to 4 times, waiting 5, 10 and then 15 seconds, but only for P1001 and P1002. Any other error, such as a migration that fails, stops the build straight away, as before.
+- **Rejected:**
+  - A longer `connect_timeout` in `DATABASE_URL`: the URL is a secret held only in Vercel, so it can't be changed from the code.
+  - Turning off Neon's auto-suspend: it isn't adjustable on the free plan.
+
+## 2026-10-05 — v1.8: visit counts and feedback
+
+- **Why:** there was no way to tell whether anyone used Sprintwise, or to hear from people who did.
+- **Visit counts: Vercel Web Analytics.**
+  - It's free on Hobby (50,000 events a month, after which collection pauses with no charge), sets no cookies, and Vercel discards its visitor hash after 24 hours. No consent banner is needed, and no new service or account.
+  - Rejected: Google Analytics, because of cookies and a consent banner; self-hosted Plausible or Umami, because they're another service to run.
+  - Speed Insights is left for later.
+- **Scrubbing (`redactUrl`, pure and tested):**
+  - Project, story and sprint ids and share tokens become placeholders, such as `/projects/[project]/sprints/[sprint]/report`.
+  - Every query string is dropped, so search terms and filters never leave the browser.
+  - API calls aren't counted.
+- **Only the live site:** the script renders when `VERCEL_ENV` is `production`. Previews, local runs and tests send nothing.
+- **Feedback: a GitHub issue form,** linked as "Send feedback" from the public footer and the app sidebar.
+  - App users already sign in with GitHub, so there's no new account and no inbox to run.
+  - Issues are public, so the form says so, asks for no work data, and has a required checkbox confirming none is included.
+  - Its config points security reports to private vulnerability reporting.
+  - Rejected: an in-app form stored in the database, which would need moderation, spam protection and a way to reply.
+- **To finish in Vercel:** Web Analytics has to be switched on once in the project's Analytics tab. Until then the script loads but nothing is recorded.
+
+## 2026-10-05 — v1.7: see the sprint move
+
+- **Why:** the sprint page showed totals only, so there was no way to see when scope moved or whether work was being finished. Trends said nothing until four sprints had run, so the first two months showed almost nothing.
+- **Burn-up, not burn-down:** a burn-down hides scope changes inside a single line. Sprintwise is about scope change, so the burn-up shows scope and done as separate lines, plus the day-one commitment as a dashed line.
+- **What "done" means here:** the points of every story in the sprint with a done status, including work added later. The two lines meet when everything is finished. This differs on purpose from Completion, which counts only the original commitment; the chart's caption says which is which.
+- **Drawing:**
+  - Step lines: a value holds until the next snapshot, because nothing in between is known. When a day has several snapshots, the last one counts.
+  - While the sprint runs, the lines carry on to a "Today" marker.
+  - The chart has a text summary for screen readers, which is also the caption.
+- **On the report:** a shorter chart, and the scope-change list shows 10 rows instead of 15 so the page still prints on one A4 sheet. The sprint page keeps the full log.
+- **Trends from sprint two:**
+  - With two or three measured sprints, insights compare the latest with the one before, and say so: "a hint", not a trend.
+  - From four sprints, insights compare averages, as before.
+  - Differences under 5 points are still left out.
+
+## 2026-10-05 — v1.6: a backlog you can run
+
+- **Why:** ordering the backlog is a Product Owner's main job, but Sprintwise could only sort by score. There was also no search, no status filter, and no way to change more than one story at a time.
+- **Priority order:**
+  - A fractional `stories.rank`, so a move changes one row. When neighbours get within 1e-6, the backlog is renumbered.
+  - Existing backlogs start in key order, comparing numbers as numbers (PROJ-2 before PROJ-10). New stories join the bottom, and imports add new keys in file order.
+  - The CSV export follows priority, so importing it into a new project keeps the order.
+  - Priority is the default view; weakest first is one select away. Reordering is only offered in priority order with no filters, because moving within a filtered list has no clear meaning.
+- **Reordering:**
+  - Drag by a handle, so text in the row's fields stays selectable.
+  - Or focus the handle and use Up, Down, Home and End. Focus follows the story, and the new position is announced.
+  - The table shows "Saving the new order…" then "Order saved.", and leaving mid-save asks first.
+  - Not on phones: HTML drag-and-drop doesn't work with touch, so the handle is hidden there.
+- **Search and filters:** a GET form, so the view lives in the URL and works without JavaScript. They cover key or title, status (including "no status") and band. Status options come from the statuses actually used.
+- **Changing several at once:** tick boxes (including "all shown") to set a status or delete. A status set this way is recorded in sprints that follow the backlog, like any other edit.
+- **Next to fix:** a link on the story page to the next story that isn't Ready, in "weakest first" order, wrapping around to the start.
+- **Phones:** the table drops band, points and the handle, and the filter cards sit two by two.
+
+## 2026-10-05 — v1.5: sprints that keep themselves up to date
+
+- **Why:** the critique found keeping a sprint current was the most likely reason to stop after one sprint. Marking a story Done meant opening it, editing it, saving it, going to the sprint and saving a snapshot. Nothing reminded you, so a forgotten snapshot meant an empty report.
+- **Quick edits:** status and points can be changed in place on the backlog list and on the sprint page. Each saves on Enter or when you leave the field, Escape puts it back, and points re-score the story. On phones only status is shown, so the table fits.
+- **Automatic recording:**
+  - A sprint "follows the backlog" (`sprints.tracksBacklog`) when its latest snapshot was picked from the backlog. A CSV snapshot turns it off, because the team has switched to exports.
+  - Its stories are the latest snapshot's keys. Any story edit (quick edit, story page, CSV import) re-reads those stories from the backlog and records the difference in that day's automatic snapshot (`snapshots.auto`).
+  - One automatic snapshot per day: later edits that day update it in place, compared again with the snapshot before it. If the edits are undone, it's deleted. Reasons already tagged are carried over by key and change type.
+  - Snapshots saved by hand are never rewritten. Adding or removing stories still goes through "Add or remove stories", because membership is a decision, not an edit.
+  - The planner is a pure function (`planTracking`). The write runs in a transaction that locks the sprint row, so two quick edits can't both create the day's snapshot.
+- **Dates:** "today" is the UTC day. The snapshot is never dated before the latest one or after the sprint's end, and edits up to a day after the end still count, so users east or west of UTC aren't cut off.
+- **At the 30-snapshot cap,** edits stop being recorded rather than overwrite history.
+- **Existing sprints:** they start following the backlog the next time a snapshot is saved from it. They weren't switched on silently, because a sprint built from CSVs would suddenly start recording backlog edits.
+- **Reminder:** a running sprint that doesn't follow the backlog shows a banner once its latest snapshot is 3 or more days old.
+- **Rejected:** a full event log of every edit with timestamps. It would show who changed what and when, but it needs a new model and a new report. The daily snapshot fits the existing metrics, report and trends unchanged.
+
+## 2026-10-05 — v1.4: rules v3, a score that's harder to fool
+
+- **Why:** in the critique walkthrough, "As a user I want a dashboard so that I can see stuff" with the criterion "Then it works" scored 95 and was Ready. A score that can be met by shape alone stops being trusted, and trust is the product. A bare story also showed "7 checks failed" when only four things were missing.
+- **Changes (RULES_VERSION 3):**
+  - **C2 names the user.** "As a user", "users", "end user", "person", "people", "someone", "somebody", "anyone" and "everyone" fail. Qualified roles such as "logged-in user" pass; the list is fixed, not a setting.
+  - **C1 scales with size.** 1 criterion up to 3 points, 2 from 5 points, 3 from 13. Unestimated stories need 1. A fixed count is crude, but it's explainable and it stops one line covering an 8-point story.
+  - **19 more default vague words,** such as works, properly, correctly, as expected, better, improve, handle, stuff and things. Each gets a plain-English alternative. "Working" was left out, because "3 working days" is measurable.
+  - **Covered rules:** C3 is covered by C1 when there are no criteria, C7 by C6 when there's no estimate, and C4 by C2 when there's no "so that". A covered rule still fails and still loses its points, but it's reported on the covering rule's line with the combined points. The score is unchanged for these cases; only the explanation is shorter. Findings always add up to 100 minus the score.
+- **Kept:** nine rules, 100 points, the same weights, and the bands.
+- **Existing data:**
+  - Projects still on the exact old default word list get the new one, through a SQL migration. Edited lists are left alone.
+  - Stored scores with an older rules version are re-scored the next time the projects list, the backlog or the CSV export is opened.
+- **Demo:** the two weak samples (TIDY-103, TIDY-110) each gained a second, equally vague criterion. Otherwise the new size rule would have moved their scores and made the recorded demo video's numbers wrong. They still score 50.
+
+## 2026-10-05 — v1.3: more forgiving
+
+- **Why:** a walkthrough as a new Product Owner found places where one slip cost real work, and a critique ranked them first because they're small to fix. The owner agreed the order: forgiving and wording fixes first, then scoring rules, then faster sprint updates, then backlog ordering, then a sprint chart, then usage numbers.
+- **Undo a baseline:** allowed only while it's the sprint's only snapshot. Nothing has been measured against it yet, so undoing it can't rewrite any number. After the first later snapshot it's fixed, as before. The delete is one statement that checks the condition, so a snapshot saved at the same moment can't slip in. Rejected: editing a locked baseline (it would make every metric meaningless), and a time window such as 24 hours (the snapshot rule is easier to explain).
+- **Unsaved changes:** the story editor asks before leaving once anything has been typed. The browser's own prompt covers reload, close and other sites. A capture-phase click listener covers links inside the app, because Next's router has no "before leave" hook. Saving isn't a link click, so it never asks. The browser Back button isn't covered; that would need a history hack.
+- **Done statuses:** a per-project list, default Done, Closed and Resolved, matched ignoring case. They replace the defaults rather than add to them, so a team can drop "Closed" if it means "won't do". They change completion, velocity and trends, but not readiness scores, so saving doesn't re-score. They're kept apart from the rule settings, which are stored with each score.
+- **Delete placement:** Delete story and Delete sprint moved from beside Edit and Open report to a section at the foot of the page.
+- **Wording:** stale CSV-only copy on the New sprint and Sprints pages, "1 pts", and the empty project and empty projects pages, which showed two "add" prompts each.
+
+## 2026-10-03 — v1.2: features for a Product Owner's week
+
+- **Decision:** the owner picked seven additions from a list built around what a PO does each sprint:
+  - trends
+  - a planning helper
+  - scope-change reasons and a sprint goal
+  - a share link
+  - CSV export
+  - writing helpers
+  - team checks
+- **Everything stays rule-based:** no AI, no new services, no running costs.
+- **Trends:** velocity is the original commitment's points that are Done at the latest snapshot, averaged over the last three measured sprints. Sprints with only a baseline are listed but not counted. Insights need four or more sprints, and a difference of 5 points or more, so noise isn't presented as a finding.
+- **Planning helper:** it warns but never blocks. A PO may have good reasons to commit an unready story; the warning makes it a choice rather than an accident.
+- **Reasons:** they are tagged per stored change, after the snapshot is saved, because the cause usually isn't known when the CSV is exported. The report weighs each change by the points it moved.
+- **Share links:**
+  - The token is 32 random bytes, checked for shape before any query.
+  - The shared page is excluded from search engines and sends no referrer.
+  - Turning sharing off deletes the token, and sharing again creates a new one.
+  - The page shows only that one report, with nothing else from the project.
+- **Team checks:** pass/fail, capped at 10 per project, checked by plain case-insensitive "contains". They cap the band, not the score, so the score keeps exactly one reason per lost point.
+- **Export:** columns follow the import template, so an export re-imports as is. Cells that a spreadsheet would run as formulas are neutralized. A "- " list bullet is left alone, so acceptance criteria survive the round trip.
+- **Rejected for now:** teammates on a project, and a live Jira connection. Both are bigger and stay in v2.
+
 ## 2026-10-03 — Easier to use without Jira, and a security pass
 
 - **Usability review:** I walked through the app as a new user with no Jira and found four problems.
@@ -30,10 +152,7 @@ One entry per decision: date, decision, options considered, reason. Newest first
   - **A site-wide daily AI ceiling** (`AI_SITE_DAILY_LIMIT`, default 200), on top of the per-user cap.
   - **Dependencies:** patched versions of the Prisma CLI's `deepmerge-ts` and `mysql2` are pinned through pnpm overrides, so `pnpm audit --prod` is clean.
   - **CI:** a read-only token, and actions pinned to commit SHAs.
-- **Still open, and needing the owner:**
-  - give Preview its own database
-  - turn on Dependabot alerts
-  - protect `main` so CI must pass before a merge
+- **Since done:** Preview has its own database, Dependabot alerts and security updates are on, and `main` requires CI to pass before a merge.
 - **Not done:** a `script-src` CSP. Next's inline bootstrap scripts would need a per-request nonce, which makes every page dynamic. There's no user-supplied HTML on the site, so the risk it covers is small.
 
 ## 2026-10-03 — A real home page and public site
@@ -131,7 +250,7 @@ One entry per decision: date, decision, options considered, reason. Newest first
 
 - **Decision:** Vercel's build command is `pnpm build`, which runs `scripts/build.mjs`. That script runs `prisma migrate deploy` only when `VERCEL_ENV=production`, and preview builds skip it.
 - **Why:** `DATABASE_URL` is still shared by Production and Preview. Under the old build command, a pull request's preview build would have applied unmerged migrations to the live database.
-- **Still to do:** give Preview its own `DATABASE_URL` (the Neon `preview` branch). Until then, preview deploys read and write the live database at runtime.
+- **Done 2026-10-03:** Preview has its own `DATABASE_URL` (the Neon `preview` branch), so preview builds now migrate that branch, and preview deploys never touch the live database.
 
 ## 2026-10-02 — Sign-in is a server action
 

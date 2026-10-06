@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./helpers";
+import { expectAccessible, signIn } from "./helpers";
 
 test("the demo opens without signing in and saves nothing", async ({ page }) => {
   await page.goto("/");
@@ -62,6 +62,21 @@ test("F-2: the demo includes a sample sprint and its one-page report", async ({ 
   ).toBeVisible();
   const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
   expect(pdf.toString("latin1").match(/\/Type\s*\/Page(?!s)/g)?.length).toBe(1);
+});
+
+test("the demo shows scope reasons and trends across sprints", async ({ page }) => {
+  await page.goto("/demo#trends");
+  const trends = page.getByRole("region", { name: "Trends across sprints" });
+  await expect(trends.getByRole("img", { name: /Bar chart of committed and done points/ })).toBeVisible();
+  await expect(trends.getByText(/a good sign\./).first()).toBeVisible();
+  await expect(page.getByRole("table", { name: "Every change in the sample sprint, newest first" })).toContainText("Bug or incident");
+  await page.goto("/demo/report");
+  await expect(page.getByRole("region", { name: "Why scope changed" })).toBeVisible();
+});
+
+test("a share link that doesn't exist is a 404", async ({ page }) => {
+  const response = await page.goto("/share/" + "x".repeat(43));
+  expect(response?.status()).toBe(404);
 });
 
 test("the first click on Sign in with GitHub is handled", async ({ page }) => {
@@ -132,3 +147,16 @@ for (const path of ["/", "/product", "/guide", "/changelog", "/about", "/demo", 
     await expectAccessible(page);
   });
 }
+
+test("Send feedback opens the GitHub form from the footer and the app sidebar", async ({ page }) => {
+  const form = "https://github.com/NaderAbsy/sprintwise/issues/new?template=feedback.yml";
+  await page.goto("/privacy");
+  await expect(page.getByRole("contentinfo").getByRole("link", { name: /Send feedback/ })).toHaveAttribute("href", form);
+  await expect(page.getByRole("heading", { name: "Visit counts" })).toBeVisible();
+  // Analytics only runs on the live site, never locally or in tests.
+  expect(await page.locator('script[src*="/_vercel/insights"], script[src*="va.vercel-scripts"]').count()).toBe(0);
+
+  await signIn(page);
+  await page.goto("/projects");
+  await expect(page.getByRole("link", { name: /Send feedback/ }).first()).toHaveAttribute("href", form);
+});

@@ -2,8 +2,8 @@
 
 Teams often start sprints with vague stories, and mid-sprint scope changes go unmeasured. Sprintwise scores every user story for readiness before planning, then measures how much the sprint changes after the team commits.
 
-- **Readiness check:** nine fixed rules (C1–C9) give each story a score out of 100. Every point lost comes with a plain-English reason. A story that isn't estimated, or is too big, can't be Ready. The score never uses AI.
-- **Scope tracking:** lock the day-one sprint as a baseline, upload later snapshots, and see scope added, removed, net change, churn and completion.
+- **Readiness check:** nine fixed rules (C1–C9) give each story a score out of 100. Every point lost comes with a plain-English reason, one per missing thing. A story that isn't estimated, or is too big, can't be Ready. The score never uses AI.
+- **Scope tracking:** lock the day-one sprint as a baseline and see scope added, removed, net change, churn and completion. A sprint built from the backlog records status and points changes as they're made; a sprint kept with Jira CSVs takes a fresh export as a snapshot. A burn-up chart shows scope against work done, day by day.
 
 No Jira setup in v1: paste a story or upload a CSV. Light and dark themes. All sample data is invented.
 
@@ -31,7 +31,7 @@ All data shown is invented. The images follow your GitHub theme. Regenerate them
   <img alt="Home page with a live readiness check that scores a story as you type" src="docs/screenshots/landing-light.png">
 </picture>
 
-**Backlog**: every story scored and sorted weakest first, with band filters.
+**Backlog**: every story scored, in your priority order (drag to reorder) or weakest first, with search, band and status filters, and changes to several stories at once.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/backlog-dark.png">
@@ -67,7 +67,11 @@ The calls that shaped v1, with the reasoning in [DECISIONS.md](DECISIONS.md):
 - **Rules set the score; AI never does.** A rule-based score is the same for the same story every time, and every point lost has one reason you can explain.
 - **AI rewrites were built, tested, then switched off.** Suggestions cost about two US cents each on the Claude API. For a portfolio site, I kept the code and tests and moved the live feature to v2, rather than pay ongoing costs or show a half-working button. Setting `ANTHROPIC_API_KEY` turns it on.
 - **An unestimated or oversized story can't be Ready.** Under the first version of the rules, a story with no estimate scored 80 and passed. The fix caps the band rather than changing the score, so every point lost still has exactly one reason.
-- **The baseline can't be edited.** If it could, every scope metric would be meaningless. To redo a wrong one, delete the sprint.
+- **The baseline can't be edited.** If it could, every scope metric would be meaningless. A baseline locked by mistake can be undone until the first later snapshot is saved; after that, the only way to redo it is to delete the sprint.
+- **Built around a PO's week.** Plan with the team's real velocity and a warning before committing unready stories; tag why scope changed; share the report with stakeholders by link; watch trends across sprints. All rule-based, no AI and no running costs.
+- **Rules v3: harder to fool.** A story with the right shape but vague content ("As a user … so that I can see stuff", "Then it works") scored 95 under v2. v3 asks for a named user, more criteria for bigger stories, and more vague words. A rule that fails only because another did is folded into that one's reason, so seven failed checks on a bare story read as four things to fix.
+- **Team checks cap the band, not the score.** A team's own Definition of Ready items are pass/fail. Adding points would break "100 points from nine rules", so a failed check keeps a story from being Ready instead, like an oversized story does.
+- **Changes are recorded as they happen.** In a sprint built from the backlog, editing a story's status or points (from the backlog, the sprint page or the story) updates that day's automatic snapshot. One automatic snapshot per day keeps the change log readable, and editing back to the old value removes it. Snapshots saved by hand are never rewritten.
 - **No Jira? No CSV needed.** Stories can be typed in and edited with a live score, and a sprint's baseline and snapshots can be picked straight from the backlog. CSV stays for teams that export from Jira.
 
 ## Tech stack
@@ -153,6 +157,14 @@ CI runs all of these on every push and pull request (`.github/workflows/ci.yml`)
 | [DECISIONS.md](DECISIONS.md) | Every decision with its options and reasons |
 
 **Usage counts (L-3):** `pnpm usage` prints anonymous event counts by month: checks run, imports, reports and AI suggestions. Point it at production with `DATABASE_URL="<Neon connection string>" pnpm usage`. The events table holds only an event type and a time: no user ids and no story text.
+
+## Feedback and visit counts
+
+"Send feedback" (footer and sidebar) opens a [GitHub issue form](https://github.com/NaderAbsy/sprintwise/issues/new?template=feedback.yml). The live site counts page views with Vercel Web Analytics: no cookies, with ids, share tokens and query strings removed before sending (`src/lib/analytics.ts`).
+
+## Security
+
+Report security problems privately through [GitHub's vulnerability reporting](https://github.com/NaderAbsy/sprintwise/security/advisories/new), not in a public issue. [SECURITY.md](SECURITY.md) covers scope, response times and safe testing. The live site also serves [`/.well-known/security.txt`](https://sprintwise-omega.vercel.app/.well-known/security.txt).
 
 ## Known limits in v1
 

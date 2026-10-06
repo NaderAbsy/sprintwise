@@ -12,7 +12,7 @@ export default async function NewSprintPage({ params }: PageProps<"/projects/[pr
       <SectionHeader
         back={{ href: `/projects/${project.id}/sprints`, label: "Sprints" }}
         title="New sprint"
-        description="Next you'll upload the day-one CSV and lock it as the baseline."
+        description="Next you'll pick the stories the team committed to on day one and lock them as the baseline."
       />
       <CreateSprintForm projectId={project.id} />
     </>

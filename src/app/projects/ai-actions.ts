@@ -40,7 +40,7 @@ export async function requestSuggestion(projectId: string, storyId: string, _pre
     return { error: "AI suggestions have reached today's limit for the whole site. Try again tomorrow." };
   }
 
-  const failedChecks = readiness.rules.filter((r) => !r.passed).map((r) => `${r.check}: ${r.reason}`);
+  const failedChecks = readiness.findings.map((f) => `${f.check}: ${f.reason}`);
   const result = await suggestForStory(story, failedChecks);
   if (!result.ok) return { error: result.error };
 

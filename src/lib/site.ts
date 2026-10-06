@@ -1,5 +1,7 @@
 /** Facts the public pages share, kept in one place so they stay consistent. */
 export const GITHUB_URL = "https://github.com/NaderAbsy/sprintwise";
+/** A GitHub issue form for ideas and problems. Issues are public, so the form asks for no work data. */
+export const FEEDBACK_URL = `${GITHUB_URL}/issues/new?template=feedback.yml`;
 
 /** The public site's tabs, in the header and the footer. */
 export const MARKETING_LINKS = [
@@ -14,6 +16,91 @@ export type Release = { version: string; date: string; title: string; summary: s
 
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
+  {
+    version: "v1.8",
+    date: "2026-10-05",
+    title: "Listening",
+    summary: "Cookie-free visit counts, and a Send feedback link on every page.",
+    items: [
+      "Send feedback in the footer and the app sidebar opens a short GitHub form for ideas and problems.",
+      "The live site counts page views with Vercel Web Analytics: no cookies, and ids, share tokens and search terms are removed first.",
+      "The Privacy page says exactly what is counted.",
+    ],
+  },
+  {
+    version: "v1.7",
+    date: "2026-10-05",
+    title: "See the sprint move",
+    summary: "A burn-up chart on the sprint page and report, and trends that start talking from the second sprint.",
+    items: [
+      "A burn-up chart: scope and work done on each snapshot day, against what was committed on day one.",
+      "The chart is on the one-page report too; the report now lists the 10 most recent scope changes.",
+      "Trends compare the latest sprint with the one before from the second sprint, and averages from the fourth.",
+    ],
+  },
+  {
+    version: "v1.6",
+    date: "2026-10-05",
+    title: "A backlog you can run",
+    summary: "Put the backlog in priority order, find stories fast, change several at once, and move from one weak story to the next.",
+    items: [
+      "Priority order: drag a story by its handle, or use the arrow keys. The export and the sprint picker follow it.",
+      "Search by key or title, and filter by status as well as band.",
+      "Tick several stories to set their status or delete them together.",
+      "“Next to fix” on a story jumps to the next weakest one that isn't Ready.",
+    ],
+  },
+  {
+    version: "v1.5",
+    date: "2026-10-05",
+    title: "Sprints that keep themselves up to date",
+    summary: "Change a status or estimate in a click, and a sprint built from the backlog records it for you.",
+    items: [
+      "Change status and points straight from the backlog list and the sprint page.",
+      "Sprints built from the backlog record each change by themselves: no Save snapshot step.",
+      "One automatic snapshot per day; undoing an edit the same day removes it, and reasons you tagged are kept.",
+      "Sprints kept with CSVs remind you when the last snapshot is 3 or more days old.",
+    ],
+  },
+  {
+    version: "v1.4",
+    date: "2026-10-05",
+    title: "A score that's harder to fool",
+    summary: "Stories with the right shape but vague content no longer pass, and each thing to fix is listed once.",
+    items: [
+      "“As a user” no longer counts: name who the story is for.",
+      "Bigger stories need more acceptance criteria: 2 from 5 points, 3 from 13.",
+      "More vague words, such as works, properly, better and stuff, each with a plain alternative.",
+      "One reason per missing thing: no criteria shows as one line, not two.",
+      "Existing scores update on their own; custom vague-word lists are kept.",
+    ],
+  },
+  {
+    version: "v1.3",
+    date: "2026-10-05",
+    title: "More forgiving",
+    summary: "Fewer ways to lose work by accident, and completion that uses your team's own words for done.",
+    items: [
+      "Undo a baseline locked by mistake, until the first later snapshot is saved.",
+      "Leaving a story with unsaved changes asks first.",
+      "Choose which statuses count as done, such as Released or Accepted, in project settings.",
+      "Delete buttons moved to the foot of the story and sprint pages, away from Edit.",
+      "Clearer first steps for new projects, and tidier wording throughout.",
+    ],
+  },
+  {
+    version: "v1.2",
+    date: "2026-10-03",
+    title: "Built for Product Owners",
+    summary: "Plan with your team's real velocity, see why scope changed, watch trends, and share reports with stakeholders.",
+    items: [
+      "Trends: velocity, completion, churn and readiness across sprints, with plain-English insights.",
+      "Planning helper: readiness per story, your usual velocity, and a warning before committing unready stories.",
+      "Sprint goals, and a reason on every scope change; the report adds them up.",
+      "Share a read-only report link with stakeholders, and turn it off any time.",
+      "Your team's own readiness checks, writing help without AI, CSV export and copy as text.",
+    ],
+  },
   {
     version: "v1.1",
     date: "2026-10-03",

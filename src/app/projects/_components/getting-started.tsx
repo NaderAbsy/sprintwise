@@ -9,13 +9,12 @@ export type Progress = { stories: number; sprintId: string | null; baselineLocke
  */
 export function GettingStarted({ base, progress }: { base: string; progress: Progress }) {
   const sprint = progress.sprintId ? `${base}/sprints/${progress.sprintId}` : null;
-  const steps = [
+  const steps: { title: string; text: string; done: boolean; href?: string; cta?: string }[] = [
     {
       title: "Add your stories",
-      text: "Score one by pasting it, import a CSV, or load sample stories to try things out.",
+      // The empty backlog right below has the buttons, so this step has no link of its own.
+      text: "Use the buttons below: score one by pasting it, import a CSV, or load sample stories to try things out.",
       done: progress.stories > 0,
-      href: `${base}/stories/new`,
-      cta: "Add stories",
     },
     {
       title: "Create a sprint",
@@ -32,8 +31,8 @@ export function GettingStarted({ base, progress }: { base: string; progress: Pro
       cta: "Open the sprint",
     },
     {
-      title: "Save a snapshot, then read the report",
-      text: "Later in the sprint, update statuses and points, save a snapshot, and open the one-page report.",
+      title: "Update as work moves, then read the report",
+      text: "Change statuses and points as the sprint runs; a sprint built from the backlog records each change. Then open the one-page report.",
       done: progress.snapshotSaved,
       href: sprint ?? `${base}/sprints`,
       cta: "Open the sprint",
@@ -51,7 +50,7 @@ export function GettingStarted({ base, progress }: { base: string; progress: Pro
         </h2>
         <p className="text-sm text-muted">
           {doneCount} of {steps.length} done ·{" "}
-          <Link href="/guide" className="text-accent hover:underline">
+          <Link href="/guide" className="text-accent underline underline-offset-2">
             Read the guide
           </Link>
         </p>
@@ -81,7 +80,7 @@ export function GettingStarted({ base, progress }: { base: string; progress: Pro
               {step.done && <span className="sr-only">(done)</span>}
             </p>
             <p className={`mt-1.5 text-muted ${i === next ? "" : "hidden md:block"}`}>{step.text}</p>
-            {i === next && (
+            {i === next && step.href && (
               <Link href={step.href} className="mt-2 inline-flex items-center gap-1 font-medium text-accent hover:underline">
                 {step.cta}
                 <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />

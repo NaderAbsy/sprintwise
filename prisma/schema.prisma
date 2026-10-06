@@ -90,17 +90,21 @@ model RateLimit {
 // ---------------------------------------------------------------------------
 
 model Project {
-  id         String   @id @default(cuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name       String
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
   /// Rule settings (story R-6).
-  maxPoints  Int      @default(8)
-  vagueWords String[]
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  stories    Story[]
-  sprints    Sprint[]
+  maxPoints    Int      @default(8)
+  vagueWords   String[]
+  /// The team's own checks (CustomCheck[]): a failed one keeps a story from being Ready.
+  customChecks Json     @default("[]")
+  /// Statuses that count as finished in sprint metrics, matched ignoring case.
+  doneStatuses String[] @default(["Done", "Closed", "Resolved"])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  stories      Story[]
+  sprints      Sprint[]
 
   @@index([userId])
   @@map("projects")
@@ -116,11 +120,14 @@ model Story {
   acceptanceCriteria String           @default("")
   storyPoints        Float?
   status             String           @default("")
+  /// Priority order in the backlog, lowest first. Fractional so a move changes one row.
+  rank               Float            @default(0)
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
   readiness          ReadinessResult?
 
   @@unique([projectId, key])
+  @@index([projectId, rank])
   @@map("stories")
 }
 
@@ -131,7 +138,7 @@ model ReadinessResult {
   story        Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
   score        Int
   band         String
-  /// RuleResult[] for the failed rules: id, check, reason.
+  /// What to fix (Finding[]: id, check, reason, points), then failed team checks.
   failedRules  Json
   /// The last AI suggestion (rewrite + scenarios), if one was asked for.
   aiSuggestion Json?
@@ -145,15 +152,22 @@ model ReadinessResult {
 }
 
 model Sprint {
-  id        String     @id @default(cuid())
-  projectId String
-  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  name      String
-  startDate DateTime   @db.Date
-  endDate   DateTime   @db.Date
-  createdAt DateTime   @default(now())
-  snapshots Snapshot[]
-  changes   Change[]
+  id            String     @id @default(cuid())
+  projectId     String
+  project       Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name          String
+  startDate     DateTime   @db.Date
+  endDate       DateTime   @db.Date
+  /// What the team set out to achieve, and whether it did: "met", "partly", "missed" or null.
+  goal          String     @default("")
+  goalOutcome   String?
+  /// Read-only report link for stakeholders; null when sharing is off.
+  shareToken    String?    @unique
+  /// True when the latest snapshot came from the backlog: later backlog edits are recorded automatically.
+  tracksBacklog Boolean    @default(false)
+  createdAt     DateTime   @default(now())
+  snapshots     Snapshot[]
+  changes       Change[]
 
   @@index([projectId])
   @@map("sprints")
@@ -169,6 +183,8 @@ model Snapshot {
   uploadedAt  DateTime       @default(now())
   isBaseline  Boolean        @default(false)
   locked      Boolean        @default(false)
+  /// Recorded from backlog edits rather than saved by hand; the day's automatic snapshot is updated in place.
+  auto        Boolean        @default(false)
   items       SnapshotItem[]
   changesFrom Change[]       @relation("fromSnapshot")
   changesTo   Change[]       @relation("toSnapshot")
@@ -207,6 +223,8 @@ model Change {
   oldValue       String?
   newValue       String?
   pointsDelta    Float
+  /// Why scope changed (bug, stakeholder, discovered, tech-debt, other); null until tagged.
+  reason         String?
 
   @@index([sprintId])
   @@map("changes")

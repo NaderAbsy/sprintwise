@@ -6,11 +6,14 @@ import { DemoScorer } from "@/app/(marketing)/demo/demo-scorer";
 import { ChangeTable } from "@/components/change-table";
 import { SprintMetricsPanel } from "@/components/sprint-metrics";
 import { DEMO_PROJECT_NAME, demoBacklog } from "@/demo/backlog";
-import { demoSprint } from "@/demo/sprint";
+import { demoTrendRows } from "@/demo/history";
+import { demoLog, demoSprint } from "@/demo/sprint";
+import { Trends } from "@/components/trends";
+import { summarizeTrends } from "@/lib/sprint/trends";
 import { DEFAULT_SETTINGS, readySummary, scoreStory } from "@/lib/readiness/rules";
 import { formatDay } from "@/lib/sprint/dates";
 import { computeMetrics } from "@/lib/sprint/metrics";
-import { changeLog, compareReadiness, readinessFinding } from "@/lib/sprint/report";
+import { compareReadiness, readinessFinding } from "@/lib/sprint/report";
 
 export const metadata: Metadata = { title: "Demo" };
 
@@ -23,11 +26,13 @@ export default function DemoPage() {
   const baseline = snapshots[0].stories;
   const latest = snapshots.at(-1)!.stories;
   const metrics = computeMetrics(baseline, latest);
+  const trendRows = demoTrendRows();
   const finding = readinessFinding(compareReadiness(baseline, latest, DEFAULT_SETTINGS));
 
   const sections = [
     { href: "#backlog", label: "Sample backlog" },
     { href: "#sample-sprint", label: "Sample sprint" },
+    { href: "#trends", label: "Trends" },
     { href: "#try-it", label: "Score your own" },
   ];
 
@@ -83,6 +88,10 @@ export default function DemoPage() {
               Open the sprint report
             </Link>
           </div>
+          <p className="text-sm">
+            <span className="font-medium">Goal:</span> {demoSprint.goal}{" "}
+            <span className="ml-1 rounded-full bg-needs-work-bg px-2 py-0.5 text-xs font-medium text-needs-work">Partly met</span>
+          </p>
           <p className="flex items-start gap-3 rounded-xl border border-needs-work-dot/30 bg-needs-work-bg px-4 py-3 text-sm text-needs-work">
             <Lightbulb aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
             {finding}
@@ -90,8 +99,22 @@ export default function DemoPage() {
           <SprintMetricsPanel metrics={metrics} />
           <div className="space-y-3">
             <h3 className="font-semibold">Change log</h3>
-            <ChangeTable caption="Every change in the sample sprint, newest first" rows={changeLog(snapshots)} />
+            <ChangeTable caption="Every change in the sample sprint, newest first" rows={demoLog()} reasons="text" />
+            <p className="text-xs text-muted">In the app, the PO tags why each scope change happened and the report adds them up.</p>
           </div>
+        </section>
+
+        <section id="trends" aria-labelledby="trends-heading" className="scroll-mt-32 space-y-4">
+          <div>
+            <h2 id="trends-heading" className="text-xl font-semibold tracking-tight">
+              Trends across sprints
+            </h2>
+            <p className="mt-1 text-sm text-muted">
+              Six invented Tidyhome sprints. As the team planned with more Ready stories, churn fell and completion rose,
+              until Sprint 12 committed two unclear stories again.
+            </p>
+          </div>
+          <Trends rows={trendRows} summary={summarizeTrends(trendRows)} />
         </section>
 
         <section id="try-it" aria-labelledby="try-heading" className="scroll-mt-32 space-y-4">

@@ -1,10 +1,10 @@
-import { formatPercent, type SprintMetrics } from "@/lib/sprint/metrics";
+import { formatPercent, formatPoints, type SprintMetrics } from "@/lib/sprint/metrics";
 
 /** S-4: the five metrics from the requirements doc, plus the two totals they are based on. */
 export function SprintMetricsPanel({ metrics }: { metrics: SprintMetrics }) {
   const tiles = [
-    { label: "Scope added", value: `${metrics.scopeAdded} pts`, note: "New work since the baseline" },
-    { label: "Scope removed", value: `${metrics.scopeRemoved} pts`, note: "Baseline work taken out" },
+    { label: "Scope added", value: formatPoints(metrics.scopeAdded), note: "New work since the baseline" },
+    { label: "Scope removed", value: formatPoints(metrics.scopeRemoved), note: "Baseline work taken out" },
     { label: "Net change", value: formatPercent(metrics.netChange, { signed: true }), note: "Did the sprint grow or shrink" },
     { label: "Churn", value: formatPercent(metrics.churn), note: "Instability, even when net is zero" },
     { label: "Completion", value: formatPercent(metrics.completion), note: "Of the original commitment, done" },
@@ -17,7 +17,7 @@ export function SprintMetricsPanel({ metrics }: { metrics: SprintMetrics }) {
         </h2>
         <p className="text-sm text-muted">
           Baseline {metrics.baselineTotal} points · latest snapshot {metrics.latestTotal} points ·{" "}
-          <a href="/guide#numbers-heading" className="no-print text-accent hover:underline">
+          <a href="/guide#numbers-heading" className="no-print text-accent underline underline-offset-2">
             What these mean
           </a>
         </p>

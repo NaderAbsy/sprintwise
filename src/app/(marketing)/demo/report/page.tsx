@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { SprintReport } from "@/components/sprint-report";
 import { DEMO_PROJECT_NAME } from "@/demo/backlog";
-import { demoSprint } from "@/demo/sprint";
+import { demoLog, demoSprint } from "@/demo/sprint";
 import { DEFAULT_SETTINGS } from "@/lib/readiness/rules";
-import { changeLog } from "@/lib/sprint/report";
 
 export const metadata: Metadata = { title: "Sample sprint report" };
 
@@ -18,8 +17,9 @@ export default function DemoReportPage() {
       baseline={snapshots[0].stories}
       latest={latest.stories}
       latestAsOf={latest.asOfDate}
-      log={changeLog(snapshots)}
+      log={demoLog()}
       settings={DEFAULT_SETTINGS}
+      snapshots={snapshots.map((s) => ({ asOfDate: s.asOfDate, items: s.stories }))}
         back={{ href: "/demo#sample-sprint", label: "Back to the demo" }}
       />
     </div>

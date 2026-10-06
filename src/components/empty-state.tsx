@@ -18,7 +18,7 @@ export function EmptyState({
       </span>
       <p className="mt-4 font-medium">{title}</p>
       {children && <div className="mt-1 max-w-sm text-sm text-muted">{children}</div>}
-      {action && <div className="mt-5">{action}</div>}
+      {action && <div className="mt-5 flex w-full justify-center">{action}</div>}
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import { ArrowRight, ChevronDown, ClipboardCheck, Code2, FileSpreadsheet, Lock, Printer } from "lucide-react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { SignInButton } from "@/components/auth-buttons";
 import { BandBadge } from "@/components/band-badge";
 import { CountUp } from "@/components/marketing/count-up";
@@ -61,7 +60,8 @@ const FAQ = [
 ];
 
 export default async function Home() {
-  if (await getSession()) redirect("/projects");
+  // Signed-in visitors see the home page too (the logo always leads here); their button opens the app.
+  const signedIn = Boolean(await getSession());
 
   // Every preview below uses the same invented demo data and the same rules as the app.
   const scored = demoBacklog.map((story) => ({ story, r: scoreStory(story) })).sort((a, b) => a.r.score - b.r.score);
@@ -78,7 +78,7 @@ export default async function Home() {
       id: "readiness",
       label: "Readiness",
       title: "Know which stories aren't ready, and why",
-      body: "Every story gets a score out of 100 and a band. The weakest come first, so refinement time goes where it matters.",
+      body: "Every story gets a score out of 100 and a band. Keep the backlog in priority order, or list the weakest first so refinement time goes where it matters.",
       points: [
         "Nine fixed rules, from acceptance criteria to vague words",
         "A plain-English reason for every point lost",
@@ -231,7 +231,13 @@ export default async function Home() {
                 Try the demo
                 <ArrowRight aria-hidden="true" className="h-4 w-4" />
               </Link>
-              <SignInButton className="btn-secondary h-11 px-5" />
+              {signedIn ? (
+                <Link href="/projects" className="btn-secondary h-11 px-5">
+                  Open your projects
+                </Link>
+              ) : (
+                <SignInButton className="btn-secondary h-11 px-5" />
+              )}
             </div>
             <p className="mt-3 text-sm text-subtle">The demo needs no account and saves nothing.</p>
           </div>

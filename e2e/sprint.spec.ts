@@ -46,7 +46,7 @@ test("a sprint reproduces the worked example from baseline to metrics", async ({
   await expect(page.getByText("5 stories, 30 points in total")).toBeVisible();
   await page.getByRole("button", { name: "Lock as baseline" }).click();
   const dialog = page.getByRole("dialog");
-  await expect(dialog.getByText(/Once locked it can't be edited or replaced/)).toBeVisible();
+  await expect(dialog.getByText(/Once locked it can't be edited\. You can undo it/)).toBeVisible();
   await dialog.getByRole("button", { name: "Lock baseline" }).click();
 
   await expect(page.getByText("Baseline 30 points · latest snapshot 30 points")).toBeVisible();

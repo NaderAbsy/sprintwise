@@ -16,3 +16,12 @@ test("signed-out visitors can't open another user's project", async ({ page }) =
   await page.goto("/projects/not-yours/stories/new");
   await expect(page).toHaveURL(/\/$/);
 });
+
+test("security.txt points researchers to private reporting", async ({ request }) => {
+  const response = await request.get("/.well-known/security.txt");
+  expect(response.status()).toBe(200);
+  const text = await response.text();
+  expect(text).toContain("Contact: https://github.com/NaderAbsy/sprintwise/security/advisories/new");
+  const expires = new Date(/Expires: (\S+)/.exec(text)![1]);
+  expect(expires.getTime()).toBeGreaterThan(Date.now());
+});

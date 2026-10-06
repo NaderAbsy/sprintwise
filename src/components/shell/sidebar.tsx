@@ -1,11 +1,12 @@
 "use client";
-import { BookOpen, FolderKanban, LayoutGrid, LifeBuoy, LogOut, Menu, Plus, Shield, UserRound, X } from "lucide-react";
+import { BookOpen, FolderKanban, LayoutGrid, LifeBuoy, LogOut, Menu, MessageSquare, Plus, Shield, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme";
 import { authClient } from "@/lib/auth-client";
+import { FEEDBACK_URL } from "@/lib/site";
 
 type Props = {
   projects: { id: string; name: string }[];
@@ -56,7 +57,7 @@ export function Sidebar(props: Props) {
     <>
       {/* Layers on phones: drawer (z-50) over the top bar (z-40) over the backdrop (z-30), so the close button stays clickable. */}
       <div className="no-print sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background/85 px-4 backdrop-blur lg:hidden">
-        <Logo href="/projects" />
+        <Logo />
         <button
           ref={menuButton}
           type="button"
@@ -99,7 +100,7 @@ function SidebarContent({ projects, user, pathname }: Props & { pathname: string
   return (
     <nav aria-label="App" className="flex h-full flex-col">
       <div className="flex h-14 items-center px-4">
-        <Logo href="/projects" />
+        <Logo />
       </div>
 
       <div className="flex-1 space-y-6 overflow-y-auto px-3 py-2">
@@ -149,6 +150,11 @@ function SidebarContent({ projects, user, pathname }: Props & { pathname: string
             <Shield aria-hidden="true" className="h-4 w-4" />
             Privacy
           </Link>
+          <a href={FEEDBACK_URL} target="_blank" rel="noopener noreferrer" className={item(false)}>
+            <MessageSquare aria-hidden="true" className="h-4 w-4" />
+            Send feedback
+            <span className="sr-only"> (opens GitHub in a new tab)</span>
+          </a>
         </div>
       </div>
 

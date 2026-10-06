@@ -8,7 +8,10 @@ import { MAX_BYTES } from "@/lib/csv/template";
 import { emptyFormState } from "@/lib/form-state";
 import { localToday } from "@/lib/sprint/dates";
 import { diffSnapshots } from "@/lib/sprint/diff";
+import { formatPoints } from "@/lib/sprint/metrics";
 import type { Story } from "@/lib/stories/types";
+import { BandBadge } from "@/components/band-badge";
+import { scoreStory, type RuleSettings } from "@/lib/readiness/rules";
 
 const totalPoints = (stories: Story[]) => stories.reduce((sum, s) => sum + (s.storyPoints ?? 0), 0);
 
@@ -74,6 +77,21 @@ export function CreateSprintForm({ projectId }: { projectId: string }) {
           <FieldError id="endDate-error" message={errors.endDate} />
         </div>
       </div>
+      <div>
+        <label htmlFor="sprint-goal" className="label">
+          Sprint goal <span className="font-normal text-muted">(optional)</span>
+        </label>
+        <textarea
+          id="sprint-goal"
+          name="goal"
+          rows={2}
+          className="field mt-1"
+          placeholder="e.g. Customers can rebook a past cleaner in two taps"
+          aria-invalid={errors.goal ? true : undefined}
+          aria-describedby="sprint-goal-error"
+        />
+        <FieldError id="sprint-goal-error" message={errors.goal} />
+      </div>
       <FormAlert state={state} />
       <button className="btn-primary" disabled={pending}>
         {pending ? "Creating…" : "Create sprint"}
@@ -95,7 +113,9 @@ type UploadProps = {
   minDay: string;
   /** The project's backlog, so teams without Jira can pick stories instead of uploading a CSV. */
   backlog: BacklogStory[];
-} & ({ mode: "baseline" } | { mode: "snapshot"; previous: Story[] });
+  /** The project's rules, to show each story's readiness while planning. */
+  settings: RuleSettings;
+} & ({ mode: "baseline"; capacity: { points: number; sprints: number } | null } | { mode: "snapshot"; previous: Story[] });
 
 type Source = "backlog" | "csv";
 
@@ -105,7 +125,7 @@ type Source = "backlog" | "csv";
  * and the server re-reads either source before saving.
  */
 export function SnapshotUploadForm(props: UploadProps) {
-  const { projectId, sprintId, rangeLabel, endDay, minDay, backlog } = props;
+  const { projectId, sprintId, rangeLabel, endDay, minDay, backlog, settings } = props;
   const serverAction = props.mode === "baseline" ? lockBaseline : uploadSnapshot;
   const [state, action, pending] = useActionState(serverAction.bind(null, projectId, sprintId), emptyFormState);
   const [source, setSource] = useState<Source>(backlog.length > 0 ? "backlog" : "csv");
@@ -162,6 +182,11 @@ export function SnapshotUploadForm(props: UploadProps) {
     source === "backlog" ? backlog.filter((s) => picked.has(s.id)) : result?.ok ? result.stories : [];
   const hasStories = stories.length > 0 && (source === "backlog" || result?.ok === true);
   const changes = hasStories && props.mode === "snapshot" ? diffSnapshots(props.previous, stories) : [];
+  const bandOf = (story: Story) => scoreStory(story, settings).band;
+  const notReady = props.mode === "baseline" ? stories.filter((st) => bandOf(st) !== "Ready") : [];
+  const capacity = props.mode === "baseline" ? props.capacity : null;
+  const selectedPoints = totalPoints(stories);
+  const overCapacity = capacity !== null && selectedPoints > capacity.points * 1.1;
   const id = props.mode;
 
   return (
@@ -204,7 +229,7 @@ export function SnapshotUploadForm(props: UploadProps) {
               <p className="text-sm text-muted">
                 {props.mode === "baseline"
                   ? "Tick the stories the team committed to."
-                  : "Tick the stories in the sprint now. Update their status and points in the backlog first; Done stories count towards completion."}
+                  : "Tick the stories in the sprint now. Their current status and points are saved with them."}
               </p>
               <div className="flex gap-2">
                 <button type="button" className="btn-ghost btn-sm" onClick={() => setPicked(new Set(backlog.map((s) => s.id)))}>
@@ -229,9 +254,15 @@ export function SnapshotUploadForm(props: UploadProps) {
                     />
                     <span className="w-20 shrink-0 font-mono text-xs text-subtle sm:w-24">{s.key}</span>
                     <span className="line-clamp-2 min-w-0 flex-1">{s.title}</span>
-                    <span className="hidden text-xs text-muted sm:inline">{s.status || "No status"}</span>
+                    {props.mode === "baseline" ? (
+                      <span className="hidden sm:inline">
+                        <BandBadge band={bandOf(s)} />
+                      </span>
+                    ) : (
+                      <span className="hidden text-xs text-muted sm:inline">{s.status || "No status"}</span>
+                    )}
                     <span className="w-14 text-right text-xs tabular-nums text-muted">
-                      {s.storyPoints === null ? "—" : `${s.storyPoints} pts`}
+                      {s.storyPoints === null ? "—" : formatPoints(s.storyPoints)}
                     </span>
                   </label>
                 </li>
@@ -255,7 +286,7 @@ export function SnapshotUploadForm(props: UploadProps) {
           <input type="hidden" name="csv" value={csv} />
           <p className="mt-2 text-xs text-muted">
             Export the sprint from Jira, or use the{" "}
-            <a href="/template.csv" className="text-accent hover:underline">
+            <a href="/template.csv" className="text-accent underline underline-offset-2">
               Sprintwise template
             </a>
             .
@@ -315,6 +346,49 @@ export function SnapshotUploadForm(props: UploadProps) {
             ) : (
               <ChangeTable caption="Changes since the previous snapshot" rows={changes} />
             ))}
+          {props.mode === "baseline" && (
+            <div className="space-y-2 rounded-lg border border-border p-3 text-sm">
+              {capacity ? (
+                <>
+                  <div className="flex flex-wrap justify-between gap-2">
+                    <span>
+                      Planned <strong className="tabular-nums">{selectedPoints}</strong> pts · the team usually finishes{" "}
+                      <strong className="tabular-nums">{capacity.points}</strong> pts
+                    </span>
+                    <span className="text-xs text-muted">
+                      Average of the last {capacity.sprints} {capacity.sprints === 1 ? "sprint" : "sprints"}
+                    </span>
+                  </div>
+                  <div aria-hidden="true" className="h-2 overflow-hidden rounded-full bg-surface-2">
+                    <div
+                      className={`h-full rounded-full ${overCapacity ? "bg-needs-work-dot" : "bg-accent"}`}
+                      style={{ width: `${Math.min(100, (selectedPoints / Math.max(capacity.points, 1)) * 100)}%` }}
+                    />
+                  </div>
+                  {overCapacity && (
+                    <p className="text-needs-work">
+                      That&apos;s {Math.round((selectedPoints - capacity.points) * 10) / 10} points more than the team
+                      usually finishes. Consider leaving something out.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-muted">
+                  Once a sprint has a later snapshot, Sprintwise shows how many points the team usually finishes here.
+                </p>
+              )}
+              {notReady.length > 0 ? (
+                <p role="status" className="text-needs-work">
+                  {notReady.length} of {stories.length} {stories.length === 1 ? "story" : "stories"}{" "}
+                  {notReady.length === 1 ? "isn't" : "aren't"} Ready:{" "}
+                  {notReady.map((st) => st.key).join(", ")}. Unready stories are the ones most likely to change
+                  mid-sprint.
+                </p>
+              ) : (
+                <p className="text-ready">Every chosen story is Ready.</p>
+              )}
+            </div>
+          )}
           {props.mode === "baseline" ? (
             <>
               <button type="button" className="btn-primary" onClick={() => dialog.current?.showModal()}>
@@ -330,9 +404,19 @@ export function SnapshotUploadForm(props: UploadProps) {
                 </h2>
                 <p className="mt-2 text-sm text-muted">
                   {totalPoints(stories)} points across {stories.length} stories become the commitment every later
-                  snapshot is measured against. Once locked it can&apos;t be edited or replaced; to redo it, delete the
-                  sprint.
+                  snapshot is measured against. Once locked it can&apos;t be edited. You can undo it until you save
+                  the first later snapshot.
                 </p>
+                {(notReady.length > 0 || overCapacity) && (
+                  <ul className="mt-3 list-disc space-y-1 rounded-lg bg-needs-work-bg py-2 pr-3 pl-7 text-sm text-needs-work">
+                    {notReady.length > 0 && (
+                      <li>
+                        {notReady.length} {notReady.length === 1 ? "story isn't" : "stories aren't"} Ready yet.
+                      </li>
+                    )}
+                    {overCapacity && capacity && <li>It&apos;s more than the {capacity.points} points the team usually finishes.</li>}
+                  </ul>
+                )}
                 <div className="mt-6 flex justify-end gap-3">
                   <button type="button" className="btn-secondary" onClick={() => dialog.current?.close()} autoFocus>
                     Cancel

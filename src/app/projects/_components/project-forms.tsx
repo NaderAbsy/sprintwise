@@ -5,14 +5,17 @@ import { ConfirmButton } from "@/components/confirm-button";
 import { FieldError, FormAlert } from "@/components/form-feedback";
 import { emptyFormState } from "@/lib/form-state";
 
-export function CreateProjectForm() {
+/** `framed={false}` drops the card and heading, for the empty projects page that already explains it. */
+export function CreateProjectForm({ framed = true }: { framed?: boolean }) {
   const [state, action, pending] = useActionState(createProject, emptyFormState);
   return (
-    <form action={action} className="card max-w-xl space-y-4 p-5" noValidate>
-      <div>
-        <h2 className="font-semibold">New project</h2>
-        <p className="mt-0.5 text-sm text-muted">Name it after the team or backlog it holds.</p>
-      </div>
+    <form action={action} className={framed ? "card max-w-xl space-y-4 p-5" : "w-full max-w-md space-y-3 text-left"} noValidate>
+      {framed && (
+        <div>
+          <h2 className="font-semibold">New project</h2>
+          <p className="mt-0.5 text-sm text-muted">Name it after the team or backlog it holds.</p>
+        </div>
+      )}
       <div className="flex flex-wrap items-start gap-3">
         <div className="min-w-56 flex-1">
           <label htmlFor="project-name" className="sr-only">

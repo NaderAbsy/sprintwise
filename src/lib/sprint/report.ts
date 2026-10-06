@@ -61,8 +61,8 @@ export function readinessFinding({ changed, unchanged }: ReadinessComparison): s
     : `Stories that changed scored ${-gap} points higher at the baseline than those that didn't.`;
 }
 
-/** A change log row: a change plus the "as of" day of the snapshot it appeared in. */
-export type LogRow = Change & { date: string };
+/** A change log row: a change plus the "as of" day of the snapshot it appeared in, and its stored id and reason. */
+export type LogRow = Change & { date: string; id?: string; reason?: string | null };
 
 /**
  * The dated change log for snapshots in date order (baseline first): each

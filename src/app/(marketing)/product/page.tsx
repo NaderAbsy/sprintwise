@@ -1,4 +1,4 @@
-import { ArrowRight, BarChart3, ClipboardCheck, KeyRound, Printer, Settings2 } from "lucide-react";
+import { ArrowRight, BarChart3, ClipboardCheck, KeyRound, Printer, Settings2, TrendingUp } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHero } from "@/components/marketing/page-hero";
@@ -9,11 +9,11 @@ export const metadata: Metadata = { title: "Product" };
 
 /** How each rule is checked, in the words the app uses when a rule fails. */
 const HOW: Record<string, string> = {
-  C1: "At least one criterion, one per line. Leading dashes, bullets and numbers are ignored.",
-  C2: "The title or description reads “As a … I want … so that …”, in that order.",
-  C3: "The criteria contain none of the project's vague words, so each one can be tested.",
+  C1: "One criterion per line, and more for bigger stories: 1 up to 3 points, 2 from 5 points, 3 from 13. Leading dashes, bullets and numbers are ignored.",
+  C2: "The title or description reads “As a … I want … so that …”, in that order, and names who it's for. “As a user” could be anyone, so it doesn't count.",
+  C3: "The criteria contain none of the project's vague words, such as works or properly, so each one can be tested.",
   C4: "There's something after “so that”: what the user gains.",
-  C5: "The title and description avoid words like fast, easy, simple and user-friendly.",
+  C5: "The title and description avoid words like fast, easy, better and user-friendly.",
   C6: "The story has story points. A story that isn't estimated can't be Ready.",
   C7: "No more than the project's maximum points (8 by default). A bigger story can't be Ready.",
   C8: "One “I want” and no “and also”, which usually joins two features.",
@@ -31,6 +31,7 @@ const SECTIONS = [
   { id: "rules", label: "The nine rules", Icon: Settings2 },
   { id: "scope", label: "Scope tracking", Icon: BarChart3 },
   { id: "report", label: "Sprint report", Icon: Printer },
+  { id: "planning", label: "Planning and trends", Icon: TrendingUp },
   { id: "privacy", label: "Accounts and data", Icon: KeyRound },
 ];
 
@@ -69,7 +70,10 @@ export default function ProductPage() {
                   Paste a story or import a CSV, and each story gets a score out of 100 from nine fixed rules. No AI sets
                   the score: the same story always gets the same number, and every lost point comes with a reason.
                 </p>
-                <p>The backlog is sorted weakest first, with filters for each band.</p>
+                <p>
+                  The backlog keeps your priority order, which you set by dragging. You can also list it weakest first,
+                  search it, filter it by band or status, and change several stories at once.
+                </p>
               </div>
             </Reveal>
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -95,7 +99,8 @@ export default function ProductPage() {
               </h2>
               <p className="mt-4 text-muted">
                 Each project can change the maximum story size and the vague-word list. Saving the settings re-scores every
-                story.
+                story. When one missing thing fails two rules, such as no criteria (so nothing to test), it shows as one
+                reason with both rules&apos; points.
               </p>
             </Reveal>
             <Reveal delay={80} className="card mt-6 overflow-x-auto p-0">
@@ -154,11 +159,48 @@ export default function ProductPage() {
                 Sprint report
               </h2>
               <p className="mt-4 text-muted">
-                One printable A4 page for the retrospective: the metrics, the biggest changes, the change log, and one plain
-                sentence on whether the stories that changed scored lower before planning.
+                One printable A4 page for the retrospective: the sprint goal and whether it was met, the metrics, why scope
+                changed (bugs, stakeholder requests, discovered work, tech debt), the change log, and one plain sentence on
+                whether the stories that changed scored lower before planning. Share it with stakeholders through a
+                read-only link you can turn off at any time.
               </p>
               <Link href="/demo/report" className="btn-secondary mt-5">
                 See the sample report
+                <ArrowRight aria-hidden="true" className="h-4 w-4" />
+              </Link>
+            </Reveal>
+          </section>
+
+          <section id="planning" aria-labelledby="planning-heading" className="scroll-mt-24">
+            <Reveal>
+              <h2 id="planning-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                Planning and trends
+              </h2>
+              <ul className="mt-4 space-y-2 text-muted">
+                <li>
+                  <strong className="text-foreground">Planning helper:</strong> while you pick the sprint, it shows each
+                  story&apos;s readiness, the team&apos;s usual velocity next to your total, and a warning before you commit
+                  stories that aren&apos;t Ready.
+                </li>
+                <li>
+                  <strong className="text-foreground">Trends:</strong> velocity, completion, churn and readiness at planning
+                  across every sprint, with plain-English insights such as whether more Ready sprints finished more.
+                </li>
+                <li>
+                  <strong className="text-foreground">Team checks:</strong> add your own Definition of Ready items; a story
+                  that fails one can&apos;t be Ready.
+                </li>
+                <li>
+                  <strong className="text-foreground">Writing help:</strong> a story template, Given / When / Then starters,
+                  measurable alternatives to vague words, and ways to split big stories. No AI needed.
+                </li>
+                <li>
+                  <strong className="text-foreground">Export:</strong> download the scored backlog as a CSV, or copy any
+                  story as text for Jira or Slack.
+                </li>
+              </ul>
+              <Link href="/demo#trends" className="btn-secondary mt-5">
+                See trends in the demo
                 <ArrowRight aria-hidden="true" className="h-4 w-4" />
               </Link>
             </Reveal>
