@@ -17,6 +17,20 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v1.9",
+    date: "2026-10-06",
+    title: "Quicker on the click",
+    summary: "Pages answer the moment you click, the app runs next to its database, and CSV imports are easier to get right.",
+    items: [
+      "The app now runs in Frankfurt, next to its database, instead of across the Atlantic.",
+      "Clicking a project tab lights it up at once and shows a placeholder while the page loads.",
+      "Sign-in is checked from a signed cookie for five minutes at a time, saving a database trip on every click.",
+      "Drag a CSV onto the file box, or remove a chosen file and pick another.",
+      "When an import is missing columns, the error lists the columns the file does have; Jira's \"Work item key\", \"Custom field (…)\" headers and Excel's UTF-16 files now work.",
+      "Accessibility: the phone top bar and the shared report's top bar are marked as page headers, and the demo's story buttons are bigger targets.",
+    ],
+  },
+  {
     version: "v1.8",
     date: "2026-10-05",
     title: "Listening",

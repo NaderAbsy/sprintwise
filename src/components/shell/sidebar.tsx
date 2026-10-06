@@ -56,7 +56,7 @@ export function Sidebar(props: Props) {
   return (
     <>
       {/* Layers on phones: drawer (z-50) over the top bar (z-40) over the backdrop (z-30), so the close button stays clickable. */}
-      <div className="no-print sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background/85 px-4 backdrop-blur lg:hidden">
+      <header className="no-print sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background/85 px-4 backdrop-blur lg:hidden">
         <Logo />
         <button
           ref={menuButton}
@@ -69,7 +69,7 @@ export function Sidebar(props: Props) {
           {open ? <X aria-hidden="true" className="h-5 w-5" /> : <Menu aria-hidden="true" className="h-5 w-5" />}
           <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
         </button>
-      </div>
+      </header>
 
       {open && (
         <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" aria-hidden="true" onClick={close} />

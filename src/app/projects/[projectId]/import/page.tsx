@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { Download } from "lucide-react";
 import type { Metadata } from "next";
 import { ImportForm } from "@/app/projects/_components/import-form";
@@ -25,10 +26,12 @@ export default async function ImportPage({ params }: PageProps<"/projects/[proje
       <div className="max-w-4xl space-y-4">
         <p className="text-sm text-muted">
           Columns:{" "}
-          {TEMPLATE_COLUMNS.map((c) => (
-            <code key={c} className="mx-0.5 rounded bg-surface-2 px-1.5 py-0.5 font-mono text-xs text-foreground">
-              {c}
-            </code>
+          {/* Spaces between the names let the line wrap on phones. */}
+          {TEMPLATE_COLUMNS.map((c, i) => (
+            <Fragment key={c}>
+              {i > 0 && " "}
+              <code className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-xs text-foreground">{c}</code>
+            </Fragment>
           ))}
           . Only <code className="font-mono text-xs">key</code> and <code className="font-mono text-xs">title</code> are required.
         </p>
