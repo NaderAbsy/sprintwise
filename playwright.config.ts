@@ -17,6 +17,6 @@ export default defineConfig({
     url: baseURL,
     timeout: 180_000,
     reuseExistingServer: !process.env.CI,
-    env: { ENABLE_TEST_SIGN_IN: "true", AI_FAKE_RESPONSES: "true", BETTER_AUTH_URL: baseURL },
+    env: { ENABLE_TEST_SIGN_IN: "true", AI_FAKE_RESPONSES: "true", JIRA_FAKE: "true", BETTER_AUTH_URL: baseURL },
   },
 });

@@ -48,7 +48,7 @@ const FAQ = [
   },
   {
     q: "Do I need to connect Jira?",
-    a: "No. Paste a story, or upload a CSV: the Sprintwise template or any Jira export. You match the columns if the names differ, tick the stories you want, and only those leave your computer. A live Jira connection is planned for version 2.",
+    a: "No. Paste a story, or upload a CSV: the Sprintwise template or any Jira export. Or connect Jira Cloud to import straight from a search, sync, and send your edits back. Sprintwise writes to Jira only when you click Send.",
   },
   {
     q: "What happens to my data?",

@@ -18,13 +18,33 @@ if (testSignIn && process.env.VERCEL_ENV) {
   throw new Error("ENABLE_TEST_SIGN_IN must not be set on a Vercel deploy.");
 }
 
+/**
+ * Atlassian is for connecting Jira to an existing account, never for signing up:
+ * read issues, write back edits, and refresh without asking again (offline_access).
+ */
+const atlassian =
+  process.env.ATLASSIAN_CLIENT_ID && process.env.ATLASSIAN_CLIENT_SECRET
+    ? {
+        clientId: process.env.ATLASSIAN_CLIENT_ID,
+        clientSecret: process.env.ATLASSIAN_CLIENT_SECRET,
+        scope: ["read:jira-work", "write:jira-work"],
+        prompt: "consent" as const,
+        disableSignUp: true,
+      }
+    : undefined;
+
 /** GitHub sign-in only in real use: no passwords stored. */
 export const auth = betterAuth({
   database: prismaAdapter(db, { provider: "postgresql" }),
-  socialProviders: github ? { github } : {},
+  socialProviders: { ...(github && { github }), ...(atlassian && { atlassian }) },
   emailAndPassword: { enabled: testSignIn },
   // The app never uses the GitHub tokens after sign-in; encrypted, a database leak doesn't expose them.
-  account: { encryptOAuthTokens: true },
+  account: {
+    encryptOAuthTokens: true,
+    // Connecting Jira links an Atlassian account to the signed-in user. Its email often differs from
+    // GitHub's (a work address); linking needs a signed-in session, so nobody can claim an account this way.
+    accountLinking: { enabled: true, allowDifferentEmails: true },
+  },
   // Every page checks the session. A signed copy in a cookie saves a database round trip on each
   // click; the cost is that a session ended elsewhere can keep working for up to five minutes.
   session: { cookieCache: { enabled: true, maxAge: 5 * 60 } },

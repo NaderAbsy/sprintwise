@@ -3,6 +3,7 @@ import { useActionState, useId, useMemo, useState } from "react";
 import { importStories } from "@/app/projects/actions";
 import { BandBadge } from "@/components/band-badge";
 import { CsvFileInput } from "@/components/csv-file-input";
+import { JiraSource, type JiraSourceProps } from "@/app/projects/_components/jira-source";
 import { FormAlert } from "@/components/form-feedback";
 import { matchColumns, readCsvTable, type CsvRow } from "@/lib/csv/parse";
 import { readCsvFile } from "@/lib/csv/read";
@@ -34,6 +35,7 @@ export function ImportForm({
   savedColumns,
   doneStatuses,
   editedKeys,
+  jira,
 }: {
   projectId: string;
   settings: RuleSettings;
@@ -43,10 +45,14 @@ export function ImportForm({
   editedKeys: string[];
   /** The columns picked at this project's last import. */
   savedColumns: ColumnMapping;
+  /** Present when the site has a Jira connection set up. */
+  jira?: JiraSourceProps;
 }) {
   const id = useId();
   const [state, action, pending] = useActionState(importStories.bind(null, projectId), emptyFormState);
   const [text, setText] = useState<string | null>(null);
+  // Where the rows came from: a file, or a Jira search (whose note says how many and from where).
+  const [origin, setOrigin] = useState<{ source: "file" | "jira"; note?: string }>({ source: "file" });
   const [fileError, setFileError] = useState<string | null>(null);
   const [mapping, setMapping] = useState<ColumnMapping>(savedColumns);
   const [ticked, setTicked] = useState<Set<number>>(new Set());
@@ -74,7 +80,7 @@ export function ImportForm({
     [table, settings],
   );
 
-  async function onFile(file: File | undefined) {
+  function reset() {
     setText(null);
     setFileError(null);
     setQuery("");
@@ -83,6 +89,13 @@ export function ImportForm({
     setLabel(ALL);
     setType(ALL);
     setTicked(new Set());
+    // A fresh load ticks again, even if it's the same text as last time.
+    setTickedFor(null);
+  }
+
+  async function onFile(file: File | undefined) {
+    reset();
+    setOrigin({ source: "file" });
     if (!file) return;
     if (file.size > IMPORT_FILE_BYTES) {
       setFileError(`The file is larger than ${IMPORT_FILE_BYTES / 1024 / 1024} MB.`);
@@ -158,6 +171,17 @@ export function ImportForm({
 
   return (
     <form action={action} className="space-y-5">
+      {jira && (
+        <JiraSource
+          projectId={projectId}
+          jira={jira}
+          onLoaded={(csv, note) => {
+            reset();
+            setOrigin({ source: "jira", note });
+            setText(csv);
+          }}
+        />
+      )}
       <div className="card p-5">
         <label htmlFor={`${id}-file`} className="label">
           CSV file
@@ -165,6 +189,7 @@ export function ImportForm({
         <CsvFileInput id={`${id}-file`} onFile={onFile} />
         <input type="hidden" name="stories" value={payload} />
         <input type="hidden" name="mapping" value={JSON.stringify(mapping)} />
+        <input type="hidden" name="source" value={origin.source} />
         <p className="mt-2 text-xs text-muted">
           The file is read on your computer. Only the stories you tick are sent to Sprintwise.
         </p>
@@ -191,6 +216,7 @@ export function ImportForm({
 
       {table?.ok && (
         <section aria-labelledby={`${id}-preview`} className="space-y-3">
+          {origin.note && <p className="text-sm text-muted">{origin.note}</p>}
           <h2 id={`${id}-preview`} className="font-medium">
             {count(rows.length)} in the file
             {problems.length > 0 && <span className="font-normal text-not-ready"> · {problems.length} can&apos;t be imported</span>}

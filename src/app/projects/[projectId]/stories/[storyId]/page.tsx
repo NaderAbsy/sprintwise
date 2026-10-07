@@ -17,7 +17,9 @@ import { rewriteAsStory, SuggestionSchema } from "@/lib/ai/suggestion";
 import { scoreStory } from "@/lib/readiness/rules";
 import { aiConfigured } from "@/lib/server/ai";
 import { db } from "@/lib/server/db";
-import { requireProject } from "@/lib/server/dal";
+import { requireProject, requireUser } from "@/lib/server/dal";
+import { jiraAccount, jiraConfigured } from "@/lib/server/jira";
+import { SendToJiraButton } from "@/app/projects/_components/jira-buttons";
 import { settingsOf, toStory } from "@/lib/server/readiness";
 import { splitCriteria } from "@/lib/stories/types";
 import { doneStatusesOf } from "@/lib/server/sprint";
@@ -43,6 +45,7 @@ export default async function StoryPage({ params, searchParams }: PageProps<"/pr
 
   const base = `/projects/${project.id}`;
   const finishedStory = isDone(story.status, doneStatusesOf(project));
+  const jiraLinked = Boolean(row.editedAt) && jiraConfigured && Boolean(project.jiraCloudId) && Boolean(await jiraAccount((await requireUser()).id));
 
   // "Next to fix": the next weakest story that isn't Ready, in the same order as the backlog's "weakest first".
   // Finished stories need no fixing, so they're skipped.
@@ -99,8 +102,11 @@ export default async function StoryPage({ params, searchParams }: PageProps<"/pr
           className="mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-accent/40 bg-accent-soft px-4 py-3 text-sm text-accent-soft-foreground"
         >
           <h2 id="jira-copy" className="mr-auto font-medium">
-            Edited here, not yet in Jira. Copy each field into the Jira issue, then mark it copied.
+            {jiraLinked
+              ? "Edited here, not yet in Jira."
+              : "Edited here, not yet in Jira. Copy each field into the Jira issue, then mark it copied."}
           </h2>
+          {jiraLinked && <SendToJiraButton projectId={project.id} storyIds={[row.id]} label="Send to Jira" />}
           <CopyButton text={story.description} label="Copy description" className="btn-secondary btn-sm" />
           <CopyButton text={story.acceptanceCriteria} label="Copy acceptance criteria" className="btn-secondary btn-sm" />
           <form action={markCopiedToJira.bind(null, project.id, row.id)}>

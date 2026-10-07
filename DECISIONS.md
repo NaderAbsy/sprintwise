@@ -2,6 +2,16 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-07 — v2.2: connect Jira
+
+- **Why:** CSV exports were the biggest source of friction: hidden columns, Numbers re-saves, row limits and copying edits back by hand. The user's own company may not allow third-party Jira apps yet, but other teams can use the connection, and it can be tested on a free Jira site with invented issues.
+- **OAuth:** Better Auth's built-in Atlassian provider, used only to **link** an Atlassian account to a signed-in user (`disableSignUp`, so it can't create accounts). Scopes: `read:jira-work`, `write:jira-work`, plus the provider's defaults (`read:jira-user`, `offline_access` for refresh). Tokens are encrypted (`encryptOAuthTokens`) and refreshed and rotated by `getAccessToken`. `allowDifferentEmails` is on because work Atlassian addresses rarely match GitHub's; linking always needs a signed-in session.
+- **API:** REST v2 (`/rest/api/2/search/jql` with `nextPageToken`, `/field`, `/issue/{key}`), because v2 returns text fields as wiki markup, which Sprintwise already renders and sends back unchanged; v3's document format would need converting both ways. Story points and acceptance criteria are found by field name per site. Up to 1,000 issues per search.
+- **Reuse:** Jira issues become a CSV with Jira's column names (`issuesAsCsv`) and go through the same preview, checks, filters and ticks as a file. Sync uses the same reader and the shared `saveStories`.
+- **Never lose work:** Sync skips stories edited here and not yet sent, and doesn't add new issues that are already finished. Send writes title, description, criteria and points. If an issue type's screen refuses points or criteria (common for bugs), it sends the rest and says so.
+- **Off unless configured:** without `ATLASSIAN_CLIENT_ID` and `ATLASSIAN_CLIENT_SECRET`, no Jira UI appears. Tests use `JIRA_FAKE` (refused on Vercel, like the other test switches).
+- **Rejected:** a Forge or Connect app (runs inside Jira and needs Marketplace listing; more than a portfolio needs); webhooks for live sync (needs admin setup on each Jira site); API tokens pasted by users (unsafe to store, and they carry the user's full permissions).
+
 ## 2026-10-07 — v2.1: refinement mode
 
 - **Why:** estimates belong to the team, and readiness gets fixed in refinement, but Sprintwise had no screen for that meeting. Story points were also the most confusing idea for a first-time product owner.

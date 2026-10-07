@@ -90,23 +90,29 @@ model RateLimit {
 // ---------------------------------------------------------------------------
 
 model Project {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   name          String
   /// Rule settings (story R-6).
-  maxPoints     Int      @default(8)
+  maxPoints     Int       @default(8)
   vagueWords    String[]
   /// The team's own checks (CustomCheck[]): a failed one keeps a story from being Ready.
-  customChecks  Json     @default("[]")
+  customChecks  Json      @default("[]")
   /// Statuses that count as finished in sprint metrics, matched ignoring case.
-  doneStatuses  String[] @default(["Done", "Closed", "Resolved"])
+  doneStatuses  String[]  @default(["Done", "Closed", "Resolved"])
+  /// The Jira site and search this project imports from and syncs with (null = no Jira connection).
+  jiraCloudId   String?
+  jiraSiteName  String?
+  jiraSiteUrl   String?
+  jiraJql       String?
+  jiraSyncedAt  DateTime?
   /// Secret for the read-only backlog link (32 random bytes, base64url); null = not shared.
-  shareToken    String?  @unique
+  shareToken    String?   @unique
   /// The CSV columns picked at the last import (ColumnMapping), so the next file from the same Jira matches.
-  importColumns Json     @default("{}")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  importColumns Json      @default("{}")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   stories       Story[]
   sprints       Sprint[]
 

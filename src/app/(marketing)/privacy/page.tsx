@@ -37,6 +37,18 @@ export default function PrivacyPage() {
       </section>
 
       <section>
+        <h2 className="text-base font-semibold text-foreground">Jira connection</h2>
+        <p className="mt-2">
+          Connecting Jira is optional. When you connect, Atlassian gives Sprintwise tokens to read issues
+          (<code>read:jira-work</code>) and to update them (<code>write:jira-work</code>). The tokens are stored
+          encrypted and refreshed automatically. Sprintwise reads only the issues your saved search returns, and writes
+          only when you click Send to Jira: the title, description, acceptance criteria and story points of stories you
+          edited here. The project keeps the Jira site and search you chose. Disconnect from your Account page, which
+          deletes the tokens; you can also revoke access from your Atlassian account settings.
+        </p>
+      </section>
+
+      <section>
         <h2 className="text-base font-semibold text-foreground">Share links</h2>
         <p className="mt-2">
           Nothing is public unless you share it. A sprint report link shows that one report; a backlog link shows the
