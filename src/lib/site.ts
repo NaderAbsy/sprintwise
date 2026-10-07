@@ -17,6 +17,17 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.5",
+    date: "2026-10-07",
+    title: "Tidier dropdowns",
+    summary: "A story's status is picked from a list, and every dropdown's arrow sits neatly inside its box.",
+    items: [
+      "In the backlog and sprint tables, a story's status is a dropdown: To Do, In Progress, the statuses your stories already use, then your done statuses. Picking one saves it.",
+      "To type a brand-new status, edit the story, or tick stories and use Set status.",
+      "Every dropdown has the same arrow, as far from the right edge as the text is from the left, in light and dark themes.",
+    ],
+  },
+  {
     version: "v2.4",
     date: "2026-10-07",
     title: "Clicks that always answer",

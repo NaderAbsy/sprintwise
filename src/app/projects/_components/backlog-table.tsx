@@ -45,6 +45,7 @@ export function BacklogTable({
   withFinished = true,
   caption,
   statusListId,
+  statusOptions,
 }: {
   projectId: string;
   rows: BacklogRow[];
@@ -52,7 +53,10 @@ export function BacklogTable({
   /** Whether finished stories are in the list, so a new position counts the same rows the server does. */
   withFinished?: boolean;
   caption: string;
+  /** The id of the <datalist> the bulk status box suggests from. */
   statusListId: string;
+  /** The statuses each story's status can be set to. */
+  statusOptions: string[];
 }) {
   const [rows, setRows] = useState(initialRows);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -286,7 +290,7 @@ export function BacklogTable({
                     storyKey={row.key}
                     field="status"
                     value={row.status}
-                    listId={statusListId}
+                    options={statusOptions}
                   />
                 </td>
                 <td className="hidden sm:table-cell">

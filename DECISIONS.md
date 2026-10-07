@@ -2,6 +2,12 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-07 — v2.5: status is picked from a list
+
+- **Why:** the user found the table's status box confusing: it was a text box with suggestions (`<datalist>`), so the text could be edited, and the browser's arrow showed only suggestions matching the current text (nothing useful once a status was set).
+- **Decision:** the quick status in the backlog and sprint tables is a `<select>` of `statusChoices`: To Do, In Progress, the statuses the project's stories use (Jira's own, say), then the done statuses, each once ignoring case; a story's own odd status is kept as an option. It saves on change. Typing a new status stays possible on the story's edit page and in the bulk Set status box, which keeps its suggestions.
+- **Dropdown arrows:** one CSS chevron (`--chevron`, per theme) replaces the browser's, placed 0.625rem from the right edge with matching padding. Unlayered CSS, so it wins over padding utilities.
+
 ## 2026-10-07 — v2.4: clicks before the page is ready
 
 - **Seen while testing Jira on the live site:** a click right after a page loads sometimes did nothing. Measured: the HTML arrives in about 0.2 s warm (1.6 s cold), and React makes buttons work 0.1–0.9 s after they appear (more on a slow connection, and after every deploy, when the scripts aren't cached yet). React only replays clicks once it has started; a click before that is dropped.

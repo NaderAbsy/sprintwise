@@ -9,6 +9,23 @@ export function isDone(status: string, doneStatuses: readonly string[] = DONE_ST
   return s !== "" && doneStatuses.some((d) => d.trim().toLowerCase() === s);
 }
 
+/**
+ * The statuses a story can be given from a list: the usual workflow, the
+ * statuses the project's stories already use (Jira's own, say), then the done
+ * statuses. Each appears once, ignoring case; finished ones come last.
+ */
+export function statusChoices(used: readonly string[], doneStatuses: readonly string[] = DONE_STATUSES): string[] {
+  const seen = new Set<string>();
+  const once = (list: readonly string[]) =>
+    list
+      .map((s) => s.trim())
+      .filter((s) => s !== "" && !seen.has(s.toLowerCase()) && seen.add(s.toLowerCase()));
+  const start = once(["To Do", "In Progress"]);
+  const done = doneStatuses.map((d) => d.trim()).filter(Boolean);
+  const middle = once(used.filter((s) => !isDone(s, done))).sort((a, b) => a.localeCompare(b));
+  return [...start, ...middle, ...once([...done, ...used])];
+}
+
 export type SprintMetrics = {
   baselineTotal: number;
   latestTotal: number;

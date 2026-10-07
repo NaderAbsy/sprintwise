@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { FileText, Lock } from "lucide-react";
 import Link from "next/link";
 import { ReasonSelect, SprintGoalForm } from "@/app/projects/_components/sprint-goal";
-import { QuickField, StatusOptions } from "@/app/projects/_components/quick-field";
+import { QuickField } from "@/app/projects/_components/quick-field";
 import { SnapshotUploadForm } from "@/app/projects/_components/sprint-forms";
 import { deleteSprint, undoBaseline } from "@/app/projects/sprint-actions";
 import { BurnupChart } from "@/components/burnup-chart";
@@ -17,6 +17,7 @@ import { requireSprint } from "@/lib/server/dal";
 import { settingsOf, toStory } from "@/lib/server/readiness";
 import { doneStatusesOf, loadProjectTrends, loadSprint } from "@/lib/server/sprint";
 import { burnupSeries } from "@/lib/sprint/burnup";
+import { statusChoices } from "@/lib/sprint/metrics";
 import { daysBetween, utcToday } from "@/lib/sprint/tracking";
 import { averageVelocity } from "@/lib/sprint/trends";
 import { normalizeKey } from "@/lib/stories/types";
@@ -42,6 +43,7 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
   // The sprint's stories now: the latest snapshot's keys, matched to the backlog for editing.
   const byKey = new Map(backlog.map((s) => [normalizeKey(s.key), s]));
   const inSprint = latest?.items.map((item) => ({ item, story: byKey.get(normalizeKey(item.key)) })) ?? [];
+  const statusOptions = statusChoices(backlog.map((s) => s.status), doneStatusesOf(project));
   const staleDays = latest && !sprint.tracksBacklog && running ? daysBetween(latest.asOfDate, today) : 0;
   const capacity = baseline ? null : averageVelocity(await loadProjectTrends(project, sprint.id));
   const uploadProps = {
@@ -147,7 +149,6 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
                     : "Changes were recorded automatically while the sprint ran."}
                 </p>
               </div>
-              <StatusOptions id="sprint-status-options" doneStatuses={doneStatusesOf(project)} />
               <div className="card overflow-x-auto">
                 <table className="data-table">
                   <caption className="sr-only">Stories in the sprint now</caption>
@@ -182,7 +183,7 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
                                 storyKey={story.key}
                                 field="status"
                                 value={story.status}
-                                listId="sprint-status-options"
+                                options={statusOptions}
                               />
                             </td>
                             <td className="hidden sm:table-cell">
