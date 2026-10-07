@@ -39,7 +39,24 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm prisma migrate deploy
-      - run: pnpm exec playwright install --with-deps chromium
+      # The browser is kept between runs. A download that hangs (it once stalled a run for 19 minutes)
+      # times out after 4 minutes and is tried once more, instead of waiting for the job's limit.
+      - id: playwright
+        run: echo "version=$(pnpm exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: browser-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install the test browser
+        timeout-minutes: 10
+        run: |
+          what=$([ "${{ steps.browser-cache.outputs.cache-hit }}" = "true" ] && echo "install-deps chromium" || echo "install --with-deps chromium")
+          for attempt in 1 2; do
+            timeout 240 pnpm exec playwright $what && exit 0
+            echo "Attempt $attempt didn't finish in 4 minutes; trying again."
+          done
+          exit 1
       - run: pnpm test:e2e
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure()
