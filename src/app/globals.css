@@ -15,6 +15,8 @@
   --surface-2: #f2f2f4;
   --foreground: #18181b;
   --muted: #5f5f6b;
+  /* The dropdown arrow, drawn in --muted (CSS can't colour an SVG background with a variable). */
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f5f6b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   --subtle: #6b6b76;
   --border: #e4e4e7;
   --border-strong: #d4d4d8;
@@ -42,6 +44,7 @@
   --surface-2: #1b1b21;
   --foreground: #ededf0;
   --muted: #a1a1aa;
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   --subtle: #8f8f99;
   --border: #26262d;
   --border-strong: #34343c;
@@ -70,6 +73,7 @@
     --surface-2: #1b1b21;
     --foreground: #ededf0;
     --muted: #a1a1aa;
+    --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
     --subtle: #8f8f99;
     --border: #26262d;
     --border-strong: #34343c;
@@ -156,6 +160,20 @@ body {
 @utility btn-sm {
   @apply h-8 px-2.5 text-xs;
 }
+/*
+ * One dropdown arrow everywhere, as far from the right edge as the text is
+ * from the left, instead of the browser's own arrow squeezed against the edge.
+ * Unlayered, so it wins over padding utilities.
+ */
+select:not([multiple]) {
+  appearance: none;
+  background-image: var(--chevron);
+  background-repeat: no-repeat;
+  background-position: right 0.625rem center;
+  background-size: 1rem;
+  padding-right: 2.25rem;
+}
+
 @utility field {
   @apply block w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm text-foreground shadow-xs placeholder:text-subtle focus-visible:border-accent;
 }
@@ -328,6 +346,7 @@ body {
     --surface-2: #f4f4f5;
     --foreground: #18181b;
     --muted: #52525b;
+    --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2352525b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
     --subtle: #71717a;
     --border: #d4d4d8;
     --border-strong: #d4d4d8;

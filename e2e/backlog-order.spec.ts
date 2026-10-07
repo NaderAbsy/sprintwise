@@ -108,3 +108,17 @@ test("Next to fix walks the stories that aren't Ready, weakest first", async ({ 
   await page.getByRole("link", { name: "Next to fix: TIDY-110" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("TIDY-110");
 });
+
+test("a story's status is picked from a list of the usual and the project's own statuses", async ({ page }) => {
+  await projectWithSamples(page, "Status list");
+  const status = page.getByLabel("Status of TIDY-104", { exact: true });
+  await expect(status).toHaveJSProperty("tagName", "SELECT");
+  const options = await status.locator("option").allTextContents();
+  expect(options.slice(0, 2)).toEqual(["To Do", "In Progress"]);
+  expect(options).toContain("Done");
+  await status.selectOption("In Progress");
+  await expect(page.getByLabel("Status of TIDY-104 saved")).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel("Status of TIDY-104", { exact: true })).toHaveValue("In Progress");
+  await expectAccessible(page);
+});

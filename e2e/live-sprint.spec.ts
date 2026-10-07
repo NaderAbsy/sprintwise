@@ -19,8 +19,13 @@ async function projectWithSamples(page: Page, name: string) {
 /** Types a new value into an inline field and leaves it, which saves it. */
 async function quickEdit(page: Page, label: string, value: string) {
   const field = page.getByLabel(label, { exact: true });
-  await field.fill(value);
-  await field.press("Enter");
+  if (label.startsWith("Status of")) {
+    // A status is picked from the list and saves at once.
+    await field.selectOption(value);
+  } else {
+    await field.fill(value);
+    await field.press("Enter");
+  }
   await expect(page.getByLabel(`${label} saved`)).toBeVisible();
 }
 

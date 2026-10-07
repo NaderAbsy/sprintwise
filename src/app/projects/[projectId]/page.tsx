@@ -17,7 +17,7 @@ import { formatDay } from "@/lib/sprint/dates";
 import { JiraBar } from "@/app/projects/_components/jira-buttons";
 import { refreshStaleScores } from "@/lib/server/readiness";
 import { doneStatusesOf } from "@/lib/server/sprint";
-import { isDone } from "@/lib/sprint/metrics";
+import { isDone, statusChoices } from "@/lib/sprint/metrics";
 import { secondLook } from "@/lib/readiness/second-look";
 
 const FILTERS: { slug: string; band: Band; Icon: typeof CircleCheck; tone: string }[] = [
@@ -103,6 +103,7 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
     ...new Set(stories.map((s) => s.status.trim()).filter(Boolean)),
   ].sort((a, b) => a.localeCompare(b));
   if (stories.some((s) => s.status.trim() === "")) statuses.push(NO_STATUS);
+  const statusOptions = statusChoices(stories.map((s) => s.status), doneStatuses);
   const epics = [...new Set(stories.map((s) => s.epic).filter(Boolean))].sort((a, b) => a.localeCompare(b));
   const types = stories.some((s) => s.issueType) ? [...new Set(stories.map(typeOf))].sort((a, b) => a.localeCompare(b)) : [];
   // Links keep the search, status and order; only the band changes.
@@ -274,13 +275,14 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
             </div>
           )}
 
-          <StatusOptions id="quick-status-options" doneStatuses={doneStatusesOf(project)} />
+          <StatusOptions id="quick-status-options" options={statusOptions} />
           <BacklogTable
             projectId={project.id}
             reorderable={sort === "priority" && !filtered}
             withFinished={showFinished}
             caption={sort === "priority" ? "Stories in priority order" : "Stories sorted by readiness score, lowest first"}
             statusListId="quick-status-options"
+            statusOptions={statusOptions}
             rows={shown.map((s) => ({
               id: s.id,
               key: s.key,

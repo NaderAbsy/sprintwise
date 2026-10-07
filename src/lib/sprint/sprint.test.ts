@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { diffSnapshots } from "@/lib/sprint/diff";
-import { computeMetrics, formatPercent, formatPoints, isDone } from "@/lib/sprint/metrics";
+import { computeMetrics, formatPercent, formatPoints, isDone, statusChoices } from "@/lib/sprint/metrics";
 import { story } from "@/test/story";
 import { baseline, latest } from "@/test/worked-example";
 
@@ -135,4 +135,21 @@ describe("formatPoints", () => {
     ["1", "1 pt"],
     [13, "13 pts"],
   ] as const)("%s → %s", (value, text) => expect(formatPoints(value)).toBe(text));
+});
+
+describe("statusChoices", () => {
+  it("lists the usual workflow, the project's own statuses, then the done ones, each once", () => {
+    expect(statusChoices(["in progress", "Idea", " Blocked ", "Done", "", "To Do"], ["Done", "Released"])).toEqual([
+      "To Do",
+      "In Progress",
+      "Blocked",
+      "Idea",
+      "Done",
+      "Released",
+    ]);
+  });
+
+  it("keeps a done status a story uses even when the project doesn't list it", () => {
+    expect(statusChoices(["Closed"], ["Done"])).toEqual(["To Do", "In Progress", "Closed", "Done"]);
+  });
 });
