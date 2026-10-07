@@ -155,9 +155,13 @@ export function SnapshotUploadForm(props: UploadProps) {
       setResult({ ok: false, errors: [{ message: "The file is larger than 1 MB." }] });
       return;
     }
-    const text = await readCsvFile(file);
-    setCsv(text);
-    setResult(parseStoriesCsv(text));
+    const read = await readCsvFile(file);
+    if (!read.ok) {
+      setResult({ ok: false, errors: [{ message: read.message }] });
+      return;
+    }
+    setCsv(read.text);
+    setResult(parseStoriesCsv(read.text));
   }
 
   function toggle(id: string) {

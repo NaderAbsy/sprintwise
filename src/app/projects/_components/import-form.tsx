@@ -78,7 +78,9 @@ export function ImportForm({
       setFileError(`The file is larger than ${IMPORT_FILE_BYTES / 1024 / 1024} MB.`);
       return;
     }
-    setText(await readCsvFile(file));
+    const read = await readCsvFile(file);
+    if (read.ok) setText(read.text);
+    else setFileError(read.message);
   }
 
   // The first time a file reads cleanly (now, or once its columns are matched), tick every usable

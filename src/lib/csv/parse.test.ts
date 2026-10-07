@@ -115,17 +115,32 @@ describe("parseStoriesCsv field limits", () => {
 describe("readCsvFile", () => {
   const text = "key,title\nA-1,Café";
   it("reads UTF-8, with or without a byte-order mark", async () => {
-    expect(await readCsvFile(new Blob([text]))).toBe(text);
-    expect(await readCsvFile(new Blob([new Uint8Array([0xef, 0xbb, 0xbf]), text]))).toBe(text);
+    expect(await readCsvFile(new Blob([text]))).toEqual({ ok: true, text });
+    expect(await readCsvFile(new Blob([new Uint8Array([0xef, 0xbb, 0xbf]), text]))).toEqual({ ok: true, text });
   });
 
   it("reads the UTF-16 files Excel saves as Unicode text", async () => {
     const le = new Uint8Array(2 + text.length * 2);
     le.set([0xff, 0xfe]);
     for (let i = 0; i < text.length; i++) le[2 + i * 2] = text.charCodeAt(i);
-    expect(await readCsvFile(new Blob([le]))).toBe(text);
+    expect(await readCsvFile(new Blob([le]))).toEqual({ ok: true, text });
     const be = le.map((_, i) => (i < 2 ? [0xfe, 0xff][i] : le[i % 2 === 0 ? i + 1 : i - 1]));
-    expect(await readCsvFile(new Blob([be]))).toBe(text);
+    expect(await readCsvFile(new Blob([be]))).toEqual({ ok: true, text });
+  });
+
+  it("turns away spreadsheets saved with a .csv name, saying how to export a CSV", async () => {
+    const zip = (entry: string) => new Blob([new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0x14, 0, 0, 0]), entry, new Uint8Array([0, 1, 2])]);
+    const message = async (blob: Blob) => {
+      const r = await readCsvFile(Object.assign(blob, { name: "Jira.CSV" }));
+      return r.ok ? "" : r.message;
+    };
+    expect(await message(zip("Index/Document.iwa"))).toBe(
+      "Jira.CSV isn't a CSV, even if its name ends in .csv: it's a Numbers spreadsheet. In Numbers, choose File → Export To → CSV…, then use the exported file.",
+    );
+    expect(await message(zip("[Content_Types].xml xl/workbook.xml"))).toMatch(/: it's an Excel workbook\. In Excel, choose File → Save As/);
+    expect(await message(new Blob([new Uint8Array([0xd0, 0xcf, 0x11, 0xe0, 0xa1])]))).toMatch(/an Excel workbook/);
+    expect(await message(zip("something.txt"))).toMatch(/a compressed file/);
+    expect(await message(new Blob([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0, 0])]))).toMatch(/not a text file/);
   });
 });
 
