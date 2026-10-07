@@ -2,6 +2,14 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-07 — v1.13: reads like Jira
+
+- **Why:** Jira's CSV export writes descriptions in Jira wiki markup (`h3.`, `*bold*`, `{{code}}`, `{noformat}`), which showed as raw symbols. Long descriptions also made the edit page lopsided: the Before box grew while the new-version box scrolled.
+- **Display only:** `parseJira` / `parseInline` (`src/lib/stories/jira-markup.ts`) build a small tree that `JiraText` renders as React elements, never as HTML, so imported text can't inject anything. Links are kept only for http(s) URLs and open with `noopener noreferrer nofollow`. Text without markup (`looksLikeJira` false) is shown exactly as typed. Stored text, scoring and Copy for Jira all use the original text.
+- **Edit page:** Before shows the formatted text, with "Show as typed" to compare raw markup line by line; the description and criteria boxes grow with their text (`fitHeight` on mount and input).
+- **Rejected:** a markdown or wiki-markup library (a dependency for a dozen patterns, and most render via HTML strings); converting markup on import (would change the text that goes back to Jira).
+- **Also:** saved column choices keep only picked columns (`rememberedColumns`), so a field set to "Not in this file" for one export is matched by name in the next (PR #37).
+
 ## 2026-10-07 — v1.12: honest counts, fair scores, back to Jira
 
 - **Finished stories:** stories whose status is one of the project's done statuses are left out of every readiness count (backlog, band cards, projects list) and hidden from the backlog until "Show N finished". Next to fix skips them. Reordering while they're hidden counts positions among the shown stories only (`moveStory(…, withFinished)`), so a drag lands where it was dropped.

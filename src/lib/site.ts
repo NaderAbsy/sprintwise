@@ -17,6 +17,19 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v1.13",
+    date: "2026-10-07",
+    title: "Reads like Jira",
+    summary: "Stories from Jira show their formatting, and the edit page keeps both versions lined up.",
+    items: [
+      "Descriptions and acceptance criteria written with Jira's formatting (headings, bold, code, {noformat} blocks, lists, tables, links) show the way Jira shows them.",
+      "When editing, the Before column shows the formatted text, with Show as typed for a character-by-character comparison.",
+      "The new version's boxes grow with the text, so both columns stay the same length.",
+      "Copy for Jira still copies the original text, so Jira keeps its own formatting.",
+      "Column choices no longer remember \"Not in this file\", so a later export with that column is matched again.",
+    ],
+  },
+  {
     version: "v1.12",
     date: "2026-10-07",
     title: "Honest counts, fair scores, back to Jira",
