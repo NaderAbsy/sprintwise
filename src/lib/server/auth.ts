@@ -20,14 +20,16 @@ if (testSignIn && process.env.VERCEL_ENV) {
 
 /**
  * Atlassian is for connecting Jira to an existing account, never for signing up:
- * read issues, write back edits, and refresh without asking again (offline_access).
+ * read issues, write back edits, and refresh without asking again (offline_access,
+ * added by the provider). read:me lets the provider read who connected
+ * (api.atlassian.com/me) to link the account.
  */
 const atlassian =
   process.env.ATLASSIAN_CLIENT_ID && process.env.ATLASSIAN_CLIENT_SECRET
     ? {
         clientId: process.env.ATLASSIAN_CLIENT_ID,
         clientSecret: process.env.ATLASSIAN_CLIENT_SECRET,
-        scope: ["read:jira-work", "write:jira-work"],
+        scope: ["read:jira-work", "write:jira-work", "read:me"],
         prompt: "consent" as const,
         disableSignUp: true,
       }

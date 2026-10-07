@@ -129,7 +129,7 @@ Then open <http://localhost:3000>. The demo at `/demo` works without signing in.
 ### Jira connection (optional)
 
 1. Create an OAuth 2.0 (3LO) app at <https://developer.atlassian.com/console/myapps/>.
-2. Under **Permissions**, add the **Jira API** with `read:jira-work` and `write:jira-work`.
+2. Under **Permissions**, add the **Jira API** with `read:jira-work`, `write:jira-work` and `read:jira-user`, and the **User identity API** with `read:me`.
 3. Under **Authorization**, set the callback URL to `http://localhost:3000/api/auth/callback/atlassian` (and the live site's equivalent).
 4. Put its client ID and secret into `ATLASSIAN_CLIENT_ID` and `ATLASSIAN_CLIENT_SECRET` in `.env`.
 5. To let people outside your own Atlassian account connect, turn on **Distribution → Sharing** in the console.
