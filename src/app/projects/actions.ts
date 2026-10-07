@@ -172,7 +172,10 @@ export async function importStories(projectId: string, _prev: FormState, formDat
   await saveStories(
     project,
     stories,
-    fromJira ? [] : [db.project.update({ where: { id: project.id }, data: { importColumns: rememberedColumns(mapping) } })],
+    fromJira
+      ? // Sync adds issues created after this moment; ones left unticked now stay out.
+        [db.project.update({ where: { id: project.id }, data: { jiraSyncedAt: new Date() } })]
+      : [db.project.update({ where: { id: project.id }, data: { importColumns: rememberedColumns(mapping) } })],
   );
   await recordSprintChanges(project.id);
   await recordUsage("import");

@@ -59,11 +59,20 @@ export async function syncFromJira(projectId: string): Promise<FormState> {
   if (!project.jiraCloudId || !project.jiraJql) return { error: "Import from Jira once first, so Sprintwise knows which search to run." };
 
   let csv: string;
+  let created: Map<string, string | null>;
   try {
-    csv = issuesAsCsv((await searchJira(user.id, project.jiraCloudId, project.jiraJql)).issues);
+    const { issues } = await searchJira(user.id, project.jiraCloudId, project.jiraJql);
+    csv = issuesAsCsv(issues);
+    created = new Map(issues.map((i) => [i.key.trim().toUpperCase(), i.created]));
   } catch (error) {
     return { error: failure(error) };
   }
+  // New issues are ones created since the last import or sync; older ones missing here were left out on purpose.
+  const since = project.jiraSyncedAt;
+  const isNew = (key: string) => {
+    const at = created.get(key);
+    return !since || !at || new Date(at) > since;
+  };
   const table = readCsvTable(csv, { maxBytes: Number.MAX_SAFE_INTEGER, maxRows: JIRA_MAX_ISSUES });
   if (!table.ok) return { error: table.errors[0]?.message ?? "Jira's issues couldn't be read." };
 
@@ -73,6 +82,7 @@ export async function syncFromJira(projectId: string): Promise<FormState> {
   const doneStatuses = doneStatusesOf(project);
   let kept = 0;
   let problems = 0;
+  let leftOut = 0;
   const stories = table.rows.flatMap((row) => {
     if (row.errors.length > 0) {
       problems++;
@@ -84,6 +94,10 @@ export async function syncFromJira(projectId: string): Promise<FormState> {
       return [];
     }
     if (!current && isDone(row.story.status, doneStatuses)) return [];
+    if (!current && !isNew(row.story.key)) {
+      leftOut++;
+      return [];
+    }
     return [{ ...row.story, epic: row.epic, issueType: row.story.issueType ?? "" }];
   });
   const added = stories.filter((s) => !existing.has(s.key)).length;
@@ -97,6 +111,7 @@ export async function syncFromJira(projectId: string): Promise<FormState> {
   const parts = [`Synced from Jira: ${stories.length - added} updated, ${added} added.`];
   if (kept > 0) parts.push(`${kept} edited here ${kept === 1 ? "was" : "were"} left as ${kept === 1 ? "it is" : "they are"}; send ${kept === 1 ? "it" : "them"} to Jira first.`);
   if (problems > 0) parts.push(`${problems} couldn't be read (for example, no title).`);
+  if (leftOut > 0) parts.push(`${leftOut} left out at import ${leftOut === 1 ? "wasn't" : "weren't"} added; import ${leftOut === 1 ? "it" : "them"} from the Import page if you want ${leftOut === 1 ? "it" : "them"}.`);
   return { message: parts.join(" ") };
 }
 
@@ -119,7 +134,7 @@ export async function sendToJira(projectId: string, storyIds: string[]): Promise
   const notes: string[] = [];
   for (const story of stories) {
     try {
-      const { skipped } = await updateJiraIssue(user.id, project.jiraCloudId, story.key, {
+      const { skipped, criteriaInDescription } = await updateJiraIssue(user.id, project.jiraCloudId, story.key, {
         summary: story.title,
         description: story.description,
         acceptanceCriteria: story.acceptanceCriteria,
@@ -127,6 +142,7 @@ export async function sendToJira(projectId: string, storyIds: string[]): Promise
       });
       await db.story.update({ where: { id: story.id }, data: { editedAt: null } });
       sent.push(story.key);
+      if (criteriaInDescription) notes.push(`${story.key}: this Jira has no acceptance criteria field, so the criteria went into the description.`);
       if (skipped.length > 0) notes.push(`${story.key}: Jira doesn't allow ${skipped.join(" or ")} on this issue type, so ${skipped.length === 1 ? "it wasn't" : "they weren't"} sent.`);
     } catch (error) {
       notes.push(`${story.key}: ${error instanceof JiraError && /does not exist|no issue/i.test(error.message) ? "isn't in Jira (written here?)." : failure(error)}`);

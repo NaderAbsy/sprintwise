@@ -21,6 +21,7 @@ describe("issuesAsCsv", () => {
         issueType: "Story",
         parent: "Refunds",
         labels: ["web", "payments"],
+        created: null,
       },
       {
         key: "ABC-2",
@@ -32,6 +33,7 @@ describe("issuesAsCsv", () => {
         issueType: "Bug",
         parent: "",
         labels: [],
+        created: null,
       },
     ]);
     const table = readCsvTable(csv, { maxBytes: 1_000_000, maxRows: 1000 });

@@ -78,3 +78,19 @@ export function parsePoints(raw: string | number | null | undefined): {
   if (!Number.isFinite(value) || value < 0) return { points: null, valid: false };
   return { points: value, valid: true };
 }
+
+/**
+ * A description with the given criteria as its "Acceptance criteria" section,
+ * for Jira sites with no criteria field: the existing section is replaced, or a
+ * new one is added at the end. Bullets are Jira's "* ".
+ */
+export function withCriteriaInDescription(description: string, criteria: string): string {
+  const bullets = splitCriteria(criteria).map((c) => `* ${c}`).join("\n");
+  if (!bullets) return description;
+  const lines = description.split(/\r?\n/);
+  const start = lines.findIndex((line) => CRITERIA_HEADING.test(line));
+  if (start < 0) return `${description.trimEnd()}${description.trim() ? "\n\n" : ""}h3. Acceptance criteria\n${bullets}`;
+  let end = start + 1;
+  while (end < lines.length && !(NEXT_HEADING.test(lines[end]) && !/^\s*[-*•#]+\s/.test(lines[end]))) end++;
+  return [...lines.slice(0, start + 1), bullets, ...(end < lines.length ? ["", ...lines.slice(end)] : [])].join("\n");
+}
