@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Product" };
 
 /** How each rule is checked, in the words the app uses when a rule fails. */
 const HOW: Record<string, string> = {
-  C1: "One criterion per line, and more for bigger stories: 1 up to 3 points, 2 from 5 points, 3 from 13. Leading dashes, bullets and numbers are ignored.",
+  C1: "One criterion per line, and more for bigger stories: 1 up to 3 points, 2 from 5 points, 3 from 13. Leading dashes, bullets and numbers are ignored. Criteria under an \u201cAcceptance criteria\u201d heading in the description count too, for Jira projects without a separate field.",
   C2: "The title or description reads “As a … I want … so that …”, in that order, and names who it's for. “As a user” could be anyone, so it doesn't count.",
   C3: "The criteria contain none of the project's vague words, such as works or properly, so each one can be tested.",
   C4: "There's something after “so that”: what the user gains.",

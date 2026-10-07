@@ -1,8 +1,8 @@
 import { secondLook } from "@/lib/readiness/second-look";
-import { splitCriteria, type Story } from "@/lib/stories/types";
+import { criteriaOf, type Story } from "@/lib/stories/types";
 
 /** Bump whenever a rule, weight or default changes, so old scores stay explainable. */
-export const RULES_VERSION = 4;
+export const RULES_VERSION = 5;
 
 export const DEFAULT_MAX_POINTS = 8;
 
@@ -210,7 +210,7 @@ function toFindings(rules: RuleResult[]): Finding[] {
 
 /** Scores one story against the fixed rules. Pure: same story + settings → same result. */
 /** Issue types scored as user stories. Anything else (a bug, a task) skips the story-format checks. */
-export const USER_STORY_TYPES = ["", "story", "user story"];
+export const USER_STORY_TYPES = ["", "story", "user story", "feature"];
 
 export function isUserStoryType(issueType = ""): boolean {
   return USER_STORY_TYPES.includes(issueType.trim().toLowerCase());
@@ -219,7 +219,8 @@ export function isUserStoryType(issueType = ""): boolean {
 export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTINGS): Readiness {
   const userStory = isUserStoryType(story.issueType);
   const storyText = `${story.title}\n${story.description}`;
-  const criteria = splitCriteria(story.acceptanceCriteria);
+  // Rules v5: criteria written under an "Acceptance criteria" heading in the description count too.
+  const criteria = criteriaOf(story).lines;
   const criteriaText = criteria.join("\n");
 
   const hasCriteria = criteria.length > 0;

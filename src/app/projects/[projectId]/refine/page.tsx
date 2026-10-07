@@ -14,7 +14,7 @@ import { requireProject } from "@/lib/server/dal";
 import { refreshStaleScores, settingsOf, toStory } from "@/lib/server/readiness";
 import { doneStatusesOf } from "@/lib/server/sprint";
 import { isDone } from "@/lib/sprint/metrics";
-import { splitCriteria } from "@/lib/stories/types";
+import { criteriaOf } from "@/lib/stories/types";
 
 export const metadata: Metadata = { title: "Refinement" };
 
@@ -78,7 +78,7 @@ export default async function RefinePage({ params, searchParams }: PageProps<"/p
   const story = toStory(row);
   const readiness = scoreStory(story, settingsOf(project));
   const looks = secondLook(story);
-  const criteria = splitCriteria(story.acceptanceCriteria);
+  const { lines: criteria, fromDescription } = criteriaOf(story);
   const prev = index > 0 ? href(list[index - 1].id) : null;
   const next = index < list.length - 1 ? href(list[index + 1].id) : `${base}/refine?done=1${all ? "&scope=all" : ""}`;
 
@@ -114,6 +114,7 @@ export default async function RefinePage({ params, searchParams }: PageProps<"/p
           </div>
           <div>
             <h3 className="eyebrow">Acceptance criteria</h3>
+            {fromDescription && <p className="mt-1 text-xs text-muted">From the description&apos;s Acceptance criteria section.</p>}
             {criteria.length === 0 ? (
               <p className="mt-1 text-subtle">None</p>
             ) : (

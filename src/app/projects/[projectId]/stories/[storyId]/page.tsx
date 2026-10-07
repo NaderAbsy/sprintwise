@@ -21,7 +21,7 @@ import { requireProject, requireUser } from "@/lib/server/dal";
 import { jiraAccount, jiraConfigured } from "@/lib/server/jira";
 import { SendToJiraButton } from "@/app/projects/_components/jira-buttons";
 import { settingsOf, toStory } from "@/lib/server/readiness";
-import { splitCriteria } from "@/lib/stories/types";
+import { criteriaOf } from "@/lib/stories/types";
 import { doneStatusesOf } from "@/lib/server/sprint";
 import { isDone } from "@/lib/sprint/metrics";
 
@@ -37,7 +37,7 @@ export default async function StoryPage({ params, searchParams }: PageProps<"/pr
   const story = toStory(row);
   const settings = settingsOf(project);
   const readiness = scoreStory(story, settings);
-  const criteria = splitCriteria(story.acceptanceCriteria);
+  const { lines: criteria, fromDescription } = criteriaOf(story);
   // Stored suggestions are re-checked against the schema before they're shown.
   const stored = SuggestionSchema.safeParse(row.readiness?.aiSuggestion);
   const suggestion = stored.success ? stored.data : null;
@@ -142,6 +142,7 @@ export default async function StoryPage({ params, searchParams }: PageProps<"/pr
           </div>
           <div className="p-5">
             <h2 className="eyebrow">Acceptance criteria</h2>
+            {fromDescription && <p className="mt-1 text-xs text-muted">From the description&apos;s Acceptance criteria section.</p>}
             {criteria.length === 0 ? (
               <p className="mt-2 text-subtle">None</p>
             ) : (

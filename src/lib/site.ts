@@ -17,6 +17,18 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.3",
+    date: "2026-10-07",
+    title: "Fits newer Jira projects",
+    summary: "Acceptance criteria written inside the description count, and Jira's Feature type is scored as a story.",
+    items: [
+      "Many Jira projects have no acceptance-criteria field, so teams write them in the description. Criteria under an \"Acceptance criteria\" heading there now count (rules v5).",
+      "The heading can be a Jira heading, bold text, a Markdown heading or \"Acceptance criteria:\"; the list ends at the next heading.",
+      "Story pages, refinement and shared backlogs show those criteria and say where they came from.",
+      "Feature, the story type in Jira's newer templates, gets the same story-format checks as Story.",
+    ],
+  },
+  {
     version: "v2.2",
     date: "2026-10-07",
     title: "Connect Jira",

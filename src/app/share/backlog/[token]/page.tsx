@@ -12,7 +12,7 @@ import { db } from "@/lib/server/db";
 import { settingsOf, toStory } from "@/lib/server/readiness";
 import { doneStatusesOf } from "@/lib/server/sprint";
 import { isDone } from "@/lib/sprint/metrics";
-import { splitCriteria } from "@/lib/stories/types";
+import { criteriaOf } from "@/lib/stories/types";
 
 // Shared links stay out of search engines and never send the token on to other sites.
 export const metadata: Metadata = { title: "Shared backlog", robots: { index: false, follow: false }, referrer: "no-referrer" };
@@ -79,7 +79,7 @@ export default async function SharedBacklogPage({ params, searchParams }: PagePr
         ) : (
           <ul className="space-y-2">
             {stories.map(({ row, story, readiness, looks }) => {
-              const criteria = splitCriteria(story.acceptanceCriteria);
+              const { lines: criteria, fromDescription } = criteriaOf(story);
               return (
                 <li key={row.id}>
                   <details className="card group">
@@ -130,6 +130,7 @@ export default async function SharedBacklogPage({ params, searchParams }: PagePr
                       </div>
                       <div>
                         <h2 className="eyebrow">Acceptance criteria</h2>
+                        {fromDescription && <p className="mt-1 text-xs text-muted">From the description&apos;s Acceptance criteria section.</p>}
                         {criteria.length === 0 ? (
                           <p className="mt-1 text-subtle">None</p>
                         ) : (

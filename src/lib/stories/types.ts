@@ -24,8 +24,43 @@ export function normalizeKey(key: string): string {
 export function splitCriteria(cell: string): string[] {
   return cell
     .split(/\r?\n/)
-    .map((line) => line.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, "").trim())
+    .map((line) => line.replace(/^\s*(?:[-*•#]+(?=\s)|\d+[.)])\s*/, "").trim())
     .filter((line) => line.length > 0);
+}
+
+/**
+ * The line that starts an acceptance-criteria section inside a description, as
+ * teams without a separate Jira field write it: "h3. Acceptance criteria",
+ * "*Acceptance criteria*", "**Acceptance Criteria:**", "## Acceptance criteria",
+ * "Acceptance criteria:" or "AC:".
+ */
+const CRITERIA_HEADING = /^\s*(?:h[1-6]\.\s*|#{1,6}\s*)?[*_]{0,2}\s*(?:acceptance criteria|ac)\s*:?\s*[*_]{0,2}\s*:?\s*$/i;
+/** The heading of the next section, which ends the criteria. Bullets ("* item") don't count. */
+const NEXT_HEADING = /^\s*(?:h[1-6]\.\s|#{1,6}\s|[*_]{1,2}[^*_\n]{1,60}[*_]{1,2}\s*:?\s*$|[A-Z][^.\n]{0,40}:\s*$)/;
+
+/** The text under a description's "Acceptance criteria" heading, up to the next heading; "" if there's none. */
+export function criteriaFromDescription(description: string): string {
+  const lines = description.split(/\r?\n/);
+  const start = lines.findIndex((line) => CRITERIA_HEADING.test(line));
+  if (start < 0) return "";
+  const section: string[] = [];
+  for (const line of lines.slice(start + 1)) {
+    if (NEXT_HEADING.test(line) && !/^\s*[-*•#]+\s/.test(line)) break;
+    section.push(line);
+  }
+  return section.join("\n").trim();
+}
+
+/**
+ * A story's acceptance criteria: its own field, or, when that's empty, the
+ * "Acceptance criteria" section of its description (common in Jira projects
+ * with no separate field).
+ */
+export function criteriaOf(story: Pick<Story, "acceptanceCriteria" | "description">): { lines: string[]; fromDescription: boolean } {
+  const own = splitCriteria(story.acceptanceCriteria);
+  if (own.length > 0) return { lines: own, fromDescription: false };
+  const found = splitCriteria(criteriaFromDescription(story.description));
+  return { lines: found, fromDescription: found.length > 0 };
 }
 
 /**
