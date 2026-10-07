@@ -32,6 +32,10 @@ const atlassian =
         scope: ["read:jira-work", "write:jira-work", "read:me"],
         prompt: "consent" as const,
         disableSignUp: true,
+        // The provider marks every email unverified, and Better Auth won't link an unverified account.
+        // Atlassian's own profile says whether the email is verified, so use that.
+        // (Atlassian's /me returns email_verified; Better Auth's profile type leaves it out.)
+        mapProfileToUser: (profile: object) => ({ emailVerified: (profile as { email_verified?: unknown }).email_verified === true }),
       }
     : undefined;
 
