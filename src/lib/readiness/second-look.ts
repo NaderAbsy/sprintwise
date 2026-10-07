@@ -1,5 +1,5 @@
 import { hasPlaceholders } from "@/lib/stories/helpers";
-import { splitCriteria, type Story } from "@/lib/stories/types";
+import { criteriaOf, type Story } from "@/lib/stories/types";
 
 /**
  * Signs that a story was pasted from an AI chat without a careful read. They
@@ -112,7 +112,7 @@ export function secondLook(story: Pick<Story, "title" | "description" | "accepta
     out.push({ kind: "placeholder", found: "[…]", message: "A [placeholder] from a template looks like it was never filled in." });
   }
 
-  for (const criterion of splitCriteria(story.acceptanceCriteria)) {
+  for (const criterion of criteriaOf(story).lines) {
     const hit = BOILERPLATE.find((phrase) => word(phrase).test(criterion));
     if (hit) {
       out.push({

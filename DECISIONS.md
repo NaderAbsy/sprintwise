@@ -2,6 +2,13 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-07 — v2.3: criteria in the description, Feature as a story (rules v5)
+
+- **Found while setting up a real Jira test site:** Jira's current Scrum template creates team-managed projects whose work types are Epic, Feature, Task and Subtask (no Story), and which have no acceptance-criteria field. Teams write criteria in the description instead. Sprintwise scored every such story as having no criteria (−35) and treated Feature as "not a story".
+- **Decision:** `criteriaOf(story)` uses the story's own criteria, or, when empty, the section under an "Acceptance criteria" heading in the description (`h3.`, `*bold*`, `**bold**`, `##`, or "Acceptance criteria:"; it ends at the next heading). Scoring, second-look hints, the story page, refinement and shared backlogs all use it, and the pages say when criteria came from the description. `Feature` joins `USER_STORY_TYPES`. `RULES_VERSION` 5, so stored scores refresh lazily. `splitCriteria` now also strips Jira's `#` and nested `**` bullets.
+- **Not changed:** the stored text. Criteria stay in the description, so Send to Jira writes back exactly what the team wrote, where they wrote it.
+- **Rejected:** moving description criteria into the criteria field on import (it would move text around in Jira on the next Send).
+
 ## 2026-10-07 — v2.2: connect Jira
 
 - **Why:** CSV exports were the biggest source of friction: hidden columns, Numbers re-saves, row limits and copying edits back by hand. The user's own company may not allow third-party Jira apps yet, but other teams can use the connection, and it can be tested on a free Jira site with invented issues.
