@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readImportPayload } from "@/lib/csv/import";
-import { matchColumns, parseStoriesCsv, readCsvTable } from "@/lib/csv/parse";
+import { matchColumns, parseStoriesCsv, readCsvTable, rememberedColumns } from "@/lib/csv/parse";
 import { readCsvFile } from "@/lib/csv/read";
 import { IMPORT_FILE_BYTES, IMPORT_FILE_ROWS, IMPORT_MAX_STORIES, MAX_ROWS, TEMPLATE_CSV } from "@/lib/csv/template";
 
@@ -174,6 +174,14 @@ describe("readCsvTable (backlog imports)", () => {
     const picked = read(text, { key: "Ticket", title: "Name", story_points: "Size", status: null });
     if (!picked.ok) throw new Error("expected rows");
     expect(picked.rows[0].story).toMatchObject({ key: "A-1", title: "One", storyPoints: 3, status: "" });
+  });
+
+  it("remembers picked columns only, so a column missing last time is found by name next time", () => {
+    const saved = rememberedColumns({ key: "Ticket", description: null, nonsense: "x", title: 3 });
+    expect(saved).toEqual({ key: "Ticket" });
+    expect(matchColumns(["Ticket", "Summary", "Description"], saved)).toMatchObject({ key: 0, title: 1, description: 2 });
+    expect(rememberedColumns(null)).toEqual({});
+    expect(rememberedColumns(["key"])).toEqual({});
   });
 
   it("falls back to header names when a remembered column isn't in this file", () => {

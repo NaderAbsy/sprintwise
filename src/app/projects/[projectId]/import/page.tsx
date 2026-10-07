@@ -3,7 +3,8 @@ import { Download } from "lucide-react";
 import type { Metadata } from "next";
 import { ImportForm } from "@/app/projects/_components/import-form";
 import { SectionHeader } from "@/components/section-header";
-import { IMPORT_FILE_ROWS, IMPORT_MAX_STORIES, TEMPLATE_COLUMNS, type ColumnMapping } from "@/lib/csv/template";
+import { rememberedColumns } from "@/lib/csv/parse";
+import { IMPORT_FILE_ROWS, IMPORT_MAX_STORIES, TEMPLATE_COLUMNS } from "@/lib/csv/template";
 import { db } from "@/lib/server/db";
 import { requireProject } from "@/lib/server/dal";
 import { settingsOf } from "@/lib/server/readiness";
@@ -42,7 +43,7 @@ export default async function ImportPage({ params }: PageProps<"/projects/[proje
         <ImportForm
           projectId={project.id}
           settings={settingsOf(project)}
-          savedColumns={(project.importColumns ?? {}) as ColumnMapping}
+          savedColumns={rememberedColumns(project.importColumns)}
           doneStatuses={doneStatusesOf(project)}
           editedKeys={edited.map((s) => s.key)}
         />

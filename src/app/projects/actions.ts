@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { readImportPayload } from "@/lib/csv/import";
+import { rememberedColumns } from "@/lib/csv/parse";
 import type { FormState } from "@/lib/form-state";
 import { db } from "@/lib/server/db";
 import { requireProject, requireUser } from "@/lib/server/dal";
@@ -183,7 +184,7 @@ export async function importStories(projectId: string, _prev: FormState, formDat
       });
     }),
     // The next file from the same Jira gets the same columns.
-    db.project.update({ where: { id: project.id }, data: { importColumns: mapping } }),
+    db.project.update({ where: { id: project.id }, data: { importColumns: rememberedColumns(mapping) } }),
   ]);
   await recordSprintChanges(project.id);
   await recordUsage("import");
