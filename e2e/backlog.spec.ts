@@ -39,8 +39,8 @@ test("a PO creates a project, scores a story and imports a backlog", async ({ pa
   await page.getByRole("link", { name: "Backlog" }).first().click();
   await page.getByRole("link", { name: "Import CSV" }).click();
   await page.getByLabel("CSV file").setInputFiles({ name: "backlog.csv", mimeType: "text/csv", buffer: Buffer.from(CSV) });
-  await expect(page.getByText("Preview: 1 of 3 stories ready")).toBeVisible();
-  await expect(page.getByText(/Row 3: Story points "XL"/)).toBeVisible();
+  await expect(page.getByText("3 stories ticked · 1 of 3 stories ready")).toBeVisible();
+  await expect(page.getByText(/Story points "XL" isn't a number/)).toBeVisible();
   await expectAccessible(page);
   await page.getByRole("button", { name: "Import 3 stories" }).click();
 
@@ -111,7 +111,7 @@ test("a CSV can be dragged onto the picker, and other files are turned away", as
   await expect(page.getByRole("button", { name: /^Remove/ })).toHaveCount(0);
 
   await drop("dropped.csv", CSV);
-  await expect(page.getByText("Preview: 1 of 3 stories ready")).toBeVisible();
+  await expect(page.getByText("3 stories ticked · 1 of 3 stories ready")).toBeVisible();
   await expect(turnedAway).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Remove dropped.csv" })).toBeVisible();
   await expectAccessible(page);

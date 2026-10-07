@@ -21,6 +21,7 @@ export type BacklogRow = {
   id: string;
   key: string;
   title: string;
+  epic: string;
   status: string;
   storyPoints: number | null;
   score: number | null;
@@ -258,6 +259,7 @@ export function BacklogTable({
                     <span className="font-mono text-xs text-subtle">{row.key}</span>{" "}
                     <span className="font-medium group-hover:text-accent group-hover:underline">{row.title}</span>
                   </Link>
+                  {row.epic && <span className="mt-0.5 block text-xs text-muted">{row.epic}</span>}
                 </td>
                 <td className="hidden sm:table-cell">{row.band && <BandBadge band={row.band} />}</td>
                 <td className="pr-2! sm:pr-4!">

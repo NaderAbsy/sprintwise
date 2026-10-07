@@ -90,21 +90,23 @@ model RateLimit {
 // ---------------------------------------------------------------------------
 
 model Project {
-  id           String   @id @default(cuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name         String
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
   /// Rule settings (story R-6).
-  maxPoints    Int      @default(8)
-  vagueWords   String[]
+  maxPoints     Int      @default(8)
+  vagueWords    String[]
   /// The team's own checks (CustomCheck[]): a failed one keeps a story from being Ready.
-  customChecks Json     @default("[]")
+  customChecks  Json     @default("[]")
   /// Statuses that count as finished in sprint metrics, matched ignoring case.
-  doneStatuses String[] @default(["Done", "Closed", "Resolved"])
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  stories      Story[]
-  sprints      Sprint[]
+  doneStatuses  String[] @default(["Done", "Closed", "Resolved"])
+  /// The CSV columns picked at the last import (ColumnMapping), so the next file from the same Jira matches.
+  importColumns Json     @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  stories       Story[]
+  sprints       Sprint[]
 
   @@index([userId])
   @@map("projects")
@@ -120,6 +122,8 @@ model Story {
   acceptanceCriteria String           @default("")
   storyPoints        Float?
   status             String           @default("")
+  /// The epic or parent it belongs to, as the import named it ("" = none). Used to filter the backlog.
+  epic               String           @default("")
   /// Priority order in the backlog, lowest first. Fractional so a move changes one row.
   rank               Float            @default(0)
   createdAt          DateTime         @default(now())

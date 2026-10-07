@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { parseStoriesCsv } from "@/lib/csv/parse";
+import { readImportPayload } from "@/lib/csv/import";
 import type { FormState } from "@/lib/form-state";
 import { db } from "@/lib/server/db";
 import { requireProject, requireUser } from "@/lib/server/dal";
@@ -141,18 +141,14 @@ export async function updateStory(projectId: string, storyId: string, _prev: For
  */
 export async function importStories(projectId: string, _prev: FormState, formData: FormData): Promise<FormState> {
   const project = await requireProject(projectId);
-  const csv = formData.get("csv");
-  if (typeof csv !== "string" || csv.trim() === "") return { error: "Choose a CSV file first." };
-
-  const parsed = parseStoriesCsv(csv);
-  if (!parsed.ok) {
-    return { error: parsed.errors.map((e) => (e.row ? `Row ${e.row}: ${e.message}` : e.message)).join(" ") };
-  }
+  const payload = readImportPayload(formData.get("stories"), formData.get("mapping"));
+  if (!payload.ok) return { error: payload.error };
+  const { stories, mapping } = payload;
 
   const existingKeys = new Set(
     (await db.story.findMany({ where: { projectId: project.id }, select: { key: true } })).map((s) => s.key),
   );
-  const newCount = parsed.stories.filter((s) => !existingKeys.has(s.key)).length;
+  const newCount = stories.filter((s) => !existingKeys.has(s.key)).length;
   if (existingKeys.size + newCount > MAX_STORIES_PER_PROJECT) {
     return {
       error: `This import would take the project past ${MAX_STORIES_PER_PROJECT} stories. Delete some stories or split the project.`,
@@ -162,8 +158,8 @@ export async function importStories(projectId: string, _prev: FormState, formDat
   const settings = settingsOf(project);
   // New stories join the bottom in file order; existing ones keep their place.
   const firstRank = await bottomRank(project.id);
-  await db.$transaction(
-    parsed.stories.map((story, i) => {
+  await db.$transaction([
+    ...stories.map((story, i) => {
       const readiness = readinessData(story, settings);
       return db.story.upsert({
         where: { projectId_key: { projectId: project.id, key: story.key } },
@@ -175,11 +171,13 @@ export async function importStories(projectId: string, _prev: FormState, formDat
         },
       });
     }),
-  );
+    // The next file from the same Jira gets the same columns.
+    db.project.update({ where: { id: project.id }, data: { importColumns: mapping } }),
+  ]);
   await recordSprintChanges(project.id);
   await recordUsage("import");
   revalidatePath(`/projects/${project.id}`, "layout");
-  redirect(`/projects/${project.id}?imported=${parsed.stories.length}`);
+  redirect(`/projects/${project.id}?imported=${stories.length}`);
 }
 
 /** Loads the invented demo backlog into a project, so a new user can try every screen. Existing keys are kept. */

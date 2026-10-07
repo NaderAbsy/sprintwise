@@ -27,10 +27,11 @@ export async function generateMetadata({ params }: PageProps<"/projects/[project
 
 export default async function BacklogPage({ params, searchParams }: PageProps<"/projects/[projectId]">) {
   const { projectId } = await params;
-  const { band: bandParam, imported, q: qParam, status: statusParam, sort: sortParam } = await searchParams;
+  const { band: bandParam, imported, q: qParam, status: statusParam, sort: sortParam, epic: epicParam } = await searchParams;
   const text = (v: string | string[] | undefined) => (typeof v === "string" ? v.trim().slice(0, 100) : "");
   const q = text(qParam);
   const statusFilter = text(statusParam);
+  const epicFilter = typeof epicParam === "string" ? epicParam.trim().slice(0, 200) : "";
   const sort = sortParam === "weakest" ? "weakest" : "priority";
   const project = await requireProject(projectId);
   const filter = FILTERS.find((f) => f.slug === bandParam);
@@ -69,19 +70,22 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
         : statusFilter === NO_STATUS
           ? s.status.trim() === ""
           : s.status.trim().toLowerCase() === statusFilter.toLowerCase(),
-    );
+    )
+    .filter((s) => !epicFilter || s.epic === epicFilter);
   if (sort === "weakest") shown.sort((a, b) => (a.readiness?.score ?? 0) - (b.readiness?.score ?? 0) || a.rank - b.rank);
-  const filtered = Boolean(filter || q || statusFilter);
+  const filtered = Boolean(filter || q || statusFilter || epicFilter);
   const statuses = [
     ...new Set(stories.map((s) => s.status.trim()).filter(Boolean)),
   ].sort((a, b) => a.localeCompare(b));
   if (stories.some((s) => s.status.trim() === "")) statuses.push(NO_STATUS);
+  const epics = [...new Set(stories.map((s) => s.epic).filter(Boolean))].sort((a, b) => a.localeCompare(b));
   // Links keep the search, status and order; only the band changes.
   const view = (band?: string) => {
     const params = new URLSearchParams();
     if (band) params.set("band", band);
     if (q) params.set("q", q);
     if (statusFilter) params.set("status", statusFilter);
+    if (epicFilter) params.set("epic", epicFilter);
     if (sort !== "priority") params.set("sort", sort);
     const query = params.toString();
     return query ? `${base}?${query}` : base;
@@ -153,6 +157,8 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
             sort={sort}
             band={filter?.slug}
             statuses={statuses}
+            epic={epicFilter}
+            epics={epics}
           />
           <nav aria-label="Filter by band" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <FilterCard href={view()} active={!filter} label="All" value={stories.length} />
@@ -187,6 +193,7 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
               id: s.id,
               key: s.key,
               title: s.title,
+              epic: s.epic,
               status: s.status,
               storyPoints: s.storyPoints,
               score: s.readiness?.score ?? null,
