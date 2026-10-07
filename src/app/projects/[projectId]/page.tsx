@@ -245,24 +245,24 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
               {filtered && (
                 <p className="flex flex-wrap items-center gap-2">
                   Showing {shown.length} of {stories.length} {stories.length === 1 ? "story" : "stories"}.
-                  <Link href={sort === "priority" ? base : `${base}?sort=${sort}`} className="text-accent underline underline-offset-2">
+                  <Link href={sort === "priority" ? base : `${base}?sort=${sort}`} scroll={false} className="text-accent underline underline-offset-2">
                     Clear filters
                   </Link>
                 </p>
               )}
               {finishedCount > 0 && !(statusFilter && isDone(statusFilter, doneStatuses)) && (
-                <Link href={toggle("finished", "show")} className="text-accent underline underline-offset-2">
+                <Link href={toggle("finished", "show")} scroll={false} className="text-accent underline underline-offset-2">
                   {finishedParam === "show" ? `Hide ${finishedCount} finished` : `Show ${finishedCount} finished`}
                 </Link>
               )}
               {needsLook.size > 0 && (
-                <Link href={toggle("look", "1")} className="text-accent underline underline-offset-2">
+                <Link href={toggle("look", "1")} scroll={false} className="text-accent underline underline-offset-2">
                   {lookOnly ? "Show all, not only second looks" : `${needsLook.size} worth a second look`}
                 </Link>
               )}
               {editedCount > 0 && (
                 <span className="flex flex-wrap items-center gap-2">
-                  <Link href={toggle("edited", "1")} className="text-accent underline underline-offset-2">
+                  <Link href={toggle("edited", "1")} scroll={false} className="text-accent underline underline-offset-2">
                     {editedOnly ? "Show all, not only edited" : `${editedCount} edited here, not yet in Jira`}
                   </Link>
                   {!jiraLinked && (
@@ -319,6 +319,8 @@ function FilterCard({
   return (
     <Link
       href={href}
+      // A filter changes the list below, so the page stays where it is.
+      scroll={false}
       aria-current={active ? "page" : undefined}
       className={`card flex items-center justify-between px-4 py-3 transition-colors ${
         active ? "border-accent ring-1 ring-accent" : "hover:border-border-strong"

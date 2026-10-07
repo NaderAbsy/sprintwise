@@ -25,6 +25,7 @@ export const RELEASES: Release[] = [
       "In the backlog and sprint tables, a story's status is a dropdown: To Do, In Progress, the statuses your stories already use, then your done statuses. Picking one saves it.",
       "To type a brand-new status, edit the story, or tick stories and use Set status.",
       "Every dropdown has the same arrow, as far from the right edge as the text is from the left, in light and dark themes.",
+      "Clicking Ready, Needs work or Not ready, or changing a filter, keeps the page where it is instead of jumping to the top.",
     ],
   },
   {

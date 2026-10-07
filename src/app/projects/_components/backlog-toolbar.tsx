@@ -9,7 +9,7 @@ export const NO_STATUS = "(none)";
 /**
  * Search, status filter and sort for the backlog. A plain GET form, so the
  * view lives in the URL and works without JavaScript; with it, changing a
- * select applies at once.
+ * select applies at once, and the page keeps its scroll position.
  */
 export function BacklogToolbar({
   action,
@@ -46,7 +46,7 @@ export function BacklogToolbar({
   const form = useRef<HTMLFormElement>(null);
   const submit = () => form.current?.requestSubmit();
   return (
-    <Form ref={form} action={action} role="search" aria-label="Find stories" className="flex flex-wrap items-end gap-3">
+    <Form ref={form} action={action} scroll={false} role="search" aria-label="Find stories" className="flex flex-wrap items-end gap-3">
       {band && <input type="hidden" name="band" value={band} />}
       {finished && <input type="hidden" name="finished" value={finished} />}
       {edited && <input type="hidden" name="edited" value="1" />}

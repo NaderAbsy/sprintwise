@@ -122,3 +122,24 @@ test("a story's status is picked from a list of the usual and the project's own 
   await expect(page.getByLabel("Status of TIDY-104", { exact: true })).toHaveValue("In Progress");
   await expectAccessible(page);
 });
+
+test("filtering keeps the page where it is instead of jumping to the top", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 600 });
+  await projectWithSamples(page, "Stay put");
+  const bands = page.getByRole("navigation", { name: "Filter by band" });
+  await bands.scrollIntoViewIfNeeded();
+  await page.mouse.wheel(0, 300);
+  await page.waitForFunction(() => window.scrollY > 200);
+
+  await bands.getByRole("link", { name: /Needs work/ }).click();
+  await expect(bands.getByRole("link", { name: /Needs work/ })).toHaveAttribute("aria-current", "page");
+  await expect(page).toHaveURL(/band=needs-work/);
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(200);
+  await expect(bands).toBeInViewport();
+
+  await page.getByLabel("Status", { exact: true }).selectOption("To Do");
+  await expect(page).toHaveURL(/status=To/);
+  await expect(page.getByLabel("Status", { exact: true })).toHaveValue("To Do");
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(200);
+  await expect(bands).toBeInViewport();
+});
