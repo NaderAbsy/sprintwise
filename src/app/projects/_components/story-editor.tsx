@@ -50,7 +50,18 @@ function insert(form: HTMLFormElement | null, name: string, text: string, mode: 
  * Score a new story or edit a saved one. The score updates as you type, with
  * the project's own rule settings, so you can fix a story before saving it.
  */
-export function StoryEditor({ projectId, settings, story }: { projectId: string; settings: RuleSettings; story?: EditedStory }) {
+export function StoryEditor({
+  projectId,
+  settings,
+  story,
+  returnToRefine,
+}: {
+  projectId: string;
+  settings: RuleSettings;
+  story?: EditedStory;
+  /** Opened from refinement mode (all unfinished stories, or only those not ready): go back there after saving or cancelling. */
+  returnToRefine?: "refine" | "refine-all";
+}) {
   const serverAction = story ? updateStory.bind(null, projectId, story.id) : addStory.bind(null, projectId);
   const [state, action, pending] = useActionState(serverAction, emptyFormState);
   const form = useRef<HTMLFormElement>(null);
@@ -131,12 +142,22 @@ export function StoryEditor({ projectId, settings, story }: { projectId: string;
             Add a Given / When / Then
           </button>
         </div>
+        {returnToRefine && <input type="hidden" name="returnTo" value={returnToRefine} />}
         <FormAlert state={state} />
         <div className="flex flex-wrap gap-3">
           <button className="btn-primary" disabled={pending}>
             {pending ? "Saving…" : story ? "Save changes" : "Score and save"}
           </button>
-          <Link href={story ? `/projects/${projectId}/stories/${story.id}` : `/projects/${projectId}`} className="btn-ghost">
+          <Link
+            href={
+              story
+                ? returnToRefine
+                  ? `/projects/${projectId}/refine?story=${story.id}${returnToRefine === "refine-all" ? "&scope=all" : ""}`
+                  : `/projects/${projectId}/stories/${story.id}`
+                : `/projects/${projectId}`
+            }
+            className="btn-ghost"
+          >
             Cancel
           </Link>
           {before && (

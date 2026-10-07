@@ -35,6 +35,10 @@ const STEPS = [
     text: "Drag stories into priority order. Then list them weakest first, open a story, read why it lost points, and choose Edit story to fix it; Next to fix takes you to the next one. Aim for Ready (80 or more) before planning.",
   },
   {
+    title: "Refine together",
+    text: "In the team's refinement meeting, open Refinement from the backlog. It shows one story at a time with what's missing. Fix it together, then everyone shows a size (1, 2, 3, 5, 8 or 13); the highest and lowest explain, the team agrees, and you click that size. Share a read-only backlog link if people want to read ahead.",
+  },
+  {
     title: "Create a sprint and lock the baseline",
     text: "On day one, create the sprint, write its goal, and tick the stories the team committed to. Sprintwise warns you about stories that aren't Ready and about planning more than the team usually finishes. Locking them makes the baseline.",
   },
