@@ -3,7 +3,7 @@ import { Download } from "lucide-react";
 import type { Metadata } from "next";
 import { ImportForm } from "@/app/projects/_components/import-form";
 import { SectionHeader } from "@/components/section-header";
-import { MAX_ROWS, TEMPLATE_COLUMNS } from "@/lib/csv/template";
+import { IMPORT_FILE_ROWS, IMPORT_MAX_STORIES, TEMPLATE_COLUMNS, type ColumnMapping } from "@/lib/csv/template";
 import { requireProject } from "@/lib/server/dal";
 import { settingsOf } from "@/lib/server/readiness";
 
@@ -15,7 +15,7 @@ export default async function ImportPage({ params }: PageProps<"/projects/[proje
     <>
       <SectionHeader
         title="Import stories from CSV"
-        description={`Up to ${MAX_ROWS} rows and 1 MB. Jira exports work too. Stories whose key is already in the project are updated.`}
+        description={`Files of up to ${IMPORT_FILE_ROWS.toLocaleString("en")} rows work, Jira exports included. Tick the stories you want, up to ${IMPORT_MAX_STORIES} at a time. Stories whose key is already in the project are updated.`}
         actions={
           <a href="/template.csv" download className="btn-secondary">
             <Download aria-hidden="true" className="h-4 w-4" />
@@ -34,8 +34,13 @@ export default async function ImportPage({ params }: PageProps<"/projects/[proje
             </Fragment>
           ))}
           . Only <code className="font-mono text-xs">key</code> and <code className="font-mono text-xs">title</code> are required.
+          Jira&apos;s Parent or Epic column and its Labels columns are read too, for filtering.
         </p>
-        <ImportForm projectId={project.id} settings={settingsOf(project)} />
+        <ImportForm
+          projectId={project.id}
+          settings={settingsOf(project)}
+          savedColumns={(project.importColumns ?? {}) as ColumnMapping}
+        />
       </div>
     </>
   );

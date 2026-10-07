@@ -18,6 +18,8 @@ export function BacklogToolbar({
   sort,
   band,
   statuses,
+  epic,
+  epics,
 }: {
   action: string;
   q: string;
@@ -25,6 +27,9 @@ export function BacklogToolbar({
   sort: "priority" | "weakest";
   band?: string;
   statuses: string[];
+  epic: string;
+  /** Epics named by imports; the filter appears only when there are some. */
+  epics: string[];
 }) {
   const form = useRef<HTMLFormElement>(null);
   const submit = () => form.current?.requestSubmit();
@@ -53,6 +58,21 @@ export function BacklogToolbar({
           ))}
         </select>
       </div>
+      {epics.length > 0 && (
+        <div>
+          <label htmlFor="backlog-epic" className="label">
+            Epic
+          </label>
+          <select id="backlog-epic" name="epic" defaultValue={epic} onChange={submit} className="field mt-1 w-48">
+            <option value="">Any epic</option>
+            {epics.map((e) => (
+              <option key={e} value={e}>
+                {e}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div>
         <label htmlFor="backlog-sort" className="label">
           Order

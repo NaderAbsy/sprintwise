@@ -2,6 +2,17 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-07 — v1.10: import any Jira export
+
+- **Why:** a real import hit three walls at once: 318 rows against a 200-row limit, column names Sprintwise didn't know, and a need to keep only one epic's stories, which meant filtering in Excel first.
+- **Decisions:**
+  - **Pick in the browser, send only the picks.** The file (up to 1,000 rows, 5 MB) is read and scored in the browser. The person filters by text, status, epic or label and ticks stories. Only the ticked stories are sent, as JSON, up to 500 per import. The server repeats every check (`readImportPayload`: shape, lengths, points, duplicate keys), since anything can be sent to a server action. The rest of the file never leaves the computer, which matters for backlogs that are company data.
+  - **Column matching** when a required column isn't recognised, or on request: one drop-down per field. The choice is saved on the project (`projects.importColumns`). A remembered column that isn't in a later file falls back to matching by name.
+  - **Row-level problems** (empty title, duplicate key, too long) flag that row and leave it unticked; they no longer reject the file. Sprint snapshots stay all-or-nothing (`parseStoriesCsv`), because a snapshot has to be the whole sprint.
+  - **Epics:** `stories.epic` is read from Jira's Parent summary, Epic Name, Epic Link or Parent column (best first), shown under the title in the backlog, and filterable. Labels are read for filtering the preview but not stored.
+- **Limits:** the server-action body limit went from 1.2 MB to 4 MB (Vercel's cap is 4.5 MB). 500 stories per import stays well inside it, and the project cap of 1,000 stories is unchanged.
+- **Rejected:** a live Jira connection (it needs a Jira admin to approve a third-party app; kept for v2); storing labels (no use for them after import yet).
+
 ## 2026-10-06 — v1.9: faster clicks
 
 - **Why:** the site felt slow when clicking. Measuring showed the app's functions ran in Vercel's default region, Washington D.C. (`iad1`), while the Neon database is in Frankfurt (`aws-eu-central-1`). Every query crossed the Atlantic, and a page makes several in a row (session, project, then the page's own data). Clicks also gave no feedback until the whole next page had arrived.

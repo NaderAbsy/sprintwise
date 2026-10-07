@@ -20,8 +20,8 @@ const SECURITY_HEADERS = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   experimental: {
-    // CSV uploads are capped at 1 MB; this leaves room for the form's other fields.
-    serverActions: { bodySizeLimit: "1.2mb" },
+    // Imports send only the ticked stories (up to 500); Vercel accepts request bodies up to 4.5 MB.
+    serverActions: { bodySizeLimit: "4mb" },
   },
   async headers() {
     return [{ source: "/:path*", headers: SECURITY_HEADERS }];

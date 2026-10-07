@@ -43,7 +43,7 @@ const FAQ = [
   },
   {
     q: "Do I need to connect Jira?",
-    a: "No. Paste a story, or upload a CSV in the Sprintwise template or a Jira export with Issue key, Summary and Story Points. A live Jira connection is planned for version 2.",
+    a: "No. Paste a story, or upload a CSV: the Sprintwise template or any Jira export. You match the columns if the names differ, tick the stories you want, and only those leave your computer. A live Jira connection is planned for version 2.",
   },
   {
     q: "What happens to my data?",
@@ -382,7 +382,7 @@ export default async function Home() {
             <div>
               <h3 className="font-semibold">Works with what you already export</h3>
               <p className="mt-1 text-sm text-muted">
-                The Sprintwise CSV template, or a Jira export with Issue key, Summary and Story Points.
+                The Sprintwise CSV template, or any Jira export: match the columns, then tick the stories you want.
               </p>
               <a href="/template.csv" className="mt-2 inline-block text-sm font-medium text-accent hover:underline">
                 Download the template

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseStoriesCsv } from "@/lib/csv/parse";
+import { readImportPayload } from "@/lib/csv/import";
+import { matchColumns, parseStoriesCsv, readCsvTable } from "@/lib/csv/parse";
 import { readCsvFile } from "@/lib/csv/read";
-import { MAX_ROWS, TEMPLATE_CSV } from "@/lib/csv/template";
+import { IMPORT_FILE_BYTES, IMPORT_FILE_ROWS, IMPORT_MAX_STORIES, MAX_ROWS, TEMPLATE_CSV } from "@/lib/csv/template";
 
 function ok(text: string) {
   const result = parseStoriesCsv(text);
@@ -125,5 +126,78 @@ describe("readCsvFile", () => {
     expect(await readCsvFile(new Blob([le]))).toBe(text);
     const be = le.map((_, i) => (i < 2 ? [0xfe, 0xff][i] : le[i % 2 === 0 ? i + 1 : i - 1]));
     expect(await readCsvFile(new Blob([be]))).toBe(text);
+  });
+});
+
+describe("readCsvTable (backlog imports)", () => {
+  const read = (text: string, mapping = {}) => readCsvTable(text, { mapping, maxBytes: IMPORT_FILE_BYTES, maxRows: IMPORT_FILE_ROWS });
+
+  it("keeps good rows when others have problems, each with its own reasons", () => {
+    const table = read("key,title,story_points\nA-1,One,3\nA-2,,2\nA-1,Again,1\nA-3,Three,XL");
+    if (!table.ok) throw new Error("expected rows");
+    expect(table.rows.map((r) => [r.row, r.errors.length])).toEqual([[1, 0], [2, 1], [3, 1], [4, 0]]);
+    expect(table.rows[1].errors).toEqual(["The title is empty."]);
+    expect(table.rows[2].errors[0]).toMatch(/^Duplicate key A-1/);
+    expect(table.rows[3].warnings[0]).toContain('"XL"');
+  });
+
+  it("reads Jira's epic and repeated Labels columns", () => {
+    const table = read("Issue key,Summary,Parent,Parent summary,Labels,Labels,Labels\nA-1,One,10001,Checkout,web,,mobile\nA-2,Two,,,,,");
+    if (!table.ok) throw new Error("expected rows");
+    expect(table.rows[0]).toMatchObject({ epic: "Checkout", labels: ["web", "mobile"] });
+    expect(table.rows[1]).toMatchObject({ epic: "", labels: [] });
+  });
+
+  it("uses the columns the person picked, and can leave one out", () => {
+    const text = "Ticket,Name,Size,Status\nA-1,One,3,To Do";
+    const missing = read(text);
+    expect(missing.ok).toBe(false);
+    if (!missing.ok) {
+      expect(missing.missing).toEqual(["key", "title"]);
+      expect(missing.headers).toEqual(["Ticket", "Name", "Size", "Status"]);
+    }
+    const picked = read(text, { key: "Ticket", title: "Name", story_points: "Size", status: null });
+    if (!picked.ok) throw new Error("expected rows");
+    expect(picked.rows[0].story).toMatchObject({ key: "A-1", title: "One", storyPoints: 3, status: "" });
+  });
+
+  it("falls back to header names when a remembered column isn't in this file", () => {
+    expect(matchColumns(["Issue key", "Summary"], { key: "Ticket" })).toMatchObject({ key: 0, title: 1, epic: null });
+  });
+
+  it("takes files of up to 1,000 rows", () => {
+    const rows = (n: number) => ["key,title", ...Array.from({ length: n }, (_, i) => `K-${i},Story ${i}`)].join("\n");
+    expect(read(rows(IMPORT_FILE_ROWS)).ok).toBe(true);
+    const over = read(rows(IMPORT_FILE_ROWS + 1));
+    expect(over.ok ? "" : over.errors[0].message).toBe("The file has 1,001 stories; the maximum is 1,000.");
+  });
+});
+
+describe("readImportPayload (what the browser sends)", () => {
+  const story = { key: " a-1 ", title: " One ", description: "", acceptanceCriteria: "", storyPoints: 3, status: "To Do", epic: " Checkout " };
+
+  it("tidies and accepts good stories, keeping the column choices", () => {
+    const result = readImportPayload(JSON.stringify([story]), JSON.stringify({ key: "Ticket", status: null, nonsense: "x" }));
+    expect(result).toEqual({
+      ok: true,
+      stories: [{ ...story, key: "A-1", title: "One", epic: "Checkout" }],
+      mapping: {},
+    });
+    const clean = readImportPayload(JSON.stringify([story]), JSON.stringify({ key: "Ticket", status: null }));
+    expect(clean.ok && clean.mapping).toEqual({ key: "Ticket", status: null });
+  });
+
+  it("repeats the file checks, since anything can be sent", () => {
+    const bad = (stories: unknown) => {
+      const r = readImportPayload(JSON.stringify(stories), "");
+      return r.ok ? "" : r.error;
+    };
+    expect(bad([])).toBe("Tick at least one story to import.");
+    expect(bad([{ ...story, title: "" }])).toBe("A-1: The title is empty.");
+    expect(bad([story, story])).toBe("A-1 is ticked twice.");
+    expect(bad([{ ...story, storyPoints: -1 }])).toMatch(/expected shape/);
+    expect(bad([{ ...story, epic: "x".repeat(201) }])).toBe("A-1: The epic is longer than 200 characters.");
+    expect(bad(Array.from({ length: IMPORT_MAX_STORIES + 1 }, (_, i) => ({ ...story, key: `K-${i}` })))).toMatch(/^Import up to 500/);
+    expect(readImportPayload("not json", "")).toEqual({ ok: false, error: "Choose a CSV file and tick the stories to import." });
   });
 });

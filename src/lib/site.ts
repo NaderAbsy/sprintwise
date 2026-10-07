@@ -17,6 +17,20 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v1.10",
+    date: "2026-10-07",
+    title: "Import any Jira export",
+    summary: "Big exports, unfamiliar column names and mixed backlogs import without touching Excel.",
+    items: [
+      "Files of up to 1,000 stories open in the preview; tick the ones you want and import up to 500 at a time.",
+      "Filter the preview by text, status, epic or label, then \"Tick only these\".",
+      "Match columns yourself when Sprintwise doesn't recognise a name; the choice is remembered for the project's next import.",
+      "Rows with a problem are flagged on their own instead of rejecting the whole file.",
+      "Only the ticked stories leave your computer; the rest of the file is read in the browser and never sent.",
+      "Stories keep their Jira epic (from the Parent or Epic column), shown in the backlog with an Epic filter.",
+    ],
+  },
+  {
     version: "v1.9",
     date: "2026-10-06",
     title: "Quicker on the click",
