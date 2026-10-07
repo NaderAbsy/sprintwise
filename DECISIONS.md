@@ -2,6 +2,13 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-07 — v1.11: before and after
+
+- **Why:** fixing an imported story meant overwriting its text with nothing left to compare against, and a first real import brought in finished stories and no story text, so every score was low with no warning.
+- **Editing:** each long field shows the saved text ("Before", read-only) beside the field ("New version"), stacked on phones. Changed fields get a marker and a Restore button; the live score shows the saved score and the change. The saved text is part of each field's accessible description. The edit layout goes side by side from `xl`, so the two columns plus the score panel aren't cramped.
+- **Imports:** stories in the project's done statuses start unticked, with a line saying how many and why. If no Description or Acceptance criteria column is matched, a warning explains that every story will score low.
+- **Rejected:** a diff view that highlights changed words (harder to read for long text, and the before text stays fully visible anyway).
+
 ## 2026-10-07 — v1.10: import any Jira export
 
 - **Why:** a real import hit three walls at once: 318 rows against a 200-row limit, column names Sprintwise didn't know, and a need to keep only one epic's stories, which meant filtering in Excel first.

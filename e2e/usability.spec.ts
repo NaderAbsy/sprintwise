@@ -88,3 +88,36 @@ test("a new user can run a whole sprint without a CSV, guided by the checklist",
   await expect(page.getByRole("heading", { level: 1, name: "Backlog" })).toBeVisible();
   await expect(checklist).toHaveCount(0);
 });
+
+test("editing shows the saved story beside each field, marks changes, and can put a field back", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/projects");
+  await page.getByLabel("Name").fill("Before and after");
+  await page.getByRole("button", { name: "Create project" }).click();
+  await page.getByRole("button", { name: /load 12 sample stories/ }).click();
+  await expect(page.getByText("Imported and scored 12 stories.")).toBeVisible();
+  await page.getByRole("link", { name: /TIDY-105/ }).click();
+  await page.getByRole("link", { name: "Edit story" }).click();
+
+  // The saved version: an empty description, and its score.
+  await expect(page.locator("#description-before")).toHaveText("Empty");
+  await expect(page.locator("#title-before")).toHaveText("Admin dashboard");
+  await expect(page.getByLabel("Description")).toHaveAccessibleDescription(/Empty/);
+  await expect(page.getByText("No changes yet.")).toBeVisible();
+  const scoreBefore = page.getByRole("complementary", { name: "Live score" }).getByText(/^Before:/);
+  await expect(scoreBefore).toContainText("Not ready");
+
+  // Write the new version: the change is marked and the score shows how far it moved.
+  await page.getByLabel("Description").fill("As a cleaning company owner I want to see this week's bookings so that I can plan staff");
+  await expect(page.getByText("1 field changed.")).toBeVisible();
+  await expect(scoreBefore).toContainText(/\+\d+ now/);
+  await expectAccessible(page);
+
+  // Restore puts the saved text back.
+  const restore = page.getByRole("button", { name: "Restore" });
+  await expect(restore).toHaveAccessibleDescription("Description");
+  await restore.click();
+  await expect(page.getByLabel("Description")).toHaveValue("");
+  await expect(page.getByText("No changes yet.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Restore" })).toHaveCount(0);
+});
