@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -349,6 +350,25 @@ export async function markCopiedToJira(projectId: string, storyId: string) {
   const project = await requireProject(projectId);
   await db.story.updateMany({ where: { id: storyId, projectId: project.id }, data: { editedAt: null } });
   revalidatePath(`/projects/${project.id}`, "layout");
+}
+
+/**
+ * Turns the read-only backlog link on, for the team's refinement meetings. Like
+ * report links, the token is 32 random bytes; turning it off deletes it, and a
+ * new link is different from the old one.
+ */
+export async function enableBacklogShare(projectId: string) {
+  const project = await requireProject(projectId);
+  if (!project.shareToken) {
+    await db.project.update({ where: { id: project.id }, data: { shareToken: randomBytes(32).toString("base64url") } });
+  }
+  revalidatePath(`/projects/${project.id}`);
+}
+
+export async function disableBacklogShare(projectId: string) {
+  const project = await requireProject(projectId);
+  await db.project.update({ where: { id: project.id }, data: { shareToken: null } });
+  revalidatePath(`/projects/${project.id}`);
 }
 
 const selectedIds = (ids: string[]) => [...new Set(ids.filter((id) => typeof id === "string"))].slice(0, MAX_STORIES_PER_PROJECT);

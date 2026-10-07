@@ -37,6 +37,16 @@ export default function PrivacyPage() {
       </section>
 
       <section>
+        <h2 className="text-base font-semibold text-foreground">Share links</h2>
+        <p className="mt-2">
+          Nothing is public unless you share it. A sprint report link shows that one report; a backlog link shows the
+          project&apos;s unfinished stories (titles, descriptions, acceptance criteria, scores, statuses and points),
+          never its sprints, settings or other projects. Anyone with a link can view it without an account. Each link
+          carries a long random secret, stays out of search engines, and stops working the moment you turn it off.
+        </p>
+      </section>
+
+      <section>
         <h2 className="text-base font-semibold text-foreground">AI suggestions</h2>
         {aiConfigured ? (
           <p className="mt-2">

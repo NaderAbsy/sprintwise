@@ -1,7 +1,8 @@
 import { CircleCheck, CircleDashed, CircleX, Download, FileUp, ListChecks, Plus, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { addSampleStories } from "@/app/projects/actions";
+import { addSampleStories, disableBacklogShare, enableBacklogShare } from "@/app/projects/actions";
+import { ShareLink } from "@/app/projects/_components/share-link";
 import { GettingStarted } from "@/app/projects/_components/getting-started";
 import { BacklogTable } from "@/app/projects/_components/backlog-table";
 import { BacklogToolbar, NO_STATUS } from "@/app/projects/_components/backlog-toolbar";
@@ -130,6 +131,14 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
           Export CSV
         </a>
       )}
+      <ShareLink
+        token={project.shareToken}
+        path="/share/backlog"
+        title="Share this backlog"
+        description="Anyone with the link can view the unfinished stories, read-only and without an account: titles, descriptions, acceptance criteria, scores, statuses and points. Not your sprints, settings or other projects. Turn the link off at any time."
+        enable={enableBacklogShare.bind(null, project.id)}
+        disable={disableBacklogShare.bind(null, project.id)}
+      />
       <Link href={`${base}/import`} className="btn-secondary">
         <FileUp aria-hidden="true" className="h-4 w-4" />
         Import CSV

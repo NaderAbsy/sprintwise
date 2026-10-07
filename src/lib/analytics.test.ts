@@ -13,6 +13,7 @@ describe("redactUrl", () => {
     ["/projects/cmuv5f8af/stories/new", "/projects/[project]/stories/new"],
     ["/projects/cmuv5f8af/sprints/cmuv5fsht/report", "/projects/[project]/sprints/[sprint]/report"],
     ["/share/" + "a".repeat(43), "/share/[token]"],
+    ["/share/backlog/" + "b".repeat(43), "/share/backlog/[token]"],
   ])("%s → %s", (path, expected) => {
     expect(redactUrl(site + path)).toBe(site + expected);
   });
