@@ -1,7 +1,17 @@
 "use client";
 import { RotateCcw } from "lucide-react";
+import { useState } from "react";
 import { FieldError } from "@/components/form-feedback";
+import { JiraText } from "@/components/jira-text";
+import { looksLikeJira } from "@/lib/stories/jira-markup";
 import type { StoryCompare, StoryDefaults, StoryFieldName } from "@/lib/stories/compare";
+
+/** Grows a text box to fit its text, so long stories don't hide in a scrolling box. Never shrinks below its rows. */
+function fitHeight(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = `${el.scrollHeight + 2}px`;
+}
 
 /** Puts a field back to its saved value, as if typed, so the live score follows. */
 function restore(name: StoryFieldName, value: string) {
@@ -63,6 +73,27 @@ function TextField({
     );
   }
   const before = compare.before[name];
+  return <CompareField name={name} heading={heading} label={label} before={before} compare={compare}>{children}</CompareField>;
+}
+
+/** Before (formatted like Jira, or as typed) beside the field being edited. */
+function CompareField({
+  name,
+  heading,
+  label,
+  before,
+  compare,
+  children,
+}: {
+  name: StoryFieldName;
+  heading: React.ReactNode;
+  label: string;
+  before: string;
+  compare: StoryCompare;
+  children: React.ReactNode;
+}) {
+  const formatted = name !== "title" && looksLikeJira(before);
+  const [asTyped, setAsTyped] = useState(false);
   return (
     <div>
       <div className="flex min-h-8 flex-wrap items-center gap-2">
@@ -71,20 +102,32 @@ function TextField({
       </div>
       <div className="mt-1 grid gap-2 md:grid-cols-2 md:gap-4">
         <div>
-          <p id={`${name}-before-label`} className="text-xs font-medium tracking-wide text-subtle uppercase">
-            Before
-          </p>
+          <div className="flex min-h-5 items-center justify-between gap-2">
+            <p id={`${name}-before-label`} className="text-xs font-medium tracking-wide text-subtle uppercase">
+              Before
+            </p>
+            {formatted && (
+              <button
+                type="button"
+                className="text-xs text-accent underline underline-offset-2"
+                aria-pressed={asTyped}
+                onClick={() => setAsTyped((v) => !v)}
+              >
+                Show as typed
+              </button>
+            )}
+          </div>
           <div
             id={`${name}-before`}
-            className={`mt-1 min-h-10 rounded-lg border border-dashed border-border-strong bg-surface-2/50 px-3 py-2 text-sm break-words whitespace-pre-wrap ${
-              name === "acceptanceCriteria" ? "font-mono text-xs" : ""
-            } ${before ? "text-muted" : "text-subtle italic"}`}
+            className={`mt-1 min-h-10 rounded-lg border border-dashed border-border-strong bg-surface-2/50 px-3 py-2 text-sm break-words ${
+              name === "acceptanceCriteria" && (!formatted || asTyped) ? "font-mono text-xs" : ""
+            } ${before ? "text-muted" : "text-subtle italic"} ${formatted && !asTyped ? "" : "whitespace-pre-wrap"}`}
           >
-            {before || "Empty"}
+            {!before ? "Empty" : formatted && !asTyped ? <JiraText text={before} /> : before}
           </div>
         </div>
         <div>
-          <p className="text-xs font-medium tracking-wide text-subtle uppercase md:block" aria-hidden="true">
+          <p className="flex min-h-5 items-center text-xs font-medium tracking-wide text-subtle uppercase" aria-hidden="true">
             New version
           </p>
           {children}
@@ -156,6 +199,8 @@ export function StoryFields({
         <textarea
           id="description"
           name="description"
+          ref={fitHeight}
+          onInput={(e) => fitHeight(e.currentTarget)}
           rows={compare ? 4 : 3}
           defaultValue={defaults.description}
           className="field mt-1"
@@ -169,6 +214,8 @@ export function StoryFields({
         <textarea
           id="acceptanceCriteria"
           name="acceptanceCriteria"
+          ref={fitHeight}
+          onInput={(e) => fitHeight(e.currentTarget)}
           rows={compare ? 5 : 4}
           defaultValue={defaults.acceptanceCriteria}
           className="field mt-1 font-mono text-xs"

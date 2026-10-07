@@ -7,6 +7,7 @@ import { CopyButton, CopyStoryButton } from "@/app/projects/_components/copy-sto
 import { storyAsText } from "@/lib/csv/export";
 import { deleteStory, markCopiedToJira } from "@/app/projects/actions";
 import { ConfirmButton } from "@/components/confirm-button";
+import { JiraInline, JiraText } from "@/components/jira-text";
 import { ReadinessBreakdown } from "@/components/readiness-breakdown";
 import { RemoveSection } from "@/components/remove-section";
 import { SectionHeader } from "@/components/section-header";
@@ -126,7 +127,7 @@ export default async function StoryPage({ params, searchParams }: PageProps<"/pr
         <section aria-label="The story" className="card divide-y divide-border text-sm">
           <div className="p-5">
             <h2 className="eyebrow">Description</h2>
-            <p className="mt-2 whitespace-pre-wrap">{story.description || <span className="text-subtle">None</span>}</p>
+            {story.description ? <JiraText text={story.description} className="mt-2" /> : <p className="mt-2 text-subtle">None</p>}
           </div>
           <div className="p-5">
             <h2 className="eyebrow">Acceptance criteria</h2>
@@ -135,7 +136,9 @@ export default async function StoryPage({ params, searchParams }: PageProps<"/pr
             ) : (
               <ul className="mt-2 list-disc space-y-1 pl-5">
                 {criteria.map((c, i) => (
-                  <li key={i}>{c}</li>
+                  <li key={i}>
+                    <JiraInline text={c} />
+                  </li>
                 ))}
               </ul>
             )}
