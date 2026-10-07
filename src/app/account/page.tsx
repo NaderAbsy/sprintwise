@@ -5,12 +5,15 @@ import { ConfirmButton } from "@/components/confirm-button";
 import { PageHeader } from "@/components/page-header";
 import { db } from "@/lib/server/db";
 import { requireUser } from "@/lib/server/dal";
+import { jiraAccount, jiraConfigured } from "@/lib/server/jira";
+import { disconnectJira } from "@/app/projects/jira-actions";
 
 export const metadata: Metadata = { title: "Account" };
 
 export default async function AccountPage() {
   const user = await requireUser();
   const projects = await db.project.count({ where: { userId: user.id } });
+  const jira = await jiraAccount(user.id);
 
   return (
     <>
@@ -33,6 +36,32 @@ export default async function AccountPage() {
             ))}
           </dl>
         </section>
+
+        {jiraConfigured && (
+          <section aria-labelledby="jira-heading" className="card space-y-3 p-5">
+            <h2 id="jira-heading" className="font-semibold">
+              Jira
+            </h2>
+            {jira ? (
+              <>
+                <p className="text-sm text-muted">
+                  Connected. Projects can import from Jira, sync, and send edits back. Disconnecting deletes the stored
+                  Jira tokens; your projects keep their stories and their saved search.
+                </p>
+                <ConfirmButton
+                  label="Disconnect Jira"
+                  title="Disconnect Jira?"
+                  body="Sprintwise will stop reading from and writing to Jira, and the stored tokens are deleted. You can connect again from any project's Import page."
+                  confirmLabel="Disconnect"
+                  tone="quiet"
+                  action={disconnectJira}
+                />
+              </>
+            ) : (
+              <p className="text-sm text-muted">Not connected. Connect it from a project&apos;s Import page.</p>
+            )}
+          </section>
+        )}
 
         <p className="text-sm text-muted">
           See{" "}

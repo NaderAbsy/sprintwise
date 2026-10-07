@@ -17,6 +17,19 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.2",
+    date: "2026-10-07",
+    title: "Connect Jira",
+    summary: "Import straight from a Jira search, sync with one click, and send your edits back. No more CSV files.",
+    items: [
+      "Connect your Atlassian account once from a project's Import page; tokens are stored encrypted.",
+      "Pick a Jira site and a search (JQL); the issues open in the same preview as a CSV, to filter and tick.",
+      "Sync from Jira re-runs the saved search: it updates stories and adds new ones, and never overwrites a story you edited here.",
+      "Send to Jira writes your edits back: title, description, acceptance criteria and points, from a story or the whole backlog.",
+      "Disconnect from your Account page at any time.",
+    ],
+  },
+  {
     version: "v2.1",
     date: "2026-10-07",
     title: "Refinement mode",

@@ -126,6 +126,16 @@ Then open <http://localhost:3000>. The demo at `/demo` works without signing in.
 2. Set the callback URL to `http://localhost:3000/api/auth/callback/github`.
 3. Put its client ID and secret into `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` in `.env`.
 
+### Jira connection (optional)
+
+1. Create an OAuth 2.0 (3LO) app at <https://developer.atlassian.com/console/myapps/>.
+2. Under **Permissions**, add the **Jira API** with `read:jira-work` and `write:jira-work`.
+3. Under **Authorization**, set the callback URL to `http://localhost:3000/api/auth/callback/atlassian` (and the live site's equivalent).
+4. Put its client ID and secret into `ATLASSIAN_CLIENT_ID` and `ATLASSIAN_CLIENT_SECRET` in `.env`.
+5. To let people outside your own Atlassian account connect, turn on **Distribution → Sharing** in the console.
+
+Without these, the Jira parts of the app don't appear. End-to-end tests use a pretend Jira (`JIRA_FAKE`), so they never need a real one.
+
 ## Tests
 
 | Command | What it covers |

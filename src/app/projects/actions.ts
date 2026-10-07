@@ -11,6 +11,7 @@ import { db } from "@/lib/server/db";
 import { requireProject, requireUser } from "@/lib/server/dal";
 import { projectDefaults, readinessData, settingsOf, toStory } from "@/lib/server/readiness";
 import { doneStatusesOf } from "@/lib/server/sprint";
+import { bottomRank, saveStories } from "@/lib/server/save-stories";
 import { recordSprintChanges } from "@/lib/server/tracking";
 import { recordUsage } from "@/lib/server/usage";
 import { readStoryForm, STORY_LIMITS } from "@/lib/stories/form";
@@ -80,10 +81,6 @@ async function nextStoryKey(projectId: string): Promise<string> {
 }
 
 /** The rank after the last story, so new stories join the bottom of the backlog. */
-async function bottomRank(projectId: string): Promise<number> {
-  const last = await db.story.aggregate({ where: { projectId }, _max: { rank: true } });
-  return (last._max.rank ?? 0) + 1;
-}
 
 /** Paste one story: score it, save it, and open its result. */
 export async function addStory(projectId: string, _prev: FormState, formData: FormData): Promise<FormState> {
@@ -170,27 +167,13 @@ export async function importStories(projectId: string, _prev: FormState, formDat
     };
   }
 
-  const settings = settingsOf(project);
-  // New stories join the bottom in file order; existing ones keep their place.
-  const firstRank = await bottomRank(project.id);
-  await db.$transaction([
-    ...stories.map((story, i) => {
-      const readiness = readinessData(story, settings);
-      return db.story.upsert({
-        where: { projectId_key: { projectId: project.id, key: story.key } },
-        create: { projectId: project.id, rank: firstRank + i, ...story, readiness: { create: readiness } },
-        update: {
-          ...story,
-          // What Jira holds now replaces what was edited here.
-          editedAt: null,
-          // A changed story makes its old AI suggestion stale.
-          readiness: { upsert: { create: readiness, update: { ...readiness, aiSuggestion: Prisma.DbNull } } },
-        },
-      });
-    }),
-    // The next file from the same Jira gets the same columns.
-    db.project.update({ where: { id: project.id }, data: { importColumns: rememberedColumns(mapping) } }),
-  ]);
+  // The next file from the same Jira gets the same columns. (An import straight from Jira has no columns to remember.)
+  const fromJira = formData.get("source") === "jira";
+  await saveStories(
+    project,
+    stories,
+    fromJira ? [] : [db.project.update({ where: { id: project.id }, data: { importColumns: rememberedColumns(mapping) } })],
+  );
   await recordSprintChanges(project.id);
   await recordUsage("import");
   revalidatePath(`/projects/${project.id}`, "layout");

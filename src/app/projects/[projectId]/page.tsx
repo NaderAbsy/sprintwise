@@ -11,7 +11,10 @@ import { EmptyState } from "@/components/empty-state";
 import { SectionHeader } from "@/components/section-header";
 import type { Band } from "@/lib/readiness/rules";
 import { db } from "@/lib/server/db";
-import { requireProject } from "@/lib/server/dal";
+import { requireProject, requireUser } from "@/lib/server/dal";
+import { jiraAccount, jiraConfigured } from "@/lib/server/jira";
+import { formatDay } from "@/lib/sprint/dates";
+import { JiraBar } from "@/app/projects/_components/jira-buttons";
 import { refreshStaleScores } from "@/lib/server/readiness";
 import { doneStatusesOf } from "@/lib/server/sprint";
 import { isDone } from "@/lib/sprint/metrics";
@@ -73,6 +76,8 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
   const ready = count("Ready");
   const typeOf = (s: (typeof stories)[number]) => s.issueType || "Story";
   const editedCount = stories.filter((s) => s.editedAt).length;
+  // Sync and Send need a connected account and a project that has imported from Jira once.
+  const jiraLinked = jiraConfigured && Boolean(project.jiraCloudId) && Boolean(await jiraAccount((await requireUser()).id));
   // Signs of a pasted AI draft: not scored, but worth listing.
   const needsLook = new Set(active.filter((s) => secondLook(s).length > 0).map((s) => s.id));
 
@@ -226,6 +231,14 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
             ))}
           </nav>
 
+          {jiraLinked && (
+            <JiraBar
+              projectId={project.id}
+              siteName={project.jiraSiteName ?? "Jira"}
+              syncedAt={project.jiraSyncedAt ? formatDay(project.jiraSyncedAt) : null}
+              editedIds={stories.filter((s) => s.editedAt).map((s) => s.id)}
+            />
+          )}
           {(filtered || finishedCount > 0 || editedCount > 0 || needsLook.size > 0) && (
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
               {filtered && (
@@ -251,9 +264,11 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
                   <Link href={toggle("edited", "1")} className="text-accent underline underline-offset-2">
                     {editedOnly ? "Show all, not only edited" : `${editedCount} edited here, not yet in Jira`}
                   </Link>
-                  <a href={`${base}/jira.csv`} download className="text-accent underline underline-offset-2">
-                    Download them for Jira
-                  </a>
+                  {!jiraLinked && (
+                    <a href={`${base}/jira.csv`} download className="text-accent underline underline-offset-2">
+                      Download them for Jira
+                    </a>
+                  )}
                 </span>
               )}
             </div>
