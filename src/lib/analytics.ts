@@ -14,8 +14,9 @@ export function redactUrl(raw: string): string | null {
   const parts = url.pathname.split("/").filter(Boolean);
   if (parts[0] === "api") return null;
 
-  const ID_AFTER: Record<string, string> = { projects: "[project]", stories: "[story]", sprints: "[sprint]", share: "[token]" };
-  const KEEP = new Set(["new"]);
+  // Backlog links are /share/backlog/<token>: "backlog" stays, the token after it goes.
+  const ID_AFTER: Record<string, string> = { projects: "[project]", stories: "[story]", sprints: "[sprint]", share: "[token]", backlog: "[token]" };
+  const KEEP = new Set(["new", "backlog"]);
   const path = parts.map((part, i) => {
     const label = ID_AFTER[parts[i - 1]];
     return label && !KEEP.has(part) ? label : part;

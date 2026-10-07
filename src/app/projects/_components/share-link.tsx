@@ -1,10 +1,27 @@
 "use client";
 import { Check, Copy, Link2, Share2 } from "lucide-react";
 import { useRef, useState, useSyncExternalStore, useTransition } from "react";
-import { disableReportShare, enableReportShare } from "@/app/projects/sprint-actions";
-
-/** Owner-only control: create, copy or turn off the read-only report link. */
-export function ShareReport({ projectId, sprintId, token }: { projectId: string; sprintId: string; token: string | null }) {
+/**
+ * Owner-only control: create, copy or turn off a read-only link. Used for a
+ * sprint report and for the backlog; the actions come bound from the page.
+ */
+export function ShareLink({
+  token,
+  path,
+  title,
+  description,
+  enable,
+  disable,
+}: {
+  token: string | null;
+  /** Where shared links live, e.g. "/share" or "/share/backlog". */
+  path: string;
+  title: string;
+  /** Exactly what a person with the link can see. */
+  description: string;
+  enable: () => Promise<void>;
+  disable: () => Promise<void>;
+}) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [pending, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
@@ -14,7 +31,7 @@ export function ShareReport({ projectId, sprintId, token }: { projectId: string;
     () => window.location.origin,
     () => "",
   );
-  const url = token ? `${origin}/share/${token}` : "";
+  const url = token ? `${origin}${path}/${token}` : "";
 
   return (
     <>
@@ -28,12 +45,9 @@ export function ShareReport({ projectId, sprintId, token }: { projectId: string;
         className="m-auto w-full max-w-md rounded-xl border border-border bg-surface p-6 text-foreground shadow-xl backdrop:bg-black/50"
       >
         <h2 id="share-title" className="text-lg font-semibold">
-          Share this report
+          {title}
         </h2>
-        <p className="mt-2 text-sm text-muted">
-          Anyone with the link can view this report, read-only, without an account. They can&apos;t see anything else in
-          your project. You can turn the link off at any time.
-        </p>
+        <p className="mt-2 text-sm text-muted">{description}</p>
         {token ? (
           <div className="mt-4 space-y-3">
             <label htmlFor="share-url" className="label">
@@ -62,7 +76,7 @@ export function ShareReport({ projectId, sprintId, token }: { projectId: string;
                 type="button"
                 className="btn-danger"
                 disabled={pending}
-                onClick={() => startTransition(() => disableReportShare(projectId, sprintId))}
+                onClick={() => startTransition(() => disable())}
               >
                 Turn off the link
               </button>
@@ -80,7 +94,7 @@ export function ShareReport({ projectId, sprintId, token }: { projectId: string;
               type="button"
               className="btn-primary"
               disabled={pending}
-              onClick={() => startTransition(() => enableReportShare(projectId, sprintId))}
+              onClick={() => startTransition(() => enable())}
             >
               <Link2 aria-hidden="true" className="h-4 w-4" />
               {pending ? "Creating…" : "Create link"}

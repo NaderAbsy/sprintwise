@@ -17,6 +17,18 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.0",
+    date: "2026-10-07",
+    title: "Share the backlog",
+    summary: "The first step towards teams: a read-only backlog link for refinement, and a home page for the AI era.",
+    items: [
+      "Share a read-only link to the backlog: the team sees every unfinished story, its score and what to fix, without an account.",
+      "Order the shared backlog by priority or weakest first; open a story to see its description, criteria and second-look hints.",
+      "Turn the link off at any time; a new link is always different from the old one.",
+      "A new home page: AI writes the tickets, Sprintwise checks they're ready.",
+    ],
+  },
+  {
     version: "v1.14",
     date: "2026-10-07",
     title: "Worth a second look",

@@ -2,6 +2,14 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-07 — v2.0 starts: a read-only backlog link
+
+- **Why:** refinement is a team meeting, but only the owner could see the scores. Full team accounts come later; a read-only link is the cheapest useful step.
+- **Decision:** `projects.shareToken` (32 random bytes, base64url, unique), like sprint report links. `/share/backlog/[token]` shows the project's unfinished stories (finished ones are counted, not listed) in priority order or weakest first. Each opens to its findings, band cap, type note, second-look hints, description and criteria. Scores are computed live with the project's settings. No edit controls, `noindex`, `no-referrer`, and a 404 once the link is off.
+- **One Share dialog:** `ShareLink` now serves both reports and backlogs, with the page passing bound server actions and saying exactly what the link shows.
+- **Privacy:** a "Share links" section on the Privacy page. Analytics scrubbing now hides the token in `/share/backlog/<token>` too; before this, only `/share/<token>` was covered.
+- **Rejected:** a shared link that also shows sprints (more exposure than refinement needs); per-viewer links (accounts are the right tool for that, and come with teammates).
+
 ## 2026-10-07 — Home page: positioned for AI-written tickets
 
 - **Why:** most people now let AI write their tickets, so "helps you write better stories" competes with AI tools and loses. Checking is the job that's left, and tracking the sprint is something writing tools don't do.
