@@ -25,6 +25,8 @@ export type BacklogRow = {
   issueType: string;
   /** Edited in Sprintwise and not yet marked as copied to Jira. */
   edited: boolean;
+  /** Shows signs of a pasted AI draft (not scored). */
+  secondLook: boolean;
   status: string;
   storyPoints: number | null;
   score: number | null;
@@ -265,13 +267,14 @@ export function BacklogTable({
                     <span className="font-mono text-xs text-subtle">{row.key}</span>{" "}
                     <span className="font-medium group-hover:text-accent group-hover:underline">{row.title}</span>
                   </Link>
-                  {(row.epic || row.edited || (row.issueType && row.issueType.toLowerCase() !== "story")) && (
+                  {(row.epic || row.edited || row.secondLook || (row.issueType && row.issueType.toLowerCase() !== "story")) && (
                     <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
                       {row.issueType && row.issueType.toLowerCase() !== "story" && (
                         <span className="rounded bg-surface-2 px-1.5 py-0.5 font-medium text-foreground">{row.issueType}</span>
                       )}
                       {row.epic && <span>{row.epic}</span>}
                       {row.edited && <span className="font-medium text-accent">Edited here</span>}
+                      {row.secondLook && <span className="font-medium text-needs-work">Second look</span>}
                     </span>
                   )}
                 </td>

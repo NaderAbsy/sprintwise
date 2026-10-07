@@ -24,6 +24,7 @@ export function BacklogToolbar({
   types,
   finished,
   edited = false,
+  look = false,
 }: {
   action: string;
   q: string;
@@ -40,6 +41,7 @@ export function BacklogToolbar({
   /** "show" while finished stories are shown, so searching keeps them. */
   finished: string;
   edited?: boolean;
+  look?: boolean;
 }) {
   const form = useRef<HTMLFormElement>(null);
   const submit = () => form.current?.requestSubmit();
@@ -48,6 +50,7 @@ export function BacklogToolbar({
       {band && <input type="hidden" name="band" value={band} />}
       {finished && <input type="hidden" name="finished" value={finished} />}
       {edited && <input type="hidden" name="edited" value="1" />}
+      {look && <input type="hidden" name="look" value="1" />}
       <div className="min-w-48 flex-1">
         <label htmlFor="backlog-q" className="label">
           Search

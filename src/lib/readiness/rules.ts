@@ -1,7 +1,8 @@
+import { secondLook } from "@/lib/readiness/second-look";
 import { splitCriteria, type Story } from "@/lib/stories/types";
 
 /** Bump whenever a rule, weight or default changes, so old scores stay explainable. */
-export const RULES_VERSION = 3;
+export const RULES_VERSION = 4;
 
 export const DEFAULT_MAX_POINTS = 8;
 
@@ -322,8 +323,13 @@ export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTIN
   const failedCustom = custom.filter((c) => !c.passed).map((c) => c.name);
 
   const score = rules.reduce((sum, r) => sum + r.earned, 0);
+  // Rules v4: text left over from an AI chat, or a placeholder nobody filled in, means nobody read it through.
+  const unread = secondLook(story).find((l) => l.kind === "leftover" || l.kind === "placeholder");
   const cap =
     bandCapFor(rules) ??
+    (unread
+      ? `Can't be Ready while it has ${unread.kind === "leftover" ? "text left over from an AI chat" : "an unfilled placeholder"}. See "Worth a second look".`
+      : undefined) ??
     (failedCustom.length > 0 ? `Can't be Ready until it passes your team's checks: ${failedCustom.join(", ")}.` : undefined);
   const scoreBand = bandFor(score);
   const typeNote = userStory
