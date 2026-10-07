@@ -60,6 +60,10 @@ const NUMBERS: [string, string][] = [
   ["Completion", "How much of the original commitment got done. Work added later doesn't count towards it. Which statuses count as done is set in project settings."],
   ["Velocity", "Points of the original commitment the team finished, averaged over the last three sprints. A planning guide, not a target."],
   ["Team checks", "Your own Definition of Ready items, such as “has a design link”. They don't change the score, but a story that fails one can't be Ready."],
+  [
+    "Worth a second look",
+    "Signs of an AI draft pasted without a careful read: chat leftovers (“Certainly! Here's…”), unfilled placeholders, criteria that fit any story, filler words and made-up figures. They don't change the score, but leftovers and placeholders keep a story from being Ready.",
+  ],
 ];
 
 export default function GuidePage() {

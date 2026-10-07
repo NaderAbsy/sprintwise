@@ -2,6 +2,13 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-07 — v1.14: worth a second look (rules v4)
+
+- **Why:** most teams now let AI draft tickets. A pasted draft can pass every rule and score 100 while still opening with "Certainly! Here's a user story", listing "All edge cases are handled" as a criterion, or promising "reduce tickets by 30%". Writing is cheap now; checking is the job, and that's Sprintwise's place next to AI writing tools.
+- **Decision:** `secondLook()` (`src/lib/readiness/second-look.ts`) finds five kinds of sign: chat leftovers (including Markdown `**bold**` / `###` that Jira shows as symbols), unfilled placeholders, boilerplate criteria that belong in a Definition of Done, filler words not already in the vague-word list, and outcome claims with a precise percentage. They're shown as "Worth a second look" on the story page, live in the editor, and as a backlog marker and filter.
+- **Not scored, with one exception:** these are heuristics, so they ask for a person's look instead of costing points. Chat leftovers and unfilled placeholders are never right in a ticket the team works from, so they cap the band at Needs work (rules v4; stored scores refresh lazily). None of the 12 sample stories trigger anything.
+- **Rejected:** an AI detector (guessing authorship is unreliable and beside the point: a careful human-reviewed AI draft is fine); counting boilerplate criteria against C1 (changes every team's scores for a heuristic); checking facts or system names (needs context Sprintwise doesn't have).
+
 ## 2026-10-07 — v1.13: reads like Jira
 
 - **Why:** Jira's CSV export writes descriptions in Jira wiki markup (`h3.`, `*bold*`, `{{code}}`, `{noformat}`), which showed as raw symbols. Long descriptions also made the edit page lopsided: the Before box grew while the new-version box scrolled.

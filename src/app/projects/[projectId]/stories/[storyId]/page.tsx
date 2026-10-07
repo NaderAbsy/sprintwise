@@ -10,6 +10,8 @@ import { ConfirmButton } from "@/components/confirm-button";
 import { JiraInline, JiraText } from "@/components/jira-text";
 import { ReadinessBreakdown } from "@/components/readiness-breakdown";
 import { RemoveSection } from "@/components/remove-section";
+import { SecondLookList } from "@/components/second-look";
+import { secondLook } from "@/lib/readiness/second-look";
 import { SectionHeader } from "@/components/section-header";
 import { rewriteAsStory, SuggestionSchema } from "@/lib/ai/suggestion";
 import { scoreStory } from "@/lib/readiness/rules";
@@ -122,7 +124,10 @@ export default async function StoryPage({ params, searchParams }: PageProps<"/pr
       )}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-        <ReadinessBreakdown readiness={readiness} />
+        <div className="space-y-6">
+          <ReadinessBreakdown readiness={readiness} />
+          <SecondLookList items={secondLook(story)} />
+        </div>
 
         <section aria-label="The story" className="card divide-y divide-border text-sm">
           <div className="p-5">

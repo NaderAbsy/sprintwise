@@ -6,19 +6,25 @@ import { addStory, updateStory } from "@/app/projects/actions";
 import { BandBadge } from "@/components/band-badge";
 import { FormAlert } from "@/components/form-feedback";
 import { ScoreRing } from "@/components/score-ring";
+import { SecondLookList } from "@/components/second-look";
 import { StoryFields } from "@/components/story-fields";
 import { useLeaveWarning } from "@/components/use-leave-warning";
 import { emptyFormState } from "@/lib/form-state";
 import { findVagueWords, scoreStory, type Readiness, type RuleSettings } from "@/lib/readiness/rules";
+import { secondLook, type SecondLook } from "@/lib/readiness/second-look";
 import { hasPlaceholders, SCENARIO_TEMPLATE, SPLIT_PATTERNS, STORY_TEMPLATE, vagueWordTips } from "@/lib/stories/helpers";
 import { storyFieldValues, type StoryDefaults, type StoryFieldName } from "@/lib/stories/compare";
 import { readStoryForm } from "@/lib/stories/form";
 
 type EditedStory = { id: string; key: string } & StoryDefaults;
 
-function preview(data: FormData, settings: RuleSettings): { readiness: Readiness; vague: string[]; placeholders: boolean } {
+function preview(
+  data: FormData,
+  settings: RuleSettings,
+): { readiness: Readiness; vague: string[]; placeholders: boolean; looks: SecondLook[] } {
   const { story } = readStoryForm(data);
   return {
+    looks: secondLook(story),
     placeholders: hasPlaceholders(`${story.description}\n${story.acceptanceCriteria}`),
     readiness: scoreStory({ key: "PREVIEW", ...story, title: story.title || " " }, settings),
     vague: findVagueWords(`${story.title}\n${story.description}\n${story.acceptanceCriteria}`, settings.vagueWords),
@@ -49,6 +55,9 @@ export function StoryEditor({ projectId, settings, story }: { projectId: string;
   const [state, action, pending] = useActionState(serverAction, emptyFormState);
   const form = useRef<HTMLFormElement>(null);
   const [placeholders, setPlaceholders] = useState(false);
+  const [looks, setLooks] = useState<SecondLook[]>(() =>
+    secondLook({ title: story?.title ?? "", description: story?.description ?? "", acceptanceCriteria: story?.acceptanceCriteria ?? "" }),
+  );
   const [dirty, setDirty] = useState(false);
   useLeaveWarning(dirty);
   const [vague, setVague] = useState<string[]>(() =>
@@ -98,6 +107,7 @@ export function StoryEditor({ projectId, settings, story }: { projectId: string;
         setReadiness(next.readiness);
         setVague(next.vague);
         setPlaceholders(next.placeholders);
+        setLooks(next.looks);
       }}
       className={`grid items-start gap-6 ${story ? "xl:grid-cols-[minmax(0,1fr)_20rem]" : "lg:grid-cols-[minmax(0,1fr)_20rem]"}`}
       noValidate
@@ -190,6 +200,7 @@ export function StoryEditor({ projectId, settings, story }: { projectId: string;
             </ul>
           </div>
         )}
+        <SecondLookList items={looks} compact />
         {vague.length > 0 && (
           <details className="rounded-lg bg-surface-2 p-3 text-sm" open>
             <summary className="cursor-pointer font-medium">Instead of vague words</summary>

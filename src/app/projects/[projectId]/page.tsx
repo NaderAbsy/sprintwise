@@ -14,6 +14,7 @@ import { requireProject } from "@/lib/server/dal";
 import { refreshStaleScores } from "@/lib/server/readiness";
 import { doneStatusesOf } from "@/lib/server/sprint";
 import { isDone } from "@/lib/sprint/metrics";
+import { secondLook } from "@/lib/readiness/second-look";
 
 const FILTERS: { slug: string; band: Band; Icon: typeof CircleCheck; tone: string }[] = [
   { slug: "ready", band: "Ready", Icon: CircleCheck, tone: "text-ready-dot" },
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: PageProps<"/projects/[project
 
 export default async function BacklogPage({ params, searchParams }: PageProps<"/projects/[projectId]">) {
   const { projectId } = await params;
-  const { band: bandParam, imported, q: qParam, status: statusParam, sort: sortParam, epic: epicParam, type: typeParam, finished: finishedParam, edited: editedParam } =
+  const { band: bandParam, imported, q: qParam, status: statusParam, sort: sortParam, epic: epicParam, type: typeParam, finished: finishedParam, edited: editedParam, look: lookParam } =
     await searchParams;
   const text = (v: string | string[] | undefined) => (typeof v === "string" ? v.trim().slice(0, 100) : "");
   const q = text(qParam);
@@ -36,6 +37,7 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
   const epicFilter = typeof epicParam === "string" ? epicParam.trim().slice(0, 200) : "";
   const typeFilter = text(typeParam);
   const editedOnly = editedParam === "1";
+  const lookOnly = lookParam === "1";
   const sort = sortParam === "weakest" ? "weakest" : "priority";
   const project = await requireProject(projectId);
   const filter = FILTERS.find((f) => f.slug === bandParam);
@@ -70,6 +72,8 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
   const ready = count("Ready");
   const typeOf = (s: (typeof stories)[number]) => s.issueType || "Story";
   const editedCount = stories.filter((s) => s.editedAt).length;
+  // Signs of a pasted AI draft: not scored, but worth listing.
+  const needsLook = new Set(active.filter((s) => secondLook(s).length > 0).map((s) => s.id));
 
   // Priority order by default; "weakest first" lists the lowest scores first, so they get fixed (story R-3).
   const needle = q.toLowerCase();
@@ -85,9 +89,10 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
     )
     .filter((s) => !epicFilter || s.epic === epicFilter)
     .filter((s) => !typeFilter || typeOf(s) === typeFilter)
-    .filter((s) => !editedOnly || s.editedAt);
+    .filter((s) => !editedOnly || s.editedAt)
+    .filter((s) => !lookOnly || needsLook.has(s.id));
   if (sort === "weakest") shown.sort((a, b) => (a.readiness?.score ?? 0) - (b.readiness?.score ?? 0) || a.rank - b.rank);
-  const filtered = Boolean(filter || q || statusFilter || epicFilter || typeFilter || editedOnly);
+  const filtered = Boolean(filter || q || statusFilter || epicFilter || typeFilter || editedOnly || lookOnly);
   const statuses = [
     ...new Set(stories.map((s) => s.status.trim()).filter(Boolean)),
   ].sort((a, b) => a.localeCompare(b));
@@ -103,13 +108,14 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
     if (epicFilter) params.set("epic", epicFilter);
     if (typeFilter) params.set("type", typeFilter);
     if (editedOnly) params.set("edited", "1");
+    if (lookOnly) params.set("look", "1");
     if (finishedParam === "show") params.set("finished", "show");
     if (sort !== "priority") params.set("sort", sort);
     const query = params.toString();
     return query ? `${base}?${query}` : base;
   };
   // Flips one switch in the current view's address, keeping the rest.
-  const toggle = (name: "finished" | "edited", on: string) => {
+  const toggle = (name: "finished" | "edited" | "look", on: string) => {
     const url = new URL(view(filter?.slug), "http://x");
     if (url.searchParams.get(name) === on) url.searchParams.delete(name);
     else url.searchParams.set(name, on);
@@ -191,6 +197,7 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
             types={types}
             finished={finishedParam === "show" ? "show" : ""}
             edited={editedOnly}
+            look={lookOnly}
           />
           <nav aria-label="Filter by band" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <FilterCard href={view()} active={!filter} label="All" value={active.length} />
@@ -206,7 +213,7 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
             ))}
           </nav>
 
-          {(filtered || finishedCount > 0 || editedCount > 0) && (
+          {(filtered || finishedCount > 0 || editedCount > 0 || needsLook.size > 0) && (
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
               {filtered && (
                 <p className="flex flex-wrap items-center gap-2">
@@ -219,6 +226,11 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
               {finishedCount > 0 && !(statusFilter && isDone(statusFilter, doneStatuses)) && (
                 <Link href={toggle("finished", "show")} className="text-accent underline underline-offset-2">
                   {finishedParam === "show" ? `Hide ${finishedCount} finished` : `Show ${finishedCount} finished`}
+                </Link>
+              )}
+              {needsLook.size > 0 && (
+                <Link href={toggle("look", "1")} className="text-accent underline underline-offset-2">
+                  {lookOnly ? "Show all, not only second looks" : `${needsLook.size} worth a second look`}
                 </Link>
               )}
               {editedCount > 0 && (
@@ -248,6 +260,7 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
               epic: s.epic,
               issueType: s.issueType,
               edited: Boolean(s.editedAt),
+              secondLook: needsLook.has(s.id),
               status: s.status,
               storyPoints: s.storyPoints,
               score: s.readiness?.score ?? null,
