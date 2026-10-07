@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { ImportForm } from "@/app/projects/_components/import-form";
 import { SectionHeader } from "@/components/section-header";
 import { IMPORT_FILE_ROWS, IMPORT_MAX_STORIES, TEMPLATE_COLUMNS, type ColumnMapping } from "@/lib/csv/template";
+import { db } from "@/lib/server/db";
 import { requireProject } from "@/lib/server/dal";
 import { settingsOf } from "@/lib/server/readiness";
 import { doneStatusesOf } from "@/lib/server/sprint";
@@ -12,6 +13,7 @@ export const metadata: Metadata = { title: "Import CSV" };
 
 export default async function ImportPage({ params }: PageProps<"/projects/[projectId]/import">) {
   const project = await requireProject((await params).projectId);
+  const edited = await db.story.findMany({ where: { projectId: project.id, editedAt: { not: null } }, select: { key: true } });
   return (
     <>
       <SectionHeader
@@ -35,13 +37,14 @@ export default async function ImportPage({ params }: PageProps<"/projects/[proje
             </Fragment>
           ))}
           . Only <code className="font-mono text-xs">key</code> and <code className="font-mono text-xs">title</code> are required.
-          Jira&apos;s Parent or Epic column and its Labels columns are read too, for filtering.
+          Jira&apos;s Issue Type, Parent or Epic, and Labels columns are read too.
         </p>
         <ImportForm
           projectId={project.id}
           settings={settingsOf(project)}
           savedColumns={(project.importColumns ?? {}) as ColumnMapping}
           doneStatuses={doneStatusesOf(project)}
+          editedKeys={edited.map((s) => s.key)}
         />
       </div>
     </>

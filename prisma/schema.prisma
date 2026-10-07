@@ -122,6 +122,10 @@ model Story {
   acceptanceCriteria String           @default("")
   storyPoints        Float?
   status             String           @default("")
+  /// Jira's issue type ("" = a story). Bugs, tasks and the like don't need the "As a … I want …" format.
+  issueType          String           @default("")
+  /// Set when the story's text or estimate is edited in Sprintwise; cleared when it's marked as copied to Jira or re-imported.
+  editedAt           DateTime?
   /// The epic or parent it belongs to, as the import named it ("" = none). Used to filter the backlog.
   epic               String           @default("")
   /// Priority order in the backlog, lowest first. Fractional so a move changes one row.
@@ -208,6 +212,8 @@ model SnapshotItem {
   acceptanceCriteria String   @default("")
   storyPoints        Float?
   status             String   @default("")
+  /// Jira's issue type at the time ("" = a story), so planning readiness scores bugs and tasks the same way.
+  issueType          String   @default("")
 
   @@unique([snapshotId, key])
   @@map("snapshot_items")

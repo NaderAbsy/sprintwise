@@ -8,10 +8,12 @@ import type { FormState } from "@/lib/form-state";
 import { db } from "@/lib/server/db";
 import { requireProject, requireUser } from "@/lib/server/dal";
 import { projectDefaults, readinessData, settingsOf, toStory } from "@/lib/server/readiness";
+import { doneStatusesOf } from "@/lib/server/sprint";
 import { recordSprintChanges } from "@/lib/server/tracking";
 import { recordUsage } from "@/lib/server/usage";
 import { readStoryForm, STORY_LIMITS } from "@/lib/stories/form";
 import { planMove } from "@/lib/stories/rank";
+import { isDone } from "@/lib/sprint/metrics";
 import { normalizeKey, parsePoints, type Story } from "@/lib/stories/types";
 import { Prisma } from "@/generated/prisma/client";
 import { MAX_PROJECTS, MAX_STORIES_PER_PROJECT } from "@/lib/limits";
@@ -101,6 +103,8 @@ export async function addStory(projectId: string, _prev: FormState, formData: Fo
       projectId: project.id,
       rank: await bottomRank(project.id),
       ...story,
+      // Written here, so it isn't in Jira yet.
+      editedAt: new Date(),
       readiness: { create: readinessData(story, settingsOf(project)) },
     },
   });
@@ -112,7 +116,7 @@ export async function addStory(projectId: string, _prev: FormState, formData: Fo
 /** Edit a saved story and re-score it. The key stays, because sprints match stories by key. */
 export async function updateStory(projectId: string, storyId: string, _prev: FormState, formData: FormData): Promise<FormState> {
   const project = await requireProject(projectId);
-  const existing = await db.story.findFirst({ where: { id: storyId, projectId: project.id }, select: { id: true, key: true } });
+  const existing = await db.story.findFirst({ where: { id: storyId, projectId: project.id } });
   if (!existing) return { error: "This story no longer exists." };
 
   const { story: fields, fieldErrors } = readStoryForm(formData);
@@ -121,10 +125,15 @@ export async function updateStory(projectId: string, storyId: string, _prev: For
 
   const story: Story = { key: existing.key, ...fields };
   const readiness = readinessData(story, settingsOf(project));
+  // A change to what Jira holds (not just the status, which moves in Jira anyway) needs copying back.
+  const textChanged = (["title", "description", "acceptanceCriteria", "storyPoints", "issueType"] as const).some(
+    (field) => (fields[field] ?? "") !== (existing[field] ?? ""),
+  );
   await db.story.update({
     where: { id: existing.id },
     data: {
       ...fields,
+      ...(textChanged && { editedAt: new Date() }),
       // A changed story makes its old AI suggestion stale.
       readiness: { upsert: { create: readiness, update: { ...readiness, aiSuggestion: Prisma.DbNull } } },
     },
@@ -166,6 +175,8 @@ export async function importStories(projectId: string, _prev: FormState, formDat
         create: { projectId: project.id, rank: firstRank + i, ...story, readiness: { create: readiness } },
         update: {
           ...story,
+          // What Jira holds now replaces what was edited here.
+          editedAt: null,
           // A changed story makes its old AI suggestion stale.
           readiness: { upsert: { create: readiness, update: { ...readiness, aiSuggestion: Prisma.DbNull } } },
         },
@@ -300,6 +311,7 @@ export async function quickUpdateStory(projectId: string, storyId: string, _prev
     where: { id: row.id },
     data: {
       ...data,
+      ...("storyPoints" in data && data.storyPoints !== row.storyPoints && { editedAt: new Date() }),
       ...("storyPoints" in data && {
         readiness: { upsert: { create: readinessData(story, settingsOf(project)), update: readinessData(story, settingsOf(project)) } },
       }),
@@ -311,20 +323,30 @@ export async function quickUpdateStory(projectId: string, storyId: string, _prev
 }
 
 /** Moves a story to `index` (0 = top) in the backlog's priority order. */
-export async function moveStory(projectId: string, storyId: string, index: number) {
+export async function moveStory(projectId: string, storyId: string, index: number, withFinished = true) {
   const project = await requireProject(projectId);
   if (!Number.isFinite(index)) return;
-  const ordered = await db.story.findMany({
+  const all = await db.story.findMany({
     where: { projectId: project.id },
     orderBy: [{ rank: "asc" }, { key: "asc" }],
-    select: { id: true, rank: true },
+    select: { id: true, rank: true, status: true },
   });
+  // The index is a position in the list as shown, which hides finished stories by default.
+  const doneStatuses = doneStatusesOf(project);
+  const ordered = withFinished ? all : all.filter((s) => !isDone(s.status, doneStatuses));
   const plan = planMove(ordered, storyId, index);
   if (plan.kind === "rank") {
     await db.story.updateMany({ where: { id: storyId, projectId: project.id }, data: { rank: plan.rank } });
   } else if (plan.kind === "renumber") {
     await db.$transaction(plan.ids.map((id, i) => db.story.updateMany({ where: { id, projectId: project.id }, data: { rank: i + 1 } })));
   }
+  revalidatePath(`/projects/${project.id}`, "layout");
+}
+
+/** The story's edits are now in Jira too, so it leaves the "Edited here" list. */
+export async function markCopiedToJira(projectId: string, storyId: string) {
+  const project = await requireProject(projectId);
+  await db.story.updateMany({ where: { id: storyId, projectId: project.id }, data: { editedAt: null } });
   revalidatePath(`/projects/${project.id}`, "layout");
 }
 

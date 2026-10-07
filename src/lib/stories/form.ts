@@ -1,7 +1,7 @@
 import { normalizeKey, parsePoints, type Story } from "@/lib/stories/types";
 
 /** Field limits for a pasted or edited story. CSV imports have their own file limits. */
-export const STORY_LIMITS = { key: 50, title: 300, description: 5000, acceptanceCriteria: 5000, status: 50, points: 1000 };
+export const STORY_LIMITS = { key: 50, title: 300, description: 5000, acceptanceCriteria: 5000, status: 50, issueType: 50, points: 1000 };
 
 export type StoryForm = { story: Omit<Story, "key">; rawKey: string; fieldErrors: Record<string, string> };
 
@@ -27,6 +27,8 @@ export function readStoryForm(data: FormData): StoryForm {
   }
   const status = text("status");
   if (status.length > STORY_LIMITS.status) fieldErrors.status = `Keep the status under ${STORY_LIMITS.status} characters.`;
+  const issueType = text("issueType");
+  if (issueType.length > STORY_LIMITS.issueType) fieldErrors.issueType = `Keep the type under ${STORY_LIMITS.issueType} characters.`;
 
   const points = parsePoints(text("storyPoints"));
   if (!points.valid) fieldErrors.storyPoints = "Story points must be a number of 0 or more.";
@@ -40,7 +42,7 @@ export function readStoryForm(data: FormData): StoryForm {
   }
 
   return {
-    story: { title, description, acceptanceCriteria, storyPoints: points.valid ? points.points : null, status },
+    story: { title, description, acceptanceCriteria, storyPoints: points.valid ? points.points : null, status, issueType },
     rawKey,
     fieldErrors,
   };

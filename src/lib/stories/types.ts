@@ -8,6 +8,8 @@ export type Story = {
   /** null = not estimated (blank or not a number). */
   storyPoints: number | null;
   status: string;
+  /** Jira's issue type; blank means a story. Optional, since sprint snapshots don't keep it. */
+  issueType?: string;
 };
 
 /** Matching key: trimmed and upper-cased, so " proj-12 " and "PROJ-12" are the same story. */

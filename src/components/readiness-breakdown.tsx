@@ -27,6 +27,7 @@ export function ReadinessBreakdown({ readiness }: { readiness: Readiness }) {
           {readiness.score} would be Ready, but this story is capped at Needs work. {readiness.bandCap}
         </p>
       )}
+      {readiness.typeNote && <p className="mt-4 rounded-lg bg-surface-2 px-3 py-2 text-sm text-muted">{readiness.typeNote}</p>}
       {failed.length > 0 && (
         <ul className="mt-5 space-y-3 border-t border-border pt-4">
           {failed.map((rule) => (

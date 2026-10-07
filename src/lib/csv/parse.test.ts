@@ -32,10 +32,10 @@ describe("parseStoriesCsv", () => {
     ]);
   });
 
-  it("accepts a Jira export's headers and ignores extra columns", () => {
-    const csv = "Issue key,Summary,Issue Type,Story point estimate,Status\nab-7,Login page,Story,2,In Progress";
+  it("accepts a Jira export's headers, reads the issue type and ignores extra columns", () => {
+    const csv = "Issue key,Summary,Issue Type,Story point estimate,Status,Reporter\nab-7,Login page,Bug,2,In Progress,Sam";
     expect(ok(csv).stories).toEqual([
-      { key: "AB-7", title: "Login page", description: "", acceptanceCriteria: "", storyPoints: 2, status: "In Progress" },
+      { key: "AB-7", title: "Login page", description: "", acceptanceCriteria: "", storyPoints: 2, status: "In Progress", issueType: "Bug" },
     ]);
   });
 
@@ -195,7 +195,7 @@ describe("readImportPayload (what the browser sends)", () => {
     const result = readImportPayload(JSON.stringify([story]), JSON.stringify({ key: "Ticket", status: null, nonsense: "x" }));
     expect(result).toEqual({
       ok: true,
-      stories: [{ ...story, key: "A-1", title: "One", epic: "Checkout" }],
+      stories: [{ ...story, key: "A-1", title: "One", epic: "Checkout", issueType: "" }],
       mapping: {},
     });
     const clean = readImportPayload(JSON.stringify([story]), JSON.stringify({ key: "Ticket", status: null }));

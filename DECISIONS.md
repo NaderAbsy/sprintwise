@@ -2,6 +2,13 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-07 — v1.12: honest counts, fair scores, back to Jira
+
+- **Finished stories:** stories whose status is one of the project's done statuses are left out of every readiness count (backlog, band cards, projects list) and hidden from the backlog until "Show N finished". Next to fix skips them. Reordering while they're hidden counts positions among the shown stories only (`moveStory(…, withFinished)`), so a drag lands where it was dropped.
+- **Issue types:** `stories.issueType` and `snapshot_items.issueType` (blank = story), read from Jira's Issue Type / Work type column and editable. Types other than Story / User Story skip C2 (story format) and C4 (benefit): they pass, and `Readiness.typeNote` says why. Everything else still applies, so a bug without acceptance criteria or an estimate still scores low. Rejected: unticking non-stories on import (bugs belong in sprints too); a separate rule set per type (more to learn for little gain). `RULES_VERSION` is unchanged, since stories without a type score exactly as before.
+- **Back to Jira:** `stories.editedAt` is set when a story's text, estimate or type changes in Sprintwise (not its status, which moves in Jira anyway), and for stories written here. It's cleared by "Mark as copied to Jira" or by re-importing the story. Edited stories show "Edited here", a copy panel on the story page, a backlog filter, and `/projects/[id]/jira.csv` with Jira's column names (Issue key, Summary, Issue Type, Description, Acceptance Criteria, Story Points). A re-import leaves edited stories unticked, with a note. Rejected: writing to Jira directly (needs a Jira connection, kept for v2).
+- **Early file picks:** a file chosen before the page's scripts loaded never fired `onChange`; the picker now reads it on mount (found as a flaky e2e test).
+
 ## 2026-10-07 — v1.11: before and after
 
 - **Why:** fixing an imported story meant overwriting its text with nothing left to compare against, and a first real import brought in finished stories and no story text, so every score was low with no warning.

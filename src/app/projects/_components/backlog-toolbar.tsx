@@ -20,6 +20,10 @@ export function BacklogToolbar({
   statuses,
   epic,
   epics,
+  type,
+  types,
+  finished,
+  edited = false,
 }: {
   action: string;
   q: string;
@@ -30,12 +34,20 @@ export function BacklogToolbar({
   epic: string;
   /** Epics named by imports; the filter appears only when there are some. */
   epics: string[];
+  type: string;
+  /** Issue types in the backlog; the filter appears only when imports named some. */
+  types: string[];
+  /** "show" while finished stories are shown, so searching keeps them. */
+  finished: string;
+  edited?: boolean;
 }) {
   const form = useRef<HTMLFormElement>(null);
   const submit = () => form.current?.requestSubmit();
   return (
     <Form ref={form} action={action} role="search" aria-label="Find stories" className="flex flex-wrap items-end gap-3">
       {band && <input type="hidden" name="band" value={band} />}
+      {finished && <input type="hidden" name="finished" value={finished} />}
+      {edited && <input type="hidden" name="edited" value="1" />}
       <div className="min-w-48 flex-1">
         <label htmlFor="backlog-q" className="label">
           Search
@@ -68,6 +80,21 @@ export function BacklogToolbar({
             {epics.map((e) => (
               <option key={e} value={e}>
                 {e}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      {types.length > 0 && (
+        <div>
+          <label htmlFor="backlog-type" className="label">
+            Type
+          </label>
+          <select id="backlog-type" name="type" defaultValue={type} onChange={submit} className="field mt-1 w-36">
+            <option value="">Any type</option>
+            {types.map((t) => (
+              <option key={t} value={t}>
+                {t}
               </option>
             ))}
           </select>
