@@ -60,6 +60,19 @@ function foundColumns(headers: string[]): string {
   return `The file's columns are ${shown.join(", ")}${more}. ${HEADER_HELP}`;
 }
 
+/**
+ * The column choices worth carrying to the next import: picked columns only.
+ * "Not in this file" was true of that file; the next export may well have the
+ * column, so it's matched by name again.
+ */
+export function rememberedColumns(saved: unknown): ColumnMapping {
+  if (typeof saved !== "object" || saved === null || Array.isArray(saved)) return {};
+  const fields = new Set<string>(IMPORT_FIELDS.map((f) => f.field));
+  return Object.fromEntries(
+    Object.entries(saved).filter(([field, header]) => fields.has(field) && typeof header === "string" && header !== ""),
+  ) as ColumnMapping;
+}
+
 /** Picks the column for each field: the person's choice first, then known header names. */
 export function matchColumns(headers: string[], mapping: ColumnMapping = {}): Record<ImportField, number | null> {
   const names = headers.map(lower);
