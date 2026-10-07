@@ -2,6 +2,13 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-07 — v2.4: clicks before the page is ready
+
+- **Seen while testing Jira on the live site:** a click right after a page loads sometimes did nothing. Measured: the HTML arrives in about 0.2 s warm (1.6 s cold), and React makes buttons work 0.1–0.9 s after they appear (more on a slow connection, and after every deploy, when the scripts aren't cached yet). React only replays clicks once it has started; a click before that is dropped.
+- **Decision:** a tiny inline script in `<head>` (`EARLY_CLICK_SCRIPT`) keeps the last button clicked before React starts, shows a busy cursor, and clicks it again once React owns that button (`__reactProps$` on it, `__reactContainer$` on the document). It removes itself on the first click after React starts, so nothing is clicked twice, and gives up after 10 s. Links already work without React.
+- **Also:** Sync's "Syncing…" label was set inside the transition, so it only showed once the sync had finished; it's set before the transition now. Set status and Turn off the link show they're working.
+- **Rejected:** disabling buttons until React is ready (they'd look broken), and keeping the database awake with a scheduled ping to avoid cold starts (Neon's free compute hours wouldn't cover it).
+
 ## 2026-10-07 — Jira tested end to end; two fixes from it
 
 - **Tested on a real Jira Cloud site** (`sprintwise-test.atlassian.net`, invented tickets): connect, import by JQL, edit, Send to Jira (checked in Jira), change in Jira, Sync (checked in Sprintwise). It works.

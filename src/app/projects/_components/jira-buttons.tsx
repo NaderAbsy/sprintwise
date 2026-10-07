@@ -61,12 +61,14 @@ export function JiraBar({
   const [pending, startTransition] = useTransition();
   const [busy, setBusy] = useState<"sync" | "send" | null>(null);
   const [state, setState] = useState<FormState | null>(null);
-  const run = (kind: "sync" | "send") =>
+  const run = (kind: "sync" | "send") => {
+    // Outside the transition, so "Syncing…" shows at once rather than when the work is done.
+    setBusy(kind);
     startTransition(async () => {
-      setBusy(kind);
       setState(kind === "sync" ? await syncFromJira(projectId) : await sendToJira(projectId, editedIds));
       setBusy(null);
     });
+  };
   const toSend = Math.min(editedIds.length, 50);
   return (
     <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
