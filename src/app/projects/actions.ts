@@ -143,6 +143,10 @@ export async function updateStory(projectId: string, storyId: string, _prev: For
   await recordSprintChanges(project.id);
   await recordUsage("check_run");
   revalidatePath(`/projects/${project.id}`, "layout");
+  const returnTo = formData.get("returnTo");
+  if (returnTo === "refine" || returnTo === "refine-all") {
+    redirect(`/projects/${project.id}/refine?story=${existing.id}${returnTo === "refine-all" ? "&scope=all" : ""}`);
+  }
   redirect(`/projects/${project.id}/stories/${existing.id}?saved=1`);
 }
 

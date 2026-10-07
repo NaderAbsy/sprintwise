@@ -13,7 +13,7 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
   const pending = clicked && clicked.from === pathname ? clicked.href : null;
   const base = `/projects/${projectId}`;
   const tabs = [
-    { href: base, label: "Backlog", Icon: ListChecks, active: pathname === base || pathname.startsWith(`${base}/stories`) },
+    { href: base, label: "Backlog", Icon: ListChecks, active: pathname === base || pathname.startsWith(`${base}/stories`) || pathname.startsWith(`${base}/refine`) },
     { href: `${base}/sprints`, label: "Sprints", Icon: Timer, active: pathname.startsWith(`${base}/sprints`) },
     { href: `${base}/trends`, label: "Trends", Icon: LineChart, active: pathname.startsWith(`${base}/trends`) },
     { href: `${base}/import`, label: "Import", Icon: FileUp, active: pathname.startsWith(`${base}/import`) },

@@ -2,6 +2,12 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-07 — v2.1: refinement mode
+
+- **Why:** estimates belong to the team, and readiness gets fixed in refinement, but Sprintwise had no screen for that meeting. Story points were also the most confusing idea for a first-time product owner.
+- **Decision:** `/projects/[id]/refine` shows one story at a time, in priority order. By default it's the unfinished stories that aren't Ready (the story on screen stays in the list after it becomes Ready); "All unfinished" shows every one. Each has its text (Jira formatting), score, what to fix and second-look hints, plus a row of sizes (1, 2, 3, 5, 8, 13) that saves through `quickUpdateStory`. So an estimate re-scores the story, records sprint changes and marks it "Edited here" for Jira, exactly like an inline edit. The screen tells the team how to estimate (show at once, highest and lowest explain, agree) and to split above the project's maximum. Arrow keys move; 1, 2, 3, 5 and 8 record. Edit story returns to the same story and list (`return=refine|refine-all`). The end page summarises Ready and unestimated counts.
+- **Rejected for now:** live planning poker with each person voting from their own device (needs teammate accounts, which come next); timers or facilitation scripts (more to learn than they're worth).
+
 ## 2026-10-07 — v2.0 starts: a read-only backlog link
 
 - **Why:** refinement is a team meeting, but only the owner could see the scores. Full team accounts come later; a read-only link is the cheapest useful step.

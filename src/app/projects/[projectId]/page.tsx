@@ -1,4 +1,4 @@
-import { CircleCheck, CircleDashed, CircleX, Download, FileUp, ListChecks, Plus, Sparkles } from "lucide-react";
+import { CircleCheck, CircleDashed, CircleX, Download, FileUp, ListChecks, Plus, Sparkles, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { addSampleStories, disableBacklogShare, enableBacklogShare } from "@/app/projects/actions";
@@ -131,6 +131,10 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
           Export CSV
         </a>
       )}
+      <Link href={`${base}/refine`} className="btn-secondary">
+        <Users aria-hidden="true" className="h-4 w-4" />
+        Refinement
+      </Link>
       <ShareLink
         token={project.shareToken}
         path="/share/backlog"

@@ -17,6 +17,19 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.1",
+    date: "2026-10-07",
+    title: "Refinement mode",
+    summary: "A meeting screen for refinement: one story at a time, what's missing, and the team's estimate in one click.",
+    items: [
+      "Refinement walks the unfinished stories that aren't Ready yet (or all unfinished ones), in priority order.",
+      "Each story shows its text, its score and what to fix, and any second-look hints.",
+      "Record the team's agreed size with one click (1, 2, 3, 5, 8, 13) or a number key; the score updates.",
+      "Edit story from refinement brings you back to the same story; arrow keys move between stories.",
+      "The end shows how many unfinished stories are Ready and how many still need an estimate.",
+    ],
+  },
+  {
     version: "v2.0",
     date: "2026-10-07",
     title: "Share the backlog",
