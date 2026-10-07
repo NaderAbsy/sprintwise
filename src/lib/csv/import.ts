@@ -12,6 +12,7 @@ const storySchema = z.object({
   acceptanceCriteria: z.string(),
   storyPoints: z.number().finite().min(0).nullable(),
   status: z.string(),
+  issueType: z.string().default(""),
   epic: z.string(),
 });
 
@@ -54,6 +55,7 @@ export function readImportPayload(
       acceptanceCriteria: item.acceptanceCriteria.trim(),
       storyPoints: item.storyPoints,
       status: item.status.trim(),
+      issueType: item.issueType.trim(),
       epic: item.epic.trim(),
     };
     const problems = storyProblems(story, story.epic);

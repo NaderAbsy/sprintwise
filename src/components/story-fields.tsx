@@ -219,6 +219,33 @@ export function StoryFields({
             <FieldError id="status-error" message={errors.status} />
           </div>
         )}
+        {showStatus && (
+          <div>
+            <label id="issueType-label" htmlFor="issueType" className="label">
+              Type
+            </label>
+            <input
+              id="issueType"
+              name="issueType"
+              list="type-options"
+              defaultValue={defaults.issueType}
+              className="field mt-1 w-36"
+              placeholder="Story"
+              aria-invalid={invalid("issueType")}
+              aria-describedby={[describedBy("issueType"), "issueType-hint"].join(" ")}
+            />
+            <datalist id="type-options">
+              <option value="Story" />
+              <option value="Bug" />
+              <option value="Task" />
+            </datalist>
+            <p id="issueType-hint" className="mt-1 max-w-48 text-xs text-muted">
+              Bugs and tasks skip the &ldquo;As a &hellip; I want &hellip;&rdquo; checks.
+            </p>
+            <ShortBefore name="issueType" label="Type" compare={compare} />
+            <FieldError id="issueType-error" message={errors.issueType} />
+          </div>
+        )}
       </div>
     </>
   );

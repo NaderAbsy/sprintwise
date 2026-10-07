@@ -8,6 +8,7 @@ import {
   MAX_BYTES,
   MAX_ROWS,
   REQUIRED_COLUMNS,
+  TYPE_ALIASES,
   type ColumnMapping,
   type ImportField,
 } from "@/lib/csv/template";
@@ -86,7 +87,9 @@ export function matchColumns(headers: string[], mapping: ColumnMapping = {}): Re
     columns[field] =
       field === "epic"
         ? byName(EPIC_ALIASES)
-        : byName(Object.entries(HEADER_ALIASES).filter(([, to]) => to === field).map(([from]) => from));
+        : field === "issue_type"
+          ? byName(TYPE_ALIASES)
+          : byName(Object.entries(HEADER_ALIASES).filter(([, to]) => to === field).map(([from]) => from));
   }
   return columns;
 }
@@ -105,6 +108,7 @@ export function storyProblems(story: Story, epic = ""): string[] {
   tooLong(story.acceptanceCriteria, STORY_LIMITS.acceptanceCriteria, "acceptance criteria");
   tooLong(story.status, STORY_LIMITS.status, "status");
   tooLong(epic, EPIC_MAX_LENGTH, "epic");
+  tooLong(story.issueType ?? "", STORY_LIMITS.issueType, "type");
   if (story.storyPoints !== null && story.storyPoints > STORY_LIMITS.points) {
     problems.push(`Story points can't be more than ${STORY_LIMITS.points}.`);
   }
@@ -181,6 +185,7 @@ export function readCsvTable(
       acceptanceCriteria: cell("acceptance_criteria"),
       storyPoints: points,
       status: cell("status"),
+      ...(cell("issue_type") && { issueType: cell("issue_type") }),
     };
     const epic = cell("epic");
     errors.push(...storyProblems(story, epic));

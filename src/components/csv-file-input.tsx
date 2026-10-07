@@ -1,6 +1,6 @@
 "use client";
 import { X } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const isCsv = (file: File) => file.name.toLowerCase().endsWith(".csv") || file.type === "text/csv";
 
@@ -32,6 +32,18 @@ export function CsvFileInput({
     setName(file?.name ?? null);
     onFile(file);
   };
+
+  // A file picked before the page's scripts finished loading never fired onChange; read it now.
+  const pickedEarly = useRef(false);
+  useEffect(() => {
+    const file = input.current?.files?.[0];
+    if (file && !pickedEarly.current) {
+      pickedEarly.current = true;
+      choose(file);
+    }
+    // Only on first mount: later picks go through onChange.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="mt-2 space-y-2">

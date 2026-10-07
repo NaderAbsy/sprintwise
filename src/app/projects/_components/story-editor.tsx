@@ -63,6 +63,7 @@ export function StoryEditor({ projectId, settings, story }: { projectId: string;
         acceptanceCriteria: story?.acceptanceCriteria ?? "",
         storyPoints: story?.storyPoints ?? null,
         status: story?.status ?? "",
+        issueType: story?.issueType ?? "",
       },
       settings,
     ),
@@ -91,6 +92,7 @@ export function StoryEditor({ projectId, settings, story }: { projectId: string;
           acceptanceCriteria: text("acceptanceCriteria"),
           storyPoints: text("storyPoints"),
           status: text("status"),
+          issueType: text("issueType"),
         });
         const next = preview(data, settings);
         setReadiness(next.readiness);
@@ -156,6 +158,7 @@ export function StoryEditor({ projectId, settings, story }: { projectId: string;
           </p>
         )}
         {readiness.bandCap && <p className="text-sm text-needs-work">{readiness.bandCap}</p>}
+        {readiness.typeNote && <p className="text-sm text-muted">{readiness.typeNote}</p>}
         {placeholders && (
           <p role="status" className="rounded-lg bg-needs-work-bg px-3 py-2 text-sm text-needs-work">
             Replace the [placeholders] from the template with your own words before saving.

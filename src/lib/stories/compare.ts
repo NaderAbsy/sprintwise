@@ -4,10 +4,11 @@ export type StoryDefaults = {
   acceptanceCriteria?: string;
   storyPoints?: number | null;
   status?: string;
+  issueType?: string;
 };
 
 /** Field names as the form sends them. */
-export type StoryFieldName = "title" | "description" | "acceptanceCriteria" | "storyPoints" | "status";
+export type StoryFieldName = "title" | "description" | "acceptanceCriteria" | "storyPoints" | "status" | "issueType";
 
 /** When editing a saved story: what it said before, and what the fields hold now, to mark changes. */
 export type StoryCompare = { before: Record<StoryFieldName, string>; current: Record<StoryFieldName, string> };
@@ -20,5 +21,6 @@ export function storyFieldValues(story: StoryDefaults): Record<StoryFieldName, s
     acceptanceCriteria: story.acceptanceCriteria ?? "",
     storyPoints: story.storyPoints === null || story.storyPoints === undefined ? "" : String(story.storyPoints),
     status: story.status ?? "",
+    issueType: story.issueType ?? "",
   };
 }

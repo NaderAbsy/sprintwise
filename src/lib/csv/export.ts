@@ -49,3 +49,17 @@ export function storyAsText(story: Story): string {
   if (meta.length > 0) parts.push("", ...(meta as string[]));
   return parts.join("\n");
 }
+
+/**
+ * Stories edited in Sprintwise, with Jira's own column names, so they can go
+ * back through Jira's CSV import (matched on Issue key) or be copied by hand.
+ */
+export function jiraCsv(stories: Story[]): string {
+  const header = ["Issue key", "Summary", "Issue Type", "Description", "Acceptance Criteria", "Story Points"];
+  const lines = stories.map((s) =>
+    [s.key, s.title, s.issueType || "Story", s.description, s.acceptanceCriteria, s.storyPoints === null ? "" : String(s.storyPoints)]
+      .map(quote)
+      .join(","),
+  );
+  return `\uFEFF${[header.join(","), ...lines].join("\r\n")}\r\n`;
+}

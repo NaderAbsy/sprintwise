@@ -5,6 +5,7 @@ import {
   criteriaNeeded,
   DEFAULT_VAGUE_WORDS,
   findVagueWords,
+  isUserStoryType,
   readySummary,
   RULES,
   DEFAULT_SETTINGS,
@@ -287,5 +288,38 @@ describe("findings: one reason per missing thing", () => {
     expect(result.rules.filter((r) => !r.passed)).toHaveLength(7);
     expect(result.findings.map((f) => f.id)).toEqual(["C1", "C2", "C6", "C9"]);
     expect(result.score).toBe(15);
+  });
+});
+
+describe("issue types", () => {
+  const bug = {
+    key: "B-1",
+    title: "Refund total ignores the discount",
+    description: "The refund page adds the discount back before refunding the order.",
+    acceptanceCriteria: "- Refunds subtract the discount\n- The refund email shows the same total",
+    storyPoints: 2,
+    status: "To Do",
+  };
+
+  it("doesn't ask a bug or task for the user-story format, and says why", () => {
+    const asStory = scoreStory(bug);
+    expect(asStory.findings.map((f) => f.id)).toEqual(["C2"]);
+    const asBug = scoreStory({ ...bug, issueType: "Bug" });
+    expect(asBug.score).toBe(100);
+    expect(asBug.typeNote).toBe('A Bug doesn\'t need the "As a … I want … so that …" format, so those checks count as passed.');
+    expect(scoreStory({ ...bug, issueType: " task " }).score).toBe(100);
+  });
+
+  it("still checks everything else on a bug", () => {
+    const bare = scoreStory({ ...bug, issueType: "Bug", acceptanceCriteria: "", storyPoints: null });
+    expect(bare.findings.map((f) => f.id)).toEqual(["C1", "C6"]);
+  });
+
+  it("treats a blank type, Story and User Story as stories", () => {
+    for (const issueType of [undefined, "", "Story", "user story"]) {
+      expect(isUserStoryType(issueType)).toBe(true);
+      expect(scoreStory({ ...bug, issueType }).typeNote).toBeUndefined();
+    }
+    expect(isUserStoryType("Sub-task")).toBe(false);
   });
 });

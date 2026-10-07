@@ -3,9 +3,9 @@ import { ArrowRight, Pencil } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AiSuggestionPanel } from "@/app/projects/_components/ai-suggestion-panel";
-import { CopyStoryButton } from "@/app/projects/_components/copy-story";
+import { CopyButton, CopyStoryButton } from "@/app/projects/_components/copy-story";
 import { storyAsText } from "@/lib/csv/export";
-import { deleteStory } from "@/app/projects/actions";
+import { deleteStory, markCopiedToJira } from "@/app/projects/actions";
 import { ConfirmButton } from "@/components/confirm-button";
 import { ReadinessBreakdown } from "@/components/readiness-breakdown";
 import { RemoveSection } from "@/components/remove-section";
@@ -17,6 +17,8 @@ import { db } from "@/lib/server/db";
 import { requireProject } from "@/lib/server/dal";
 import { settingsOf, toStory } from "@/lib/server/readiness";
 import { splitCriteria } from "@/lib/stories/types";
+import { doneStatusesOf } from "@/lib/server/sprint";
+import { isDone } from "@/lib/sprint/metrics";
 
 export const metadata: Metadata = { title: "Story" };
 
@@ -37,12 +39,17 @@ export default async function StoryPage({ params, searchParams }: PageProps<"/pr
   const rewrite = suggestion ? scoreStory(rewriteAsStory(story, suggestion), settings) : null;
 
   const base = `/projects/${project.id}`;
+  const finishedStory = isDone(story.status, doneStatusesOf(project));
 
   // "Next to fix": the next weakest story that isn't Ready, in the same order as the backlog's "weakest first".
-  const unready = await db.story.findMany({
-    where: { projectId: project.id, readiness: { is: { band: { not: "Ready" } } } },
-    select: { id: true, key: true, title: true, rank: true, readiness: { select: { score: true } } },
-  });
+  // Finished stories need no fixing, so they're skipped.
+  const doneStatuses = doneStatusesOf(project);
+  const unready = (
+    await db.story.findMany({
+      where: { projectId: project.id, readiness: { is: { band: { not: "Ready" } } } },
+      select: { id: true, key: true, title: true, rank: true, status: true, readiness: { select: { score: true } } },
+    })
+  ).filter((s) => s.id === row.id || !isDone(s.status, doneStatuses));
   unready.sort((a, b) => (a.readiness?.score ?? 0) - (b.readiness?.score ?? 0) || a.rank - b.rank);
   const here = unready.findIndex((s) => s.id === row.id);
   const next = [...unready.slice(here + 1), ...unready.slice(0, Math.max(here, 0))].find((s) => s.id !== row.id);
@@ -83,7 +90,28 @@ export default async function StoryPage({ params, searchParams }: PageProps<"/pr
           Changes saved and the story re-scored.
         </p>
       )}
-      {!saved && readiness.band !== "Ready" && (
+      {row.editedAt && (
+        <section
+          aria-labelledby="jira-copy"
+          className="mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-accent/40 bg-accent-soft px-4 py-3 text-sm text-accent-soft-foreground"
+        >
+          <h2 id="jira-copy" className="mr-auto font-medium">
+            Edited here, not yet in Jira. Copy each field into the Jira issue, then mark it copied.
+          </h2>
+          <CopyButton text={story.description} label="Copy description" className="btn-secondary btn-sm" />
+          <CopyButton text={story.acceptanceCriteria} label="Copy acceptance criteria" className="btn-secondary btn-sm" />
+          <form action={markCopiedToJira.bind(null, project.id, row.id)}>
+            <button className="btn-primary btn-sm">Mark as copied to Jira</button>
+          </form>
+        </section>
+      )}
+      {finishedStory && (
+        <p className="mb-6 rounded-lg bg-surface-2 px-4 py-3 text-sm text-muted">
+          This story is {story.status}, so it&apos;s finished: it isn&apos;t counted in the backlog&apos;s readiness, and
+          Next to fix skips it.
+        </p>
+      )}
+      {!saved && !finishedStory && readiness.band !== "Ready" && (
         <p className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-accent-soft px-4 py-3 text-sm text-accent-soft-foreground">
           Each reason below says what to fix. Edit the story and the score updates as you type.
           <Link href={`${base}/stories/${row.id}/edit`} className="font-medium underline underline-offset-2">
@@ -112,7 +140,11 @@ export default async function StoryPage({ params, searchParams }: PageProps<"/pr
               </ul>
             )}
           </div>
-          <dl className="grid grid-cols-2 p-5">
+          <dl className="grid grid-cols-3 p-5">
+            <div>
+              <dt className="eyebrow">Type</dt>
+              <dd className="mt-1">{story.issueType || "Story"}</dd>
+            </div>
             <div>
               <dt className="eyebrow">Points</dt>
               <dd className="mt-1">{story.storyPoints ?? <span className="text-subtle">Not estimated</span>}</dd>

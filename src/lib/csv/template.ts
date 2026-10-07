@@ -60,6 +60,7 @@ export const IMPORT_FIELDS = [
   { field: "story_points", label: "Story points" },
   { field: "status", label: "Status" },
   { field: "epic", label: "Epic" },
+  { field: "issue_type", label: "Type" },
 ] as const satisfies readonly { field: string; label: string; required?: boolean }[];
 
 export type ImportField = (typeof IMPORT_FIELDS)[number]["field"];
@@ -77,6 +78,9 @@ export const EPIC_ALIASES = [
   "custom field (epic link)",
   "parent",
 ];
+
+/** Header names for Jira's issue type (called "work type" in newer Jira). */
+export const TYPE_ALIASES = ["issue type", "work type", "work item type", "issuetype", "type"];
 
 /** Jira repeats the Labels column once per label. */
 export const LABEL_ALIASES = ["labels", "label"];

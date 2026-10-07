@@ -17,6 +17,20 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v1.12",
+    date: "2026-10-07",
+    title: "Honest counts, fair scores, back to Jira",
+    summary: "Finished work leaves the readiness counts, bugs and tasks aren't asked for user stories, and edits made here find their way back to Jira.",
+    items: [
+      "Finished stories (your done statuses) are left out of \"X of Y ready\" and hidden from the backlog until you click Show finished. Next to fix skips them.",
+      "Stories keep Jira's issue type. Bugs, tasks and other non-stories skip the \"As a … I want … so that …\" checks, with a note saying so; every other check still applies.",
+      "Filter the backlog and the import preview by type, and change a story's type when editing it.",
+      "Stories edited here are marked \"Edited here\". Copy the description or acceptance criteria for Jira, then mark the story as copied.",
+      "Download the edited stories as a CSV with Jira's column names, and a re-import leaves edited stories unticked so Jira's older text doesn't replace your work.",
+      "A file picked before the page finished loading is now read too.",
+    ],
+  },
+  {
     version: "v1.11",
     date: "2026-10-07",
     title: "Before and after",

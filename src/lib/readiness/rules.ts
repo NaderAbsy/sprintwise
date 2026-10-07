@@ -109,6 +109,8 @@ export type Readiness = {
   /** The project's own checks, if it has any. */
   custom: CustomCheckResult[];
   rulesVersion: number;
+  /** Set for bugs, tasks and other non-stories: why the story-format checks were passed without being met. */
+  typeNote?: string;
 };
 
 export const RULES: ReadonlyArray<{ id: RuleId; check: string; points: number }> = [
@@ -206,7 +208,15 @@ function toFindings(rules: RuleResult[]): Finding[] {
 }
 
 /** Scores one story against the fixed rules. Pure: same story + settings → same result. */
+/** Issue types scored as user stories. Anything else (a bug, a task) skips the story-format checks. */
+export const USER_STORY_TYPES = ["", "story", "user story"];
+
+export function isUserStoryType(issueType = ""): boolean {
+  return USER_STORY_TYPES.includes(issueType.trim().toLowerCase());
+}
+
 export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTINGS): Readiness {
+  const userStory = isUserStoryType(story.issueType);
   const storyText = `${story.title}\n${story.description}`;
   const criteria = splitCriteria(story.acceptanceCriteria);
   const criteriaText = criteria.join("\n");
@@ -250,7 +260,7 @@ export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTIN
         : `A ${story.storyPoints}-point story needs at least ${needed} acceptance criteria; this has ${criteria.length}. Add one line for each thing the team must build.`,
     },
     C2: {
-      passed: followsFormat && !genericRole,
+      passed: !userStory || (followsFormat && !genericRole),
       reason: !followsFormat
         ? soThat
           ? 'Doesn\'t follow "As a … I want … so that …" in the title or description.'
@@ -265,7 +275,7 @@ export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTIN
       coveredBy: hasCriteria ? undefined : "C1",
     },
     C4: {
-      passed: statesBenefit,
+      passed: !userStory || statesBenefit,
       reason: soThat
         ? 'The "so that" part is empty. Say what the user gains.'
         : 'No benefit stated. Add a "so that …" part.',
@@ -316,10 +326,13 @@ export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTIN
     bandCapFor(rules) ??
     (failedCustom.length > 0 ? `Can't be Ready until it passes your team's checks: ${failedCustom.join(", ")}.` : undefined);
   const scoreBand = bandFor(score);
+  const typeNote = userStory
+    ? undefined
+    : `A ${story.issueType!.trim()} doesn't need the "As a … I want … so that …" format, so those checks count as passed.`;
   if (cap && scoreBand === "Ready") {
-    return { score, band: "Needs work", bandCap: cap, rules, findings, custom, rulesVersion: RULES_VERSION };
+    return { score, band: "Needs work", bandCap: cap, rules, findings, custom, rulesVersion: RULES_VERSION, ...(typeNote && { typeNote }) };
   }
-  return { score, band: scoreBand, rules, findings, custom, rulesVersion: RULES_VERSION };
+  return { score, band: scoreBand, rules, findings, custom, rulesVersion: RULES_VERSION, ...(typeNote && { typeNote }) };
 }
 
 /** "7 of 12 stories ready" */

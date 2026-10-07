@@ -33,11 +33,14 @@ export function ImportForm({
   settings,
   savedColumns,
   doneStatuses,
+  editedKeys,
 }: {
   projectId: string;
   settings: RuleSettings;
   /** The project's finished statuses: those stories start unticked, since they need no readiness check. */
   doneStatuses: string[];
+  /** Stories edited in Sprintwise and not yet marked as copied to Jira: importing would overwrite those edits. */
+  editedKeys: string[];
   /** The columns picked at this project's last import. */
   savedColumns: ColumnMapping;
 }) {
@@ -51,7 +54,9 @@ export function ImportForm({
   const [status, setStatus] = useState(ALL);
   const [epic, setEpic] = useState(ALL);
   const [label, setLabel] = useState(ALL);
+  const [type, setType] = useState(ALL);
 
+  const edited = useMemo(() => new Set(editedKeys), [editedKeys]);
   const table = useMemo(
     () =>
       text === null
@@ -76,6 +81,7 @@ export function ImportForm({
     setStatus(ALL);
     setEpic(ALL);
     setLabel(ALL);
+    setType(ALL);
     setTicked(new Set());
     if (!file) return;
     if (file.size > IMPORT_FILE_BYTES) {
@@ -92,23 +98,29 @@ export function ImportForm({
   const [tickedFor, setTickedFor] = useState<string | null>(null);
   if (table?.ok && text !== null && tickedFor !== text) {
     setTickedFor(text);
-    const ready = table.rows.filter((r) => r.errors.length === 0 && !isDone(r.story.status, doneStatuses));
+    const ready = table.rows.filter(
+      (r) => r.errors.length === 0 && !isDone(r.story.status, doneStatuses) && !edited.has(r.story.key),
+    );
     setTicked(ready.length <= IMPORT_MAX_STORIES ? new Set(ready.map((r) => r.row)) : new Set());
   }
 
   const usable = (r: CsvRow) => r.errors.length === 0;
+  const typeOf = (r: CsvRow) => r.story.issueType || "Story";
   const lower = query.trim().toLowerCase();
   const shown = rows.filter(
     (r) =>
       (lower === "" || r.story.key.toLowerCase().includes(lower) || r.story.title.toLowerCase().includes(lower)) &&
       (status === ALL || r.story.status === status) &&
       (epic === ALL || r.epic === epic) &&
-      (label === ALL || r.labels.includes(label)),
+      (label === ALL || r.labels.includes(label)) &&
+      (type === ALL || typeOf(r) === type),
   );
   const options = (values: string[]) => [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b));
   const statuses = options(rows.map((r) => r.story.status));
   const epics = options(rows.map((r) => r.epic));
   const labels = options(rows.flatMap((r) => r.labels));
+  // The type filter and column appear once the file says what types its rows are.
+  const types = rows.some((r) => r.story.issueType) ? options(rows.map(typeOf)) : [];
 
   // A ticked row that a new column choice broke drops out of the count.
   const picked = rows.filter((r) => ticked.has(r.row) && usable(r));
@@ -116,6 +128,7 @@ export function ImportForm({
   const allShownTicked = shownUsable.length > 0 && shownUsable.every((r) => ticked.has(r.row));
   const problems = rows.filter((r) => !usable(r));
   const finished = rows.filter((r) => usable(r) && isDone(r.story.status, doneStatuses));
+  const overwriting = rows.filter((r) => usable(r) && edited.has(r.story.key));
   const noText = table?.ok
     ? [table.columns.description === null && "Description", table.columns.acceptance_criteria === null && "Acceptance criteria"].filter(
         (c): c is string => Boolean(c),
@@ -213,6 +226,7 @@ export function ImportForm({
             <Filter id={`${id}-status`} label="Status" value={status} onChange={setStatus} values={statuses} />
             {epics.length > 0 && <Filter id={`${id}-epic`} label="Epic" value={epic} onChange={setEpic} values={epics} />}
             {labels.length > 0 && <Filter id={`${id}-label`} label="Label" value={label} onChange={setLabel} values={labels} />}
+            {types.length > 0 && <Filter id={`${id}-type`} label="Type" value={type} onChange={setType} values={types} />}
           </div>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
@@ -225,6 +239,12 @@ export function ImportForm({
               <p className="w-full text-muted">
                 {count(finished.length)} already finished ({[...new Set(finished.map((r) => r.story.status))].join(", ")}) left
                 unticked: finished work needs no readiness check.
+              </p>
+            )}
+            {overwriting.length > 0 && (
+              <p className="w-full text-needs-work">
+                {count(overwriting.length)} you edited in Sprintwise and haven&apos;t marked as copied to Jira left unticked:
+                importing would replace your edits with Jira&apos;s text. Tick them only if Jira has the newer version.
               </p>
             )}
             {filtered && (
@@ -262,6 +282,11 @@ export function ImportForm({
                     />
                   </th>
                   <th scope="col">Story</th>
+                  {types.length > 0 && (
+                    <th scope="col" className="hidden md:table-cell">
+                      Type
+                    </th>
+                  )}
                   {epics.length > 0 && (
                     <th scope="col" className="hidden md:table-cell">
                       Epic
@@ -309,6 +334,7 @@ export function ImportForm({
                         <p className="mt-1 text-xs text-needs-work">{r.warnings.join(" ")}</p>
                       )}
                     </td>
+                    {types.length > 0 && <td className="hidden text-sm text-muted md:table-cell">{typeOf(r)}</td>}
                     {epics.length > 0 && <td className="hidden text-sm text-muted md:table-cell">{r.epic}</td>}
                     <td className="hidden text-sm whitespace-nowrap text-muted sm:table-cell">{r.story.status}</td>
                     <td className="hidden text-right tabular-nums sm:table-cell">{r.story.storyPoints ?? "—"}</td>

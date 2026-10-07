@@ -11,7 +11,9 @@ export function settingsOf(project: Pick<Project, "maxPoints" | "vagueWords" | "
   return { maxPoints: project.maxPoints, vagueWords: project.vagueWords, customChecks: readCustomChecks(project.customChecks) };
 }
 
-export function toStory(row: Pick<StoryRow, "key" | "title" | "description" | "acceptanceCriteria" | "storyPoints" | "status">): Story {
+export function toStory(
+  row: Pick<StoryRow, "key" | "title" | "description" | "acceptanceCriteria" | "storyPoints" | "status"> & { issueType?: string },
+): Story {
   return {
     key: row.key,
     title: row.title,
@@ -19,6 +21,7 @@ export function toStory(row: Pick<StoryRow, "key" | "title" | "description" | "a
     acceptanceCriteria: row.acceptanceCriteria,
     storyPoints: row.storyPoints,
     status: row.status,
+    ...(row.issueType && { issueType: row.issueType }),
   };
 }
 

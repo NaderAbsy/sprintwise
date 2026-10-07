@@ -22,6 +22,9 @@ export type BacklogRow = {
   key: string;
   title: string;
   epic: string;
+  issueType: string;
+  /** Edited in Sprintwise and not yet marked as copied to Jira. */
+  edited: boolean;
   status: string;
   storyPoints: number | null;
   score: number | null;
@@ -37,12 +40,15 @@ export function BacklogTable({
   projectId,
   rows: initialRows,
   reorderable,
+  withFinished = true,
   caption,
   statusListId,
 }: {
   projectId: string;
   rows: BacklogRow[];
   reorderable: boolean;
+  /** Whether finished stories are in the list, so a new position counts the same rows the server does. */
+  withFinished?: boolean;
   caption: string;
   statusListId: string;
 }) {
@@ -78,7 +84,7 @@ export function BacklogTable({
     setRows(next);
     setAnnouncement(`${row.key} moved to position ${target + 1} of ${rows.length}.`);
     setMoved(true);
-    startMove(() => moveStory(projectId, id, target));
+    startMove(() => moveStory(projectId, id, target, withFinished));
   };
 
   const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
@@ -259,7 +265,15 @@ export function BacklogTable({
                     <span className="font-mono text-xs text-subtle">{row.key}</span>{" "}
                     <span className="font-medium group-hover:text-accent group-hover:underline">{row.title}</span>
                   </Link>
-                  {row.epic && <span className="mt-0.5 block text-xs text-muted">{row.epic}</span>}
+                  {(row.epic || row.edited || (row.issueType && row.issueType.toLowerCase() !== "story")) && (
+                    <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+                      {row.issueType && row.issueType.toLowerCase() !== "story" && (
+                        <span className="rounded bg-surface-2 px-1.5 py-0.5 font-medium text-foreground">{row.issueType}</span>
+                      )}
+                      {row.epic && <span>{row.epic}</span>}
+                      {row.edited && <span className="font-medium text-accent">Edited here</span>}
+                    </span>
+                  )}
                 </td>
                 <td className="hidden sm:table-cell">{row.band && <BandBadge band={row.band} />}</td>
                 <td className="pr-2! sm:pr-4!">

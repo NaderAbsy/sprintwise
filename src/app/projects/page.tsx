@@ -7,6 +7,8 @@ import { PageHeader } from "@/components/page-header";
 import { MAX_PROJECTS } from "@/lib/limits";
 import { formatDay } from "@/lib/sprint/dates";
 import { db } from "@/lib/server/db";
+import { doneStatusesOf } from "@/lib/server/sprint";
+import { isDone } from "@/lib/sprint/metrics";
 import { requireUser } from "@/lib/server/dal";
 import { refreshStaleScores } from "@/lib/server/readiness";
 
@@ -19,7 +21,7 @@ export default async function ProjectsPage() {
     where: { userId: user.id },
     orderBy: { updatedAt: "desc" },
     include: {
-      stories: { select: { readiness: { select: { band: true } } } },
+      stories: { select: { status: true, readiness: { select: { band: true } } } },
       _count: { select: { sprints: true } },
     },
   });
@@ -41,8 +43,10 @@ export default async function ProjectsPage() {
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {projects.map((project) => {
-            const total = project.stories.length;
-            const ready = project.stories.filter((s) => s.readiness?.band === "Ready").length;
+            // Finished stories need no readiness check, as on the backlog.
+            const open = project.stories.filter((s) => !isDone(s.status, doneStatusesOf(project)));
+            const total = open.length;
+            const ready = open.filter((s) => s.readiness?.band === "Ready").length;
             const share = total === 0 ? 0 : Math.round((ready / total) * 100);
             return (
               <li key={project.id}>
