@@ -17,6 +17,7 @@ import {
 } from "@/lib/csv/template";
 import { emptyFormState } from "@/lib/form-state";
 import { readySummary, scoreStory, type RuleSettings } from "@/lib/readiness/rules";
+import { isDone } from "@/lib/sprint/metrics";
 
 const NONE = "__none__";
 const ALL = "__all__";
@@ -31,9 +32,12 @@ export function ImportForm({
   projectId,
   settings,
   savedColumns,
+  doneStatuses,
 }: {
   projectId: string;
   settings: RuleSettings;
+  /** The project's finished statuses: those stories start unticked, since they need no readiness check. */
+  doneStatuses: string[];
   /** The columns picked at this project's last import. */
   savedColumns: ColumnMapping;
 }) {
@@ -88,7 +92,7 @@ export function ImportForm({
   const [tickedFor, setTickedFor] = useState<string | null>(null);
   if (table?.ok && text !== null && tickedFor !== text) {
     setTickedFor(text);
-    const ready = table.rows.filter((r) => r.errors.length === 0);
+    const ready = table.rows.filter((r) => r.errors.length === 0 && !isDone(r.story.status, doneStatuses));
     setTicked(ready.length <= IMPORT_MAX_STORIES ? new Set(ready.map((r) => r.row)) : new Set());
   }
 
@@ -111,6 +115,12 @@ export function ImportForm({
   const shownUsable = shown.filter(usable);
   const allShownTicked = shownUsable.length > 0 && shownUsable.every((r) => ticked.has(r.row));
   const problems = rows.filter((r) => !usable(r));
+  const finished = rows.filter((r) => usable(r) && isDone(r.story.status, doneStatuses));
+  const noText = table?.ok
+    ? [table.columns.description === null && "Description", table.columns.acceptance_criteria === null && "Acceptance criteria"].filter(
+        (c): c is string => Boolean(c),
+      )
+    : [];
   const filtered = shown.length !== rows.length;
   const tooMany = picked.length > IMPORT_MAX_STORIES;
 
@@ -173,6 +183,19 @@ export function ImportForm({
             {problems.length > 0 && <span className="font-normal text-not-ready"> · {problems.length} can&apos;t be imported</span>}
           </h2>
 
+          {noText.length > 0 && (
+            <div className="rounded-lg bg-needs-work-bg p-4 text-sm text-needs-work">
+              <p className="font-medium">
+                No {noText.join(" or ")} column, so every story will score low.
+              </p>
+              <p className="mt-1">
+                The score reads the story text: who wants what and why, and how you&apos;ll know it&apos;s done. Pick the
+                column under Match columns, or show it in Jira&apos;s list view and export again. If your team writes
+                acceptance criteria inside the description, a Description column is enough.
+              </p>
+            </div>
+          )}
+
           <div role="group" aria-label="Filter the stories" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <label htmlFor={`${id}-q`} className="label">
@@ -198,6 +221,12 @@ export function ImportForm({
               <span className="font-medium text-foreground">{count(picked.length)} ticked</span>
               {picked.length > 0 && ` · ${readySummary(picked.map((p) => p.readiness))}`}
             </p>
+            {finished.length > 0 && (
+              <p className="w-full text-muted">
+                {count(finished.length)} already finished ({[...new Set(finished.map((r) => r.story.status))].join(", ")}) left
+                unticked: finished work needs no readiness check.
+              </p>
+            )}
             {filtered && (
               <button
                 type="button"

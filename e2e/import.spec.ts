@@ -86,3 +86,15 @@ test("rows with problems are shown but can't be ticked; the rest import", async 
   await page.getByRole("button", { name: "Import 2 stories" }).click();
   await expect(page.getByText("Imported and scored 2 stories.")).toBeVisible();
 });
+
+test("finished stories start unticked, and a missing story-text column is flagged before importing", async ({ page }) => {
+  await openImport(page, "Done and bare");
+  const csv = "Issue key,Summary,Status\nA-1,Refund a payment,To Do\nA-2,Export statements,Done\nA-3,Search orders,Closed";
+  await page.getByLabel("CSV file").setInputFiles({ name: "bare.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
+  await expect(page.getByText("No Description or Acceptance criteria column, so every story will score low.")).toBeVisible();
+  await expect(page.getByText("2 stories already finished (Done, Closed) left unticked", { exact: false })).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: "Import A-1" })).toBeChecked();
+  await expect(page.getByRole("checkbox", { name: "Import A-2" })).not.toBeChecked();
+  await expect(page.getByRole("button", { name: "Import 1 story" })).toBeEnabled();
+  await expectAccessible(page);
+});

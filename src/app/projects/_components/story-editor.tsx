@@ -6,11 +6,12 @@ import { addStory, updateStory } from "@/app/projects/actions";
 import { BandBadge } from "@/components/band-badge";
 import { FormAlert } from "@/components/form-feedback";
 import { ScoreRing } from "@/components/score-ring";
-import { StoryFields, type StoryDefaults } from "@/components/story-fields";
+import { StoryFields } from "@/components/story-fields";
 import { useLeaveWarning } from "@/components/use-leave-warning";
 import { emptyFormState } from "@/lib/form-state";
 import { findVagueWords, scoreStory, type Readiness, type RuleSettings } from "@/lib/readiness/rules";
 import { hasPlaceholders, SCENARIO_TEMPLATE, SPLIT_PATTERNS, STORY_TEMPLATE, vagueWordTips } from "@/lib/stories/helpers";
+import { storyFieldValues, type StoryDefaults, type StoryFieldName } from "@/lib/stories/compare";
 import { readStoryForm } from "@/lib/stories/form";
 
 type EditedStory = { id: string; key: string } & StoryDefaults;
@@ -66,6 +67,13 @@ export function StoryEditor({ projectId, settings, story }: { projectId: string;
       settings,
     ),
   );
+  // Editing: the saved story stays on screen, field by field and as a score, to write the new version against.
+  const [before] = useState(() => (story ? { values: storyFieldValues(story), readiness } : null));
+  const [current, setCurrent] = useState(() => storyFieldValues(story ?? {}));
+  const changedCount = before
+    ? (Object.keys(before.values) as StoryFieldName[]).filter((k) => current[k].trim() !== before.values[k].trim()).length
+    : 0;
+  const delta = before ? readiness.score - before.readiness.score : 0;
   const failed = readiness.findings;
   const failedCustom = readiness.custom.filter((c) => !c.passed);
 
@@ -75,16 +83,31 @@ export function StoryEditor({ projectId, settings, story }: { projectId: string;
       ref={form}
       onInput={(event) => {
         setDirty(true);
-        const next = preview(new FormData(event.currentTarget), settings);
+        const data = new FormData(event.currentTarget);
+        const text = (name: StoryFieldName) => String(data.get(name) ?? "");
+        setCurrent({
+          title: text("title"),
+          description: text("description"),
+          acceptanceCriteria: text("acceptanceCriteria"),
+          storyPoints: text("storyPoints"),
+          status: text("status"),
+        });
+        const next = preview(data, settings);
         setReadiness(next.readiness);
         setVague(next.vague);
         setPlaceholders(next.placeholders);
       }}
-      className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]"
+      className={`grid items-start gap-6 ${story ? "xl:grid-cols-[minmax(0,1fr)_20rem]" : "lg:grid-cols-[minmax(0,1fr)_20rem]"}`}
       noValidate
     >
       <div className="card space-y-4 p-5">
-        <StoryFields errors={state.fieldErrors} showKey={!story} showStatus defaults={story} />
+        <StoryFields
+          errors={state.fieldErrors}
+          showKey={!story}
+          showStatus
+          defaults={story}
+          compare={before ? { before: before.values, current } : undefined}
+        />
         <div className="flex flex-wrap gap-2 border-t border-border pt-3">
           <span className="self-center text-xs text-muted">Writing help:</span>
           <button type="button" className="btn-ghost btn-sm" onClick={() => insert(form.current, "description", STORY_TEMPLATE, "replace-if-empty")}>
@@ -104,10 +127,15 @@ export function StoryEditor({ projectId, settings, story }: { projectId: string;
           <Link href={story ? `/projects/${projectId}/stories/${story.id}` : `/projects/${projectId}`} className="btn-ghost">
             Cancel
           </Link>
+          {before && (
+            <p className="self-center text-sm text-muted">
+              {changedCount === 0 ? "No changes yet." : `${changedCount} ${changedCount === 1 ? "field" : "fields"} changed.`}
+            </p>
+          )}
         </div>
       </div>
 
-      <aside aria-label="Live score" className="card space-y-4 p-5 lg:sticky lg:top-20">
+      <aside aria-label="Live score" className={`card space-y-4 p-5 ${story ? "xl:sticky xl:top-20" : "lg:sticky lg:top-20"}`}>
         <div aria-live="polite" className="flex items-center gap-3">
           <span className="ring-animate">
             <ScoreRing score={readiness.score} band={readiness.band} size="md" />
@@ -117,6 +145,16 @@ export function StoryEditor({ projectId, settings, story }: { projectId: string;
             <p className="text-xs text-muted">Updates as you type</p>
           </div>
         </div>
+        {before && (
+          <p className="text-sm text-muted">
+            Before: <span className="font-medium text-foreground tabular-nums">{before.readiness.score}</span> {before.readiness.band}
+            {delta !== 0 && (
+              <span className={`ml-2 font-medium tabular-nums ${delta > 0 ? "text-ready" : "text-not-ready"}`}>
+                {delta > 0 ? `+${delta}` : delta} now
+              </span>
+            )}
+          </p>
+        )}
         {readiness.bandCap && <p className="text-sm text-needs-work">{readiness.bandCap}</p>}
         {placeholders && (
           <p role="status" className="rounded-lg bg-needs-work-bg px-3 py-2 text-sm text-needs-work">

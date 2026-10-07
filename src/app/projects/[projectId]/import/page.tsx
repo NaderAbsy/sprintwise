@@ -6,6 +6,7 @@ import { SectionHeader } from "@/components/section-header";
 import { IMPORT_FILE_ROWS, IMPORT_MAX_STORIES, TEMPLATE_COLUMNS, type ColumnMapping } from "@/lib/csv/template";
 import { requireProject } from "@/lib/server/dal";
 import { settingsOf } from "@/lib/server/readiness";
+import { doneStatusesOf } from "@/lib/server/sprint";
 
 export const metadata: Metadata = { title: "Import CSV" };
 
@@ -40,6 +41,7 @@ export default async function ImportPage({ params }: PageProps<"/projects/[proje
           projectId={project.id}
           settings={settingsOf(project)}
           savedColumns={(project.importColumns ?? {}) as ColumnMapping}
+          doneStatuses={doneStatusesOf(project)}
         />
       </div>
     </>

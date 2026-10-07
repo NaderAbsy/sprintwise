@@ -17,6 +17,18 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v1.11",
+    date: "2026-10-07",
+    title: "Before and after",
+    summary: "Edit a story with its saved version beside every field, and imports that leave out finished work.",
+    items: [
+      "Editing a story shows what it said before next to each field, marks what you changed, and has Restore to put a field back.",
+      "The live score shows the saved score and how far your edits have moved it.",
+      "Imports leave finished stories (your project's done statuses) unticked: finished work needs no readiness check.",
+      "If an import has no Description or Acceptance criteria column, the preview says so before you import.",
+    ],
+  },
+  {
     version: "v1.10",
     date: "2026-10-07",
     title: "Import any Jira export",
