@@ -2,6 +2,7 @@ import "server-only";
 import { headers } from "next/headers";
 import { auth } from "@/lib/server/auth";
 import { db } from "@/lib/server/db";
+import { withCriteriaInDescription } from "@/lib/stories/types";
 
 /**
  * Jira Cloud through Atlassian's OAuth 2.0 (3LO). Tokens are stored by Better
@@ -31,6 +32,8 @@ export type JiraIssue = {
   issueType: string;
   parent: string;
   labels: string[];
+  /** When the issue was created in Jira (ISO), so Sync can tell new issues from ones left out at import. */
+  created: string | null;
 };
 
 /** The fields Sprintwise writes back: what was edited here. */
@@ -59,6 +62,7 @@ const fakeIssues = new Map<string, JiraIssue>(
       issueType: "Story",
       parent: "Refunds",
       labels: ["payments"],
+      created: "2026-01-05T09:00:00.000Z",
     },
     {
       key: "SHOP-2",
@@ -70,6 +74,7 @@ const fakeIssues = new Map<string, JiraIssue>(
       issueType: "Bug",
       parent: "Refunds",
       labels: [],
+      created: "2026-01-05T09:00:00.000Z",
     },
     {
       key: "SHOP-3",
@@ -81,6 +86,7 @@ const fakeIssues = new Map<string, JiraIssue>(
       issueType: "Story",
       parent: "Statements",
       labels: ["finance"],
+      created: "2026-01-05T09:00:00.000Z",
     },
     {
       key: "SHOP-4",
@@ -92,6 +98,7 @@ const fakeIssues = new Map<string, JiraIssue>(
       issueType: "Task",
       parent: "",
       labels: [],
+      created: "2026-01-05T09:00:00.000Z",
     },
   ].map((issue) => [issue.key, issue]),
 );
@@ -183,6 +190,7 @@ function toIssue(raw: RawIssue, ids: FieldIds): JiraIssue {
     issueType: named(f.issuetype),
     parent: text(parent?.fields?.summary),
     labels: Array.isArray(f.labels) ? f.labels.filter((l): l is string => typeof l === "string") : [],
+    created: text(f.created) || null,
   };
 }
 
@@ -194,7 +202,7 @@ export async function searchJira(userId: string, cloudId: string, jql: string): 
   }
   const token = await accessToken(userId);
   const ids = await fieldIds(token, cloudId);
-  const fields = ["summary", "description", "status", "issuetype", "parent", "labels", ...ids.storyPoints];
+  const fields = ["summary", "description", "status", "issuetype", "parent", "labels", "created", ...ids.storyPoints];
   if (ids.acceptanceCriteria) fields.push(ids.acceptanceCriteria);
 
   const issues: JiraIssue[] = [];
@@ -226,29 +234,32 @@ export async function updateJiraIssue(
   cloudId: string,
   key: string,
   update: JiraUpdate,
-): Promise<{ skipped: string[] }> {
+): Promise<{ skipped: string[]; criteriaInDescription: boolean }> {
   if (jiraFake) {
     const issue = fakeIssues.get(key);
     if (!issue) throw new JiraError(`Jira has no issue ${key}.`);
     fakeIssues.set(key, { ...issue, ...update });
-    return { skipped: [] };
+    return { skipped: [], criteriaInDescription: false };
   }
   const token = await accessToken(userId);
   const ids = await fieldIds(token, cloudId);
   const url = `${API}/ex/jira/${cloudId}/rest/api/2/issue/${encodeURIComponent(key)}?notifyUsers=false`;
-  const base: Record<string, unknown> = { summary: update.summary, description: update.description };
+  // With no criteria field on this site, criteria written here go into the description, where the team keeps them.
+  const criteriaInDescription = !ids.acceptanceCriteria && update.acceptanceCriteria.trim() !== "";
+  const description = criteriaInDescription ? withCriteriaInDescription(update.description, update.acceptanceCriteria) : update.description;
+  const base: Record<string, unknown> = { summary: update.summary, description };
   const extra: Record<string, unknown> = {};
   if (ids.storyPoints[0]) extra[ids.storyPoints[0]] = update.storyPoints;
   if (ids.acceptanceCriteria) extra[ids.acceptanceCriteria] = update.acceptanceCriteria;
   try {
     await call<void>(token, url, { method: "PUT", body: JSON.stringify({ fields: { ...base, ...extra } }) });
-    return { skipped: [] };
+    return { skipped: [], criteriaInDescription };
   } catch (error) {
     const notOnScreen = error instanceof JiraError && /cannot be set|not on the appropriate screen|unknown/i.test(error.message);
     if (!notOnScreen || Object.keys(extra).length === 0) throw error;
     await call<void>(token, url, { method: "PUT", body: JSON.stringify({ fields: base }) });
     const skipped = [ids.storyPoints[0] && "story points", ids.acceptanceCriteria && "acceptance criteria"].filter(Boolean) as string[];
-    return { skipped };
+    return { skipped, criteriaInDescription };
   }
 }
 

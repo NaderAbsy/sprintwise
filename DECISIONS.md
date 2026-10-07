@@ -2,6 +2,12 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-07 — Jira tested end to end; two fixes from it
+
+- **Tested on a real Jira Cloud site** (`sprintwise-test.atlassian.net`, invented tickets): connect, import by JQL, edit, Send to Jira (checked in Jira), change in Jira, Sync (checked in Sprintwise). It works.
+- **Sync added issues that were left out at import.** Sync now adds only issues created in Jira after the last import or sync (`created` is read with each issue; importing from Jira sets `jiraSyncedAt`). Ones left unticked stay out, and the message says how many.
+- **Criteria could be lost on sites with no criteria field.** Criteria typed into Sprintwise's own criteria box had nowhere to go in Jira. Send now writes them into the description's "Acceptance criteria" section (`withCriteriaInDescription` replaces an existing section or adds one), and says so.
+
 ## 2026-10-07 — v2.3: criteria in the description, Feature as a story (rules v5)
 
 - **Found while setting up a real Jira test site:** Jira's current Scrum template creates team-managed projects whose work types are Epic, Feature, Task and Subtask (no Story), and which have no acceptance-criteria field. Teams write criteria in the description instead. Sprintwise scored every such story as having no criteria (−35) and treated Feature as "not a story".

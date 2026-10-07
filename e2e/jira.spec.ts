@@ -21,7 +21,7 @@ test("import from Jira, send an edit back, and sync without losing work done her
   await expect(page.getByRole("heading", { name: "3 stories in the file" })).toBeVisible();
   await page.getByRole("button", { name: "Import 3 stories" }).click();
   await expect(page.getByText("Imported and scored 3 stories.")).toBeVisible();
-  await expect(page.getByText("From Example Jira.", { exact: false })).toBeVisible();
+  await expect(page.getByText(/From Example Jira, last synced/)).toBeVisible();
   await expect(page.getByRole("table").getByText("Bug", { exact: true })).toBeVisible();
 
   // Edit SHOP-3 and send it to Jira from the story page.

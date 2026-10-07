@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { scoreStory } from "@/lib/readiness/rules";
-import { criteriaFromDescription, criteriaOf, splitCriteria } from "@/lib/stories/types";
+import { criteriaFromDescription, criteriaOf, splitCriteria, withCriteriaInDescription } from "@/lib/stories/types";
 
 const story = (description: string, acceptanceCriteria = "") => ({
   key: "A-1",
@@ -51,5 +51,31 @@ describe("Feature, the story type in Jira's newer templates", () => {
     const bare = { ...story("Booking should be easy."), issueType: "Feature" };
     expect(scoreStory(bare).typeNote).toBeUndefined();
     expect(scoreStory(bare).findings.map((f) => f.id)).toContain("C2");
+  });
+});
+
+describe("withCriteriaInDescription (Jira sites with no criteria field)", () => {
+  it("adds a section at the end", () => {
+    expect(withCriteriaInDescription("As a customer I want refunds so that I get money back.", "- Full refunds\n- Partial refunds")).toBe(
+      "As a customer I want refunds so that I get money back.\n\nh3. Acceptance criteria\n* Full refunds\n* Partial refunds",
+    );
+    expect(withCriteriaInDescription("", "- One")).toBe("h3. Acceptance criteria\n* One");
+  });
+
+  it("replaces an existing section and keeps what follows it", () => {
+    const description = "Intro.\n\nh3. Acceptance criteria\n* Old one\n* Old two\n\nh3. Notes\nKeep me";
+    expect(withCriteriaInDescription(description, "- New one")).toBe("Intro.\n\nh3. Acceptance criteria\n* New one\n\nh3. Notes\nKeep me");
+  });
+
+  it("leaves the description alone when there are no criteria", () => {
+    expect(withCriteriaInDescription("Intro.", "  ")).toBe("Intro.");
+  });
+
+  it("round-trips: what it writes is read back as the same criteria", () => {
+    const written = withCriteriaInDescription("Intro.", "- Shows the last four digits\n- Asks for the CVC only");
+    expect(criteriaOf({ description: written, acceptanceCriteria: "" })).toEqual({
+      lines: ["Shows the last four digits", "Asks for the CVC only"],
+      fromDescription: true,
+    });
   });
 });
