@@ -2,6 +2,12 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-07 — Home page: positioned for AI-written tickets
+
+- **Why:** most people now let AI write their tickets, so "helps you write better stories" competes with AI tools and loses. Checking is the job that's left, and tracking the sprint is something writing tools don't do.
+- **Decision:** the headline becomes "AI writes the tickets. Sprintwise checks they're ready." A new section shows an invented AI draft beside Sprintwise's real verdict on it, computed at render time with `scoreStory` and `secondLook`, so the page can't drift from the product. "0 setup steps" becomes "0 tickets sent to an AI". The FAQ opens with "We write our tickets with AI. Why use this?". The site description, steps, readiness tab and closing call to action follow the same line.
+- **Rejected:** keeping "Were we ready, and did we stick to it?" (true, but it doesn't say why to choose this over an AI tool); an "AI-powered" angle (the rules are deliberately not a model, and that's a selling point for company data).
+
 ## 2026-10-07 — v1.14: worth a second look (rules v4)
 
 - **Why:** most teams now let AI draft tickets. A pasted draft can pass every rule and score 100 while still opening with "Certainly! Here's a user story", listing "All edge cases are handled" as a criterion, or promising "reduce tickets by 30%". Writing is cheap now; checking is the job, and that's Sprintwise's place next to AI writing tools.

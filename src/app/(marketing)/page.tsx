@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronDown, ClipboardCheck, Code2, FileSpreadsheet, Lock, Printer } from "lucide-react";
+import { ArrowRight, Bot, ChevronDown, ClipboardCheck, Code2, Eye, FileSpreadsheet, Lock, Printer } from "lucide-react";
 import Link from "next/link";
 import { SignInButton } from "@/components/auth-buttons";
 import { BandBadge } from "@/components/band-badge";
@@ -13,6 +13,7 @@ import { demoBacklog } from "@/demo/backlog";
 import { demoSprint } from "@/demo/sprint";
 import videoLines from "@/demo/video-lines.json";
 import { DEFAULT_SETTINGS, RULES, scoreStory } from "@/lib/readiness/rules";
+import { secondLook } from "@/lib/readiness/second-look";
 import { computeMetrics, formatPercent } from "@/lib/sprint/metrics";
 import { compareReadiness, readinessFinding } from "@/lib/sprint/report";
 import { getSession } from "@/lib/server/dal";
@@ -21,8 +22,8 @@ import { GITHUB_URL, RELEASES } from "@/lib/site";
 const STEPS = [
   {
     Icon: ClipboardCheck,
-    title: "Score every story",
-    text: "Paste a story or upload a CSV. Nine fixed rules score each one out of 100, with a plain-English reason for every point lost.",
+    title: "Check every story",
+    text: "Paste a story or import your Jira backlog, AI-drafted or not. Nine fixed rules score each one out of 100, with a reason for every point lost and a flag on anything an AI draft left behind.",
   },
   {
     Icon: Lock,
@@ -38,8 +39,12 @@ const STEPS = [
 
 const FAQ = [
   {
-    q: "Does AI decide the score?",
-    a: "No. The score comes from nine fixed rules, so the same story always gets the same number and every lost point has a reason you can read. AI rewrites are built but switched off on the live site.",
+    q: "We write our tickets with AI. Why use this?",
+    a: "Because a draft that reads well isn't the same as a story the team can start on. AI drafts often keep chat text (\u201cCertainly! Here's\u2026\u201d), placeholders, criteria that fit any story, filler words and made-up figures, and they can't know your team's estimate. Sprintwise checks for all of that before planning, then tracks whether the sprint stuck to the plan, which writing tools don't do.",
+  },
+  {
+    q: "Does AI decide the score, or read my tickets?",
+    a: "No. The score comes from nine fixed rules, so the same story always gets the same number and every lost point has a reason you can read. Your tickets are never sent to an AI model. AI rewrites are built but switched off on the live site.",
   },
   {
     q: "Do I need to connect Jira?",
@@ -59,6 +64,17 @@ const FAQ = [
   },
 ];
 
+/** An invented AI draft for the home page: scored live with the real rules, so the verdict shown is the product's own. */
+const AI_DRAFT = {
+  key: "DEMO-1",
+  title: "Refund a payment",
+  description:
+    "Certainly! Here's a user story for refunds:\n\nAs a support agent, I want to leverage a streamlined refund flow so that we reduce support tickets by 30%.",
+  acceptanceCriteria: "- Refunds can be made from the order page\n- The customer gets an email with the amount\n- All edge cases are handled",
+  storyPoints: 3,
+  status: "To Do",
+};
+
 export default async function Home() {
   // Signed-in visitors see the home page too (the logo always leads here); their button opens the app.
   const signedIn = Boolean(await getSession());
@@ -72,6 +88,8 @@ export default async function Home() {
   const finding = readinessFinding(compareReadiness(baseline, latest, DEFAULT_SETTINGS));
   const transcript = Object.values(videoLines).map((line) => line.caption);
   const latestRelease = RELEASES[0];
+  const draftScore = scoreStory(AI_DRAFT);
+  const draftLooks = secondLook(AI_DRAFT);
 
   const tabs: FeatureTab[] = [
     {
@@ -83,6 +101,7 @@ export default async function Home() {
         "Nine fixed rules, from acceptance criteria to vague words",
         "A plain-English reason for every point lost",
         "Unestimated or oversized stories can't be Ready",
+        "Flags chat leftovers, placeholders and boilerplate from AI drafts",
       ],
       preview: (
         <div className="card overflow-hidden p-0">
@@ -216,15 +235,16 @@ export default async function Home() {
               className="group inline-flex items-center gap-2 rounded-full border border-border bg-surface/80 py-1 pr-3 pl-1 text-xs font-medium text-muted backdrop-blur transition-colors hover:border-accent hover:text-foreground"
             >
               <span className="rounded-full bg-accent px-2 py-0.5 text-accent-foreground">{latestRelease.version}</span>
-              Version 1 is out: see what&apos;s new
+              New: catch AI drafts nobody read through
               <ArrowRight aria-hidden="true" className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <h1 className="mt-6 text-4xl font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl">
-              Were we ready, <span className="text-gradient">and did we stick to it?</span>
+              AI writes the tickets. <span className="text-gradient">Sprintwise checks they&apos;re ready.</span>
             </h1>
             <p className="mt-5 max-w-xl text-lg text-muted text-pretty">
-              Sprintwise scores user stories for readiness before planning, then measures how much the sprint changes
-              after the team commits. No Jira setup: paste a story or upload a CSV.
+              Import your backlog, AI-drafted or not. Nine fixed rules score every story before planning and flag what a
+              pasted draft left behind; then Sprintwise measures how much the sprint changed after the team committed.
+              No AI reads your tickets.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link href="/demo" className="btn-primary h-11 px-5 shadow-lg shadow-accent/25">
@@ -255,7 +275,7 @@ export default async function Home() {
             { value: 9, label: "fixed rules", note: "the same story always gets the same score" },
             { value: 100, label: "point score", note: "with a reason for every point lost" },
             { value: 1, label: "printable page", note: "for the whole sprint retrospective" },
-            { value: 0, label: "setup steps", note: "paste a story or upload a CSV" },
+            { value: 0, label: "tickets sent to an AI", note: "fixed rules, not a model" },
           ].map((stat, i) => (
             <Reveal key={stat.label} delay={i * 80} className="flex flex-col px-2 py-8 sm:px-4">
               <dt className="text-sm text-muted">
@@ -269,6 +289,58 @@ export default async function Home() {
             </Reveal>
           ))}
         </dl>
+      </section>
+
+      {/* AI draft vs. Sprintwise */}
+      <section aria-labelledby="ai-heading" className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-28">
+        <Reveal className="mx-auto max-w-2xl text-center">
+          <p className="eyebrow">Written by AI, checked by Sprintwise</p>
+          <h2 id="ai-heading" className="mt-2 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+            A draft that reads well isn&apos;t a story the team can start
+          </h2>
+          <p className="mt-3 text-muted">
+            An invented ticket pasted straight from a chat. It passes every rule, and still isn&apos;t ready. This is
+            Sprintwise&apos;s real verdict on it.
+          </p>
+        </Reveal>
+        <div className="mt-10 grid gap-6 lg:grid-cols-2">
+          <Reveal className="card p-5">
+            <p className="flex items-center gap-2 text-sm font-medium text-muted">
+              <Bot aria-hidden="true" className="h-4 w-4" />
+              The AI draft
+            </p>
+            <p className="mt-3 font-semibold">{AI_DRAFT.title}</p>
+            <p className="mt-2 text-sm whitespace-pre-wrap text-muted">{AI_DRAFT.description}</p>
+            <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">
+              {AI_DRAFT.acceptanceCriteria.split("\n").map((line) => (
+                <li key={line}>{line.replace(/^-\s*/, "")}</li>
+              ))}
+            </ul>
+            <p className="mt-3 text-xs text-subtle">{AI_DRAFT.storyPoints} story points</p>
+          </Reveal>
+          <Reveal delay={100} className="card space-y-4 p-5">
+            <div className="flex items-center gap-3">
+              <ScoreRing score={draftScore.score} band={draftScore.band} size="md" />
+              <div className="space-y-1">
+                <BandBadge band={draftScore.band} />
+                <p className="text-xs text-muted">
+                  Passes all nine rules ({draftScore.score} points), but held at {draftScore.band}.
+                </p>
+              </div>
+            </div>
+            <div>
+              <p className="flex items-center gap-2 text-sm font-medium">
+                <Eye aria-hidden="true" className="h-4 w-4 text-accent" />
+                Worth a second look
+              </p>
+              <ul className="mt-2 space-y-2 text-sm text-muted">
+                {draftLooks.map((look) => (
+                  <li key={look.message}>{look.message}</li>
+                ))}
+              </ul>
+            </div>
+          </Reveal>
+        </div>
       </section>
 
       {/* Video */}
@@ -411,7 +483,7 @@ export default async function Home() {
             <div className="aurora-blob absolute -right-10 -bottom-24 h-72 w-72 rounded-full bg-fuchsia-400/30 blur-3xl" style={{ animationDelay: "-9s" }} />
           </div>
           <div className="relative">
-            <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">Check your next sprint before you commit to it</h2>
+            <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">Check the tickets before your team commits to them</h2>
             <p className="mx-auto mt-3 max-w-xl text-accent-foreground/85">
               Open the demo with an invented backlog and sprint. No account, nothing saved.
             </p>

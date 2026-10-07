@@ -160,3 +160,12 @@ test("Send feedback opens the GitHub form from the footer and the app sidebar", 
   await page.goto("/projects");
   await expect(page.getByRole("link", { name: /Send feedback/ }).first()).toHaveAttribute("href", form);
 });
+
+test("the home page shows the real verdict on an AI draft", async ({ page }) => {
+  await page.goto("/");
+  const section = page.getByRole("region", { name: "A draft that reads well isn't a story the team can start" });
+  await expect(section).toContainText("Passes all nine rules (100 points), but held at Needs work.");
+  await expect(section).toContainText("looks left over from an AI chat");
+  await expect(section).toContainText("“All edge cases are handled” would fit any story");
+  await expect(page.getByText("tickets sent to an AI")).toBeVisible();
+});
