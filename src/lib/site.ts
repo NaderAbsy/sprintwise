@@ -17,6 +17,18 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.4",
+    date: "2026-10-07",
+    title: "Clicks that always answer",
+    summary: "A click made while a page is still getting ready isn't lost, every button shows it's working, and Jira sync is more careful.",
+    items: [
+      "A page shows a moment before its buttons work. A click in that moment now happens as soon as the page is ready, instead of doing nothing.",
+      "Sync from Jira says \"Syncing…\" the moment you click; Set status and Turn off the link also show they're working.",
+      "Sync adds only issues created in Jira since the last import or sync, so issues you left out at import stay out.",
+      "On Jira sites without an acceptance-criteria field, Send to Jira puts the criteria in the description under an \"Acceptance criteria\" heading.",
+    ],
+  },
+  {
     version: "v2.3",
     date: "2026-10-07",
     title: "Fits newer Jira projects",

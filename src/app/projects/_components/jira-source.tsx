@@ -124,9 +124,9 @@ export function JiraSource({
             type="button"
             className="btn-primary"
             disabled={pending || !cloudId}
-            onClick={() =>
+            onClick={() => {
+              setError(null);
               startTransition(async () => {
-                setError(null);
                 const result = await previewFromJira(projectId, cloudId, jql);
                 if ("error" in result) setError(result.error);
                 else
@@ -134,8 +134,8 @@ export function JiraSource({
                     result.csv,
                     `${result.count} ${result.count === 1 ? "issue" : "issues"} from Jira${result.truncated ? " (the first 1,000; narrow the search for the rest)" : ""}.`,
                   );
-              })
-            }
+              });
+            }}
           >
             {pending ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> : <Search aria-hidden="true" className="h-4 w-4" />}
             {pending ? "Reading Jira…" : "Preview issues"}

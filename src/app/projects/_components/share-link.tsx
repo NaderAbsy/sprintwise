@@ -78,7 +78,7 @@ export function ShareLink({
                 disabled={pending}
                 onClick={() => startTransition(() => disable())}
               >
-                Turn off the link
+                {pending ? "Turning off…" : "Turn off the link"}
               </button>
               <button type="button" className="btn-ghost" onClick={() => dialog.current?.close()} autoFocus>
                 Done

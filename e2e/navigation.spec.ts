@@ -87,3 +87,23 @@ test("a click answers at once: the tab lights up and a placeholder shows while t
   await expect(tabs.locator("[aria-current=page]")).toHaveCount(1);
   await expect(page.getByRole("heading", { level: 1, name: "Trends" })).toBeVisible();
 });
+
+test("a click made before the page is ready isn't lost: it happens once the page is ready", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/projects");
+  await page.getByLabel("Name").fill("Early click");
+  await page.getByRole("button", { name: "Create project" }).click();
+  await expect(page).toHaveURL(/\/projects\/[^/?]+/);
+  const settings = `${page.url().split("?")[0]}/settings`;
+
+  // Hold the page's scripts for two seconds, as a slow connection would, and click while they load.
+  await page.route(/\/_next\/static\/.*\.js/, async (route) => {
+    await new Promise((r) => setTimeout(r, 2000));
+    await route.continue();
+  });
+  await page.goto(settings, { waitUntil: "commit" });
+  await page.getByRole("button", { name: "Delete project" }).click();
+  expect(await page.evaluate(() => Object.keys(document).some((k) => k.startsWith("__reactContainer$")))).toBe(false);
+  await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole("dialog").getByRole("heading", { name: "Delete Early click?" })).toBeVisible();
+});

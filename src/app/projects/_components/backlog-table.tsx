@@ -132,7 +132,7 @@ export function BacklogTable({
               className="field h-8 w-36 px-2 py-1 text-sm"
             />
             <button className="btn-secondary btn-sm" disabled={pending}>
-              Set status
+              {pending ? "Saving…" : "Set status"}
             </button>
           </form>
           <ConfirmButton
