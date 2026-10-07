@@ -28,6 +28,7 @@ export const RELEASES: Release[] = [
       "Rows with a problem are flagged on their own instead of rejecting the whole file.",
       "Only the ticked stories leave your computer; the rest of the file is read in the browser and never sent.",
       "Stories keep their Jira epic (from the Parent or Epic column), shown in the backlog with an Epic filter.",
+      "A Numbers or Excel file saved with a .csv name is recognised, with steps to export a real CSV.",
     ],
   },
   {

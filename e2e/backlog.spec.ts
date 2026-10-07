@@ -119,6 +119,18 @@ test("a CSV can be dragged onto the picker, and other files are turned away", as
   await expect(page.getByText("Imported and scored 3 stories.")).toBeVisible();
 });
 
+test("a Numbers file saved with a .csv name is explained, not shown as garbled columns", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/projects");
+  await page.getByLabel("Name").fill("Numbers file");
+  await page.getByRole("button", { name: "Create project" }).click();
+  await page.getByRole("link", { name: "Import CSV" }).click();
+  const numbers = Buffer.concat([Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x14, 0, 0, 0]), Buffer.from("Index/Document.iwa"), Buffer.from([0, 1, 2])]);
+  await page.getByLabel("CSV file").setInputFiles({ name: "Jira.CSV", mimeType: "text/csv", buffer: numbers });
+  await expect(page.getByText("it's a Numbers spreadsheet. In Numbers, choose File → Export To → CSV…", { exact: false })).toBeVisible();
+  await expect(page.getByText("Match columns")).toHaveCount(0);
+});
+
 test("users only see their own projects", async ({ browser }) => {
   const owner = await browser.newPage();
   await signIn(owner);
