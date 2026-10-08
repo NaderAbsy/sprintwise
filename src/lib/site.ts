@@ -17,6 +17,18 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.11",
+    date: "2026-10-09",
+    title: "Honest about unplanned work",
+    summary: "Bugs added mid-sprint are tagged by themselves and counted even without points, and planning explains the room velocity already leaves.",
+    items: [
+      "Work of type Bug, Defect, Incident or Hotfix added mid-sprint is tagged \"Bug or incident\" by itself. A reason you choose is never replaced.",
+      "Scope added says how many new stories have no estimate, so a sprint flooded with unestimated bugs no longer reads as \"0 pts added\".",
+      "The planning helper says how much work usually arrives mid-sprint, and that velocity already leaves room for it, so no extra buffer is taken off.",
+      "Refinement and the Guide say estimates include testing.",
+    ],
+  },
+  {
     version: "v2.10",
     date: "2026-10-08",
     title: "Faster on phones",

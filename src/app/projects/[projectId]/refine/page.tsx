@@ -161,7 +161,8 @@ export default async function RefinePage({ params, searchParams }: PageProps<"/p
           <div className="card space-y-3 p-5">
             <EstimateButtons projectId={project.id} storyId={row.id} points={story.storyPoints} />
             <p className="text-xs text-muted">
-              Everyone shows a size at once. The highest and lowest explain why, then agree. Record the agreed size here.
+              Everyone shows a size at once, testing included. The highest and lowest explain why, then agree. Record the
+              agreed size here.
               Bigger than {settingsOf(project).maxPoints}? Split the story instead.
             </p>
           </div>

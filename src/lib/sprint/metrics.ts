@@ -40,6 +40,8 @@ export type SprintMetrics = {
   completion: number | null;
   /** Keys with no points in the baseline or the latest snapshot; they count as 0. */
   unestimatedKeys: string[];
+  /** Stories added since the baseline with no points: unplanned work the points can't show. */
+  addedUnestimated: number;
 };
 
 const points = (story: Story) => story.storyPoints ?? 0;
@@ -57,7 +59,8 @@ export function computeMetrics(
   const baselineTotal = sum([...before.values()].map(points));
   const latestTotal = sum([...after.values()].map(points));
 
-  const scopeAdded = sum([...after].filter(([key]) => !before.has(key)).map(([, s]) => points(s)));
+  const added = [...after].filter(([key]) => !before.has(key)).map(([, s]) => s);
+  const scopeAdded = sum(added.map(points));
   const scopeRemoved = sum([...before].filter(([key]) => !after.has(key)).map(([, s]) => points(s)));
 
   let reestimateTotal = 0;
@@ -87,7 +90,13 @@ export function computeMetrics(
     churn: ratio(scopeAdded + scopeRemoved + reestimateTotal),
     completion: ratio(donePoints),
     unestimatedKeys: [...unestimated],
+    addedUnestimated: added.filter((s) => s.storyPoints === null).length,
   };
+}
+
+/** "+2 with no estimate" for the Scope added tile, or "" when every added story has points. */
+export function unestimatedNote(count: number): string {
+  return count === 0 ? "" : `plus ${count} ${count === 1 ? "story" : "stories"} with no estimate`;
 }
 
 /** 0.16667 → "+16.7%"; null → "—". */

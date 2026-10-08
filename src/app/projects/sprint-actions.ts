@@ -11,7 +11,7 @@ import { MAX_SNAPSHOTS_PER_SPRINT, MAX_SPRINTS_PER_PROJECT } from "@/lib/limits"
 import type { FormState } from "@/lib/form-state";
 import { validateSnapshotDate, validateSprintDates } from "@/lib/sprint/dates";
 import { diffSnapshots } from "@/lib/sprint/diff";
-import { isGoalOutcome, isReason } from "@/lib/sprint/reasons";
+import { defaultReasons, isGoalOutcome, isReason } from "@/lib/sprint/reasons";
 import { db } from "@/lib/server/db";
 import { assertId, requireProject, requireSprint } from "@/lib/server/dal";
 import { toStory } from "@/lib/server/readiness";
@@ -138,7 +138,7 @@ export async function uploadSnapshot(
   const csv = await readSnapshotStories(project.id, formData);
   if (!("stories" in csv)) return csv;
 
-  const changes = diffSnapshots(previous.items.map(toStory), csv.stories);
+  const changes = defaultReasons(diffSnapshots(previous.items.map(toStory), csv.stories), csv.stories);
   await db.$transaction(async (tx) => {
     const snapshot = await tx.snapshot.create({
       data: { sprintId: sprint.id, asOfDate: date.asOfDate, locked: true, items: { create: csv.stories } },
@@ -156,6 +156,7 @@ export async function uploadSnapshot(
           oldValue: c.oldValue,
           newValue: c.newValue,
           pointsDelta: c.pointsDelta,
+          reason: c.reason,
         })),
       });
     }

@@ -1,5 +1,7 @@
 import { scoreStory, type RuleSettings } from "@/lib/readiness/rules";
+import { indexByKey } from "@/lib/sprint/diff";
 import { computeMetrics, DONE_STATUSES } from "@/lib/sprint/metrics";
+import { isBugType } from "@/lib/sprint/reasons";
 import type { Story } from "@/lib/stories/types";
 
 export type SprintTrendInput = {
@@ -23,6 +25,9 @@ export type SprintTrendRow = {
   startDate: Date;
   committed: number;
   done: number;
+  /** Points added mid-sprint, and how many of them were bugs (by issue type). */
+  added: number;
+  addedBugs: number;
   completion: number | null;
   churn: number | null;
   netChange: number | null;
@@ -42,6 +47,8 @@ export function trendRows(
     .map((s) => {
       const m = computeMetrics(s.baseline, s.latest, doneStatuses);
       const scores = s.baseline.map((story) => scoreStory(story, settings));
+      const before = indexByKey(s.baseline);
+      const addedStories = [...indexByKey(s.latest)].filter(([key]) => !before.has(key)).map(([, story]) => story);
       return {
         id: s.id,
         measured: (s.measured ?? true) && !s.running,
@@ -50,6 +57,8 @@ export function trendRows(
         startDate: s.startDate,
         committed: m.baselineTotal,
         done: m.donePoints,
+        added: m.scopeAdded,
+        addedBugs: addedStories.filter((story) => isBugType(story.issueType)).reduce((sum, story) => sum + (story.storyPoints ?? 0), 0),
         completion: m.completion,
         churn: m.churn,
         netChange: m.netChange,
@@ -61,11 +70,26 @@ export function trendRows(
 
 const mean = (values: number[]) => (values.length === 0 ? null : values.reduce((a, b) => a + b, 0) / values.length);
 
-/** Average points done over the last `n` sprints with a later snapshot: a planning guide, not a target. */
-export function averageVelocity(rows: SprintTrendRow[], n = 3): { points: number; sprints: number } | null {
+/**
+ * Average points done over the last `n` finished sprints: a planning guide, not a target. Velocity
+ * counts only planned work that got done, so it already leaves room for the work that usually
+ * arrives mid-sprint; `unplanned` says how much that was, so no buffer is taken off a second time.
+ */
+export function averageVelocity(
+  rows: SprintTrendRow[],
+  n = 3,
+): { points: number; sprints: number; unplanned: number; unplannedBugs: number } | null {
   const recent = rows.filter((r) => r.measured).slice(-n);
   const value = mean(recent.map((r) => r.done));
-  return value === null ? null : { points: Math.round(value * 10) / 10, sprints: recent.length };
+  const round = (v: number | null) => Math.round((v ?? 0) * 10) / 10;
+  return value === null
+    ? null
+    : {
+        points: round(value),
+        sprints: recent.length,
+        unplanned: round(mean(recent.map((r) => r.added))),
+        unplannedBugs: round(mean(recent.map((r) => r.addedBugs))),
+      };
 }
 
 export type TrendSummary = {

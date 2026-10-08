@@ -36,6 +36,8 @@ const row = (done: number, completion: number, churn: number, ready: number): Sp
   id: String(Math.random()),
   measured: true,
   running: false,
+  added: 0,
+  addedBugs: 0,
   name: "S",
   startDate: new Date(),
   committed: 20,
@@ -49,7 +51,7 @@ const row = (done: number, completion: number, churn: number, ready: number): Sp
 
 describe("summarizeTrends", () => {
   it("averages the last three sprints for velocity", () => {
-    expect(averageVelocity([row(10, 0.5, 0.2, 0.5), row(20, 1, 0, 1), row(30, 1, 0, 1), row(40, 1, 0, 1)])).toEqual({ points: 30, sprints: 3 });
+    expect(averageVelocity([row(10, 0.5, 0.2, 0.5), row(20, 1, 0, 1), row(30, 1, 0, 1), row(40, 1, 0, 1)])).toMatchObject({ points: 30, sprints: 3 });
     expect(averageVelocity([])).toBeNull();
   });
 
@@ -61,7 +63,7 @@ describe("summarizeTrends", () => {
   });
 
   it("ignores sprints that only have a baseline", () => {
-    expect(averageVelocity([row(30, 1, 0, 1), { ...row(0, 0, 0, 1), measured: false }])).toEqual({ points: 30, sprints: 1 });
+    expect(averageVelocity([row(30, 1, 0, 1), { ...row(0, 0, 0, 1), measured: false }])).toMatchObject({ points: 30, sprints: 1 });
   });
 
   it("stays quiet with one sprint", () => {
@@ -98,5 +100,24 @@ describe("running sprints", () => {
     );
     expect(done).toMatchObject({ measured: true, running: false });
     expect(running).toMatchObject({ measured: false, running: true });
+  });
+});
+
+describe("unplanned work", () => {
+  const story = (key: string, storyPoints: number | null, issueType = ""): Story => ({
+    key, title: key, description: "", acceptanceCriteria: "", storyPoints, status: "", issueType,
+  });
+
+  it("measures what was added mid-sprint, and how much of it was bugs", () => {
+    const [row] = trendRows(
+      [{ id: "a", name: "Sprint 1", startDate: new Date("2026-09-01"), baseline: [story("A-1", 5)], latest: [story("A-1", 5), story("A-2", 3, "Bug"), story("A-3", 2, "Story"), story("A-4", null, "Bug")] }],
+      DEFAULT_SETTINGS,
+    );
+    expect(row).toMatchObject({ added: 5, addedBugs: 3 });
+  });
+
+  it("says how much unplanned work the velocity already allows for", () => {
+    const rows = [row(20, 1, 0, 1), row(22, 1, 0, 1)].map((r, i) => ({ ...r, added: [4, 6][i], addedBugs: [2, 3][i] }));
+    expect(averageVelocity(rows)).toEqual({ points: 21, sprints: 2, unplanned: 5, unplannedBugs: 2.5 });
   });
 });

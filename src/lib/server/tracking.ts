@@ -2,6 +2,7 @@ import "server-only";
 import { MAX_SNAPSHOTS_PER_SPRINT } from "@/lib/limits";
 import { db } from "@/lib/server/db";
 import { toStory } from "@/lib/server/readiness";
+import { defaultReasons } from "@/lib/sprint/reasons";
 import { carryReasons, planTracking, utcToday } from "@/lib/sprint/tracking";
 
 /**
@@ -73,7 +74,7 @@ async function recordSprint(projectId: string, sprintId: string, today: Date) {
         const snapshot = await tx.snapshot.create({
           data: { sprintId, asOfDate: plan.asOfDate, locked: true, auto: true, items: { create: plan.items } },
         });
-        await tx.change.createMany({ data: changeRows(plan.changes, latestRow.id, snapshot.id) });
+        await tx.change.createMany({ data: changeRows(defaultReasons(plan.changes, plan.items), latestRow.id, snapshot.id) });
         return;
       }
       case "replace": {
@@ -81,7 +82,9 @@ async function recordSprint(projectId: string, sprintId: string, today: Date) {
         await tx.change.deleteMany({ where: { toSnapshotId: plan.snapshotId } });
         await tx.snapshotItem.deleteMany({ where: { snapshotId: plan.snapshotId } });
         await tx.snapshotItem.createMany({ data: plan.items.map((item) => ({ ...item, snapshotId: plan.snapshotId })) });
-        await tx.change.createMany({ data: changeRows(carryReasons(plan.changes, old), previousRow!.id, plan.snapshotId) });
+        await tx.change.createMany({
+          data: changeRows(defaultReasons(carryReasons(plan.changes, old), plan.items), previousRow!.id, plan.snapshotId),
+        });
         return;
       }
       case "delete":

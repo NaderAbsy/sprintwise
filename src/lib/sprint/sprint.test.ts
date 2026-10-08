@@ -153,3 +153,14 @@ describe("statusChoices", () => {
     expect(statusChoices(["Closed"], ["Done"])).toEqual(["To Do", "In Progress", "Closed", "Done"]);
   });
 });
+
+describe("added stories with no estimate", () => {
+  it("counts them, so unestimated bugs don't read as nothing added", async () => {
+    const { computeMetrics, unestimatedNote } = await import("@/lib/sprint/metrics");
+    const base = [story({ key: "A-1", storyPoints: 5 })];
+    const m = computeMetrics(base, [...base, story({ key: "A-2", storyPoints: null }), story({ key: "A-3", storyPoints: null }), story({ key: "A-4", storyPoints: 2 })]);
+    expect(m).toMatchObject({ scopeAdded: 2, addedUnestimated: 2 });
+    expect(unestimatedNote(2)).toBe("plus 2 stories with no estimate");
+    expect(unestimatedNote(0)).toBe("");
+  });
+});

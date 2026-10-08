@@ -117,7 +117,10 @@ type UploadProps = {
   backlog: BacklogStory[];
   /** The project's rules, to show each story's readiness while planning. */
   settings: RuleSettings;
-} & ({ mode: "baseline"; capacity: { points: number; sprints: number } | null } | { mode: "snapshot"; previous: Story[] });
+} & (
+  | { mode: "baseline"; capacity: { points: number; sprints: number; unplanned: number; unplannedBugs: number } | null }
+  | { mode: "snapshot"; previous: Story[] }
+);
 
 type Source = "backlog" | "csv";
 
@@ -364,6 +367,19 @@ export function SnapshotUploadForm(props: UploadProps) {
                       style={{ width: `${Math.min(100, (selectedPoints / Math.max(capacity.points, 1)) * 100)}%` }}
                     />
                   </div>
+                  {capacity.unplanned > 0 && (
+                    <p className="text-xs text-muted">
+                      That already leaves room for the work that usually arrives mid-sprint, about{" "}
+                      <span className="tabular-nums">{capacity.unplanned}</span> points a sprint
+                      {capacity.unplannedBugs > 0 && (
+                        <>
+                          {" "}
+                          (<span className="tabular-nums">{capacity.unplannedBugs}</span> of them bugs)
+                        </>
+                      )}
+                      , because only planned work that got done counts. No extra buffer needed.
+                    </p>
+                  )}
                   {overCapacity && (
                     <p className="text-needs-work">
                       That&apos;s {Math.round((selectedPoints - capacity.points) * 10) / 10} points more than the team
