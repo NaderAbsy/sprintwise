@@ -66,3 +66,13 @@ describe("looksLikeJira", () => {
     expect(looksLikeJira("- The total is 2*3\n- It works")).toBe(false);
   });
 });
+
+describe("hostile markup", () => {
+  it("reads 5,000 characters of unmatched openers quickly", () => {
+    for (const text of ["{{a ".repeat(1250), "[|".repeat(2500), "*a ".repeat(1666), "[a ".repeat(1666)]) {
+      const start = performance.now();
+      parseJira(text);
+      expect(performance.now() - start).toBeLessThan(50);
+    }
+  });
+});

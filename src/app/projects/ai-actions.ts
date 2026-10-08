@@ -5,7 +5,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { scoreStory } from "@/lib/readiness/rules";
 import { dailyLimit, siteDailyLimit, suggestForStory } from "@/lib/server/ai";
 import { db } from "@/lib/server/db";
-import { requireProject, requireUser } from "@/lib/server/dal";
+import { assertId, requireProject, requireUser } from "@/lib/server/dal";
 import { settingsOf, toStory } from "@/lib/server/readiness";
 import { recordUsage } from "@/lib/server/usage";
 
@@ -15,6 +15,7 @@ export type SuggestState = { error?: string } | null;
 export async function requestSuggestion(projectId: string, storyId: string, _prev: SuggestState): Promise<SuggestState> {
   const user = await requireUser();
   const project = await requireProject(projectId);
+  assertId(storyId);
   const row = await db.story.findFirst({ where: { id: storyId, projectId: project.id } });
   if (!row) return { error: "That story no longer exists." };
 
@@ -24,14 +25,19 @@ export async function requestSuggestion(projectId: string, storyId: string, _pre
     return { error: "This story is already Ready. Suggestions are for stories that still need work." };
   }
 
-  // The daily cap counts attempts, so failed calls can't be used to get around it.
+  // The daily cap counts attempts, so failed calls can't be used to get around it. The count only
+  // goes up while under the cap (one conditional update), so refused tries don't fill the site-wide total.
   const today = new Date(new Date().toISOString().slice(0, 10) + "T00:00:00Z");
-  const usage = await db.aiUsage.upsert({
+  await db.aiUsage.upsert({
     where: { userId_day: { userId: user.id, day: today } },
-    create: { userId: user.id, day: today, count: 1 },
-    update: { count: { increment: 1 } },
+    create: { userId: user.id, day: today, count: 0 },
+    update: {},
   });
-  if (usage.count > dailyLimit()) {
+  const { count: allowed } = await db.aiUsage.updateMany({
+    where: { userId: user.id, day: today, count: { lt: dailyLimit() } },
+    data: { count: { increment: 1 } },
+  });
+  if (allowed === 0) {
     return { error: `You've used today's ${dailyLimit()} AI suggestions. The limit resets at midnight UTC.` };
   }
   // A site-wide ceiling too, so many accounts together can't run up the bill.

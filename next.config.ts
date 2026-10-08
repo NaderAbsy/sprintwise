@@ -2,15 +2,31 @@ import type { NextConfig } from "next";
 
 /**
  * Security headers for every response. There's no user-supplied HTML, so the
- * CSP focuses on framing, plugins, base URLs and where forms may post
- * (GitHub, for sign-in). script-src is left to the defaults because Next's
- * inline bootstrap scripts would need a per-request nonce.
+ * CSP limits what a page may load or contact rather than which scripts run:
+ * script-src is left to the defaults because Next's inline bootstrap scripts
+ * would need a per-request nonce, which would make every page dynamic.
+ * Pages talk only to this site (Atlassian and GitHub are called from the
+ * server); images are this site's, inline data, or GitHub avatars.
  */
+const CSP = [
+  "default-src 'self'",
+  // The dev server's hot reload evaluates code; production builds don't.
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://avatars.githubusercontent.com",
+  "font-src 'self'",
+  "media-src 'self'",
+  "connect-src 'self'",
+  "frame-src 'none'",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "form-action 'self'",
+  "upgrade-insecure-requests",
+].join("; ");
+
 const SECURITY_HEADERS = [
-  {
-    key: "Content-Security-Policy",
-    value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self' https://github.com",
-  },
+  { key: "Content-Security-Policy", value: CSP },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

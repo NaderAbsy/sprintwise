@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { backlogCsv, storyAsText } from "@/lib/csv/export";
+import { backlogCsv, neutralize, storyAsText } from "@/lib/csv/export";
 import { parseStoriesCsv } from "@/lib/csv/parse";
 
 const row = {
@@ -32,6 +32,17 @@ describe("backlogCsv", () => {
 
   it("neutralizes a minus that starts a formula", () => {
     expect(backlogCsv([{ ...row, title: "-1+2" }])).toContain("'-1+2");
+  });
+
+  it("neutralizes formulas after spaces or a bullet, but not a bullet followed by a word", () => {
+    for (const cell of ["- 1+1", "-  2+cmd|' /C calc'!A0", " =1+1", "  @SUM(A1)", "\t=1", "+1"]) expect(neutralize(cell), cell).toBe(`'${cell}`);
+    for (const cell of ["- Full refunds", '- "Quoted" text', "Plain text", "", "a - b"]) expect(neutralize(cell), cell).toBe(cell);
+  });
+
+  it("re-imports neutralized cells without the apostrophe", () => {
+    const parsed = parseStoriesCsv(backlogCsv([{ ...row, title: "- 2 day delivery", description: "=SUM(1)" }]).slice(1));
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok) expect(parsed.stories[0]).toMatchObject({ title: "- 2 day delivery", description: "=SUM(1)" });
   });
 });
 

@@ -17,6 +17,19 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.7",
+    date: "2026-10-08",
+    title: "Security check",
+    summary: "A full security review of the site, and fixes for everything it found.",
+    items: [
+      "Atlassian can only connect Jira to a signed-in account; it can never be used to sign in.",
+      "Text written to slow the site down (in a story or a Jira ticket) is now read as fast as any other.",
+      "Exported CSV files can't run as spreadsheet formulas, and re-import exactly as before.",
+      "Pages may only load content from Sprintwise itself, and stored GitHub or Atlassian keys can't be read from a page.",
+      "Sign-in limits repeated tries, and the weekly Atlassian check only runs when Vercel calls it.",
+    ],
+  },
+  {
     version: "v2.6",
     date: "2026-10-08",
     title: "Ready to share the Jira connection",

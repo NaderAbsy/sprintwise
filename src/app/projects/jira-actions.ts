@@ -5,7 +5,7 @@ import { readCsvTable } from "@/lib/csv/parse";
 import type { FormState } from "@/lib/form-state";
 import { MAX_STORIES_PER_PROJECT } from "@/lib/limits";
 import { db } from "@/lib/server/db";
-import { requireProject, requireUser } from "@/lib/server/dal";
+import { isId, requireProject, requireUser } from "@/lib/server/dal";
 import { issuesAsCsv, JIRA_MAX_ISSUES, JiraError, jiraSites, searchJira, updateJiraIssue } from "@/lib/server/jira";
 import { saveStories } from "@/lib/server/save-stories";
 import { doneStatusesOf } from "@/lib/server/sprint";
@@ -123,7 +123,7 @@ export async function sendToJira(projectId: string, storyIds: string[]): Promise
   const project = await requireProject(projectId);
   const user = await requireUser();
   if (!project.jiraCloudId) return { error: "Import from Jira once first, so Sprintwise knows which Jira site to write to." };
-  const ids = [...new Set(storyIds.filter((id) => typeof id === "string"))].slice(0, SEND_MAX);
+  const ids = [...new Set((Array.isArray(storyIds) ? storyIds : []).filter(isId))].slice(0, SEND_MAX);
   const stories = await db.story.findMany({
     where: { projectId: project.id, id: { in: ids }, editedAt: { not: null } },
     orderBy: [{ rank: "asc" }, { key: "asc" }],

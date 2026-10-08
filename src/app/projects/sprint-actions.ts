@@ -13,7 +13,7 @@ import { validateSnapshotDate, validateSprintDates } from "@/lib/sprint/dates";
 import { diffSnapshots } from "@/lib/sprint/diff";
 import { isGoalOutcome, isReason } from "@/lib/sprint/reasons";
 import { db } from "@/lib/server/db";
-import { requireProject, requireSprint } from "@/lib/server/dal";
+import { assertId, requireProject, requireSprint } from "@/lib/server/dal";
 import { toStory } from "@/lib/server/readiness";
 import type { Story } from "@/lib/stories/types";
 
@@ -212,6 +212,7 @@ export async function updateSprintGoal(
 /** Tags one scope change with why it happened, for the report's breakdown. */
 export async function setChangeReason(projectId: string, sprintId: string, changeId: string, reason: string) {
   const { project, sprint } = await requireSprint(projectId, sprintId);
+  assertId(changeId);
   // The change must belong to this sprint; the where clause enforces it.
   await db.change.updateMany({
     where: { id: changeId, sprintId: sprint.id },

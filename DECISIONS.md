@@ -2,6 +2,23 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-08 — v2.7: security review and fixes
+
+A full review: three parallel code audits (access control; injection and input; auth, secrets and supply chain) plus black-box tests of the live site. No cross-user data access was found: every action, route and page checks ownership through the DAL, and share links are 256-bit tokens. Fixed:
+
+- **Atlassian sign-in into existing accounts (medium):** with account linking on and implicit linking allowed, an Atlassian account with a verified email matching a user's could sign in as them. Now `disableImplicitLinking`, and a `hooks.before` refuses `/sign-in/social` for Atlassian. Linking from Connect Jira still works (it only needs a session).
+- **Catastrophic backtracking (high):** the "Acceptance criteria" heading regex had four optional whitespace runs; "AC" plus a few thousand spaces took minutes, reachable from Jira sync and the public share page. Replaced by tidy-and-compare (`isCriteriaHeading`, lines over 200 characters skipped). The Jira markup parser's repeats are bounded and its link pattern can't rescan.
+- **CSV formulas (low):** cells whose first non-space character is `= + @`, or `-` not followed by a word, get an apostrophe; the importer strips it. Bullets like "- Full refunds" stay as typed, so `jira.csv` reads the same in Jira.
+- **Server action ids (info):** `assertId`/`isId` in the DAL; an object like `{"not": ""}` can no longer reach a Prisma filter. Bulk id lists are filtered by `isId`.
+- **Tokens reachable from the browser (info):** `/get-access-token`, `/refresh-token` and `/account-info` are in `disabledPaths`; the server uses `auth.api`, which they don't affect.
+- **Sign-in without rate limiting (medium):** the GitHub sign-in server action called `auth.api` directly, skipping Better Auth's limiter. The button now calls the client, through the limited endpoint; the early-click script covers clicks before hydration.
+- **Cron route open (low):** on Vercel it refuses every call unless `CRON_SECRET` is set and sent (constant-time compare).
+- **Jira request paths (low):** site ids and issue keys are checked (`siteApi`, `isJiraKey`) before a URL is built.
+- **AI cap (low):** refused attempts no longer count toward the site-wide total (conditional increment).
+- **CSP:** `default-src 'self'` with `connect-src`, `img-src` (plus GitHub avatars), `media-src`, `frame-src 'none'`, `form-action 'self'` and `upgrade-insecure-requests`. `script-src` still allows inline scripts, because nonces would make every page dynamic. An e2e test fails on any CSP violation across the main pages.
+- **For the user, outside the code:** set `CRON_SECRET` in Vercel; use a different `BETTER_AUTH_SECRET` for Preview than for Production (a preview build could otherwise mint production sessions while the cookie cache is on); rotate the Neon production password; turn on GitHub code scanning (CodeQL default setup); use two-factor sign-in on GitHub, Vercel, Neon and Atlassian.
+- **Accepted:** the 5-minute session cookie cache (sign-out elsewhere takes up to 5 minutes to apply); account deletion doesn't revoke grants at GitHub or Atlassian (users can revoke them there).
+
 ## 2026-10-08 — v2.6: Atlassian personal data reporting
 
 - **Why:** before the Jira connection can be shared with other companies, Atlassian requires apps that store account IDs to report them through the personal data reporting API, and to erase data for accounts Atlassian says were closed.

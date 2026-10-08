@@ -45,6 +45,19 @@ export class JiraError extends Error {}
 export const JIRA_MAX_ISSUES = 1000;
 const API = "https://api.atlassian.com";
 
+/**
+ * The REST base for one Jira site. Site ids come from Atlassian and keys from
+ * stories; both are checked so neither can change which endpoint a request
+ * reaches with the user's token ("..", "/" and the like).
+ */
+function siteApi(cloudId: string): string {
+  if (!/^[a-zA-Z0-9-]{1,64}$/.test(cloudId)) throw new JiraError("That Jira site isn't one Sprintwise can open.");
+  return `${API}/ex/jira/${cloudId}/rest/api/2`;
+}
+
+/** Jira issue keys look like ABC-123. */
+export const isJiraKey = (key: string) => /^[A-Za-z][A-Za-z0-9_]{0,49}-\d{1,12}$/.test(key);
+
 // ---------------------------------------------------------------------------
 // The pretend Jira (tests only)
 // ---------------------------------------------------------------------------
@@ -163,7 +176,7 @@ type FieldIds = { storyPoints: string[]; acceptanceCriteria: string | null };
 async function fieldIds(token: string, cloudId: string): Promise<FieldIds> {
   const fields = await call<{ id: string; name: string; custom: boolean; schema?: { type?: string } }[]>(
     token,
-    `${API}/ex/jira/${cloudId}/rest/api/2/field`,
+    `${siteApi(cloudId)}/field`,
   );
   const named = (pattern: RegExp) => fields.filter((f) => f.custom && pattern.test(f.name.trim()));
   return {
@@ -210,7 +223,7 @@ export async function searchJira(userId: string, cloudId: string, jql: string): 
   do {
     const page = await call<{ issues: RawIssue[]; nextPageToken?: string; isLast?: boolean }>(
       token,
-      `${API}/ex/jira/${cloudId}/rest/api/2/search/jql`,
+      `${siteApi(cloudId)}/search/jql`,
       { method: "POST", body: JSON.stringify({ jql, fields, maxResults: 100, ...(nextPageToken && { nextPageToken }) }) },
     );
     issues.push(...page.issues.map((raw) => toIssue(raw, ids)));
@@ -241,9 +254,10 @@ export async function updateJiraIssue(
     fakeIssues.set(key, { ...issue, ...update });
     return { skipped: [], criteriaInDescription: false };
   }
+  if (!isJiraKey(key)) throw new JiraError(`${key.slice(0, 60)} isn't a Jira issue key, so it can't be sent.`);
   const token = await accessToken(userId);
   const ids = await fieldIds(token, cloudId);
-  const url = `${API}/ex/jira/${cloudId}/rest/api/2/issue/${encodeURIComponent(key)}?notifyUsers=false`;
+  const url = `${siteApi(cloudId)}/issue/${encodeURIComponent(key)}?notifyUsers=false`;
   // With no criteria field on this site, criteria written here go into the description, where the team keeps them.
   const criteriaInDescription = !ids.acceptanceCriteria && update.acceptanceCriteria.trim() !== "";
   const description = criteriaInDescription ? withCriteriaInDescription(update.description, update.acceptanceCriteria) : update.description;

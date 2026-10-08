@@ -79,3 +79,12 @@ describe("withCriteriaInDescription (Jira sites with no criteria field)", () => 
     });
   });
 });
+
+describe("hostile text", () => {
+  it("reads a line of thousands of spaces after AC at once", () => {
+    const description = `AC${" ".repeat(5000)}x\n- One`;
+    const start = performance.now();
+    expect(criteriaOf({ description, acceptanceCriteria: "" }).lines).toEqual([]);
+    expect(performance.now() - start).toBeLessThan(50);
+  });
+});
