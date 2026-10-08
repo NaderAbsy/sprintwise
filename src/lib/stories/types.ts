@@ -29,19 +29,30 @@ export function splitCriteria(cell: string): string[] {
 }
 
 /**
- * The line that starts an acceptance-criteria section inside a description, as
+ * Whether a line starts an acceptance-criteria section inside a description, as
  * teams without a separate Jira field write it: "h3. Acceptance criteria",
  * "*Acceptance criteria*", "**Acceptance Criteria:**", "## Acceptance criteria",
- * "Acceptance criteria:" or "AC:".
+ * "Acceptance criteria:" or "AC:". The line is tidied and compared rather than
+ * matched with one big pattern: that pattern, with optional spaces between each
+ * part, took minutes on a line of spaces.
  */
-const CRITERIA_HEADING = /^\s*(?:h[1-6]\.\s*|#{1,6}\s*)?[*_]{0,2}\s*(?:acceptance criteria|ac)\s*:?\s*[*_]{0,2}\s*:?\s*$/i;
+function isCriteriaHeading(line: string): boolean {
+  if (line.length > 200) return false;
+  const words = line
+    .trim()
+    .replace(/^(?:h[1-6]\.|#{1,6})/i, "")
+    .replace(/[\s:*_]+/g, " ")
+    .trim()
+    .toLowerCase();
+  return words === "acceptance criteria" || words === "ac";
+}
 /** The heading of the next section, which ends the criteria. Bullets ("* item") don't count. */
 const NEXT_HEADING = /^\s*(?:h[1-6]\.\s|#{1,6}\s|[*_]{1,2}[^*_\n]{1,60}[*_]{1,2}\s*:?\s*$|[A-Z][^.\n]{0,40}:\s*$)/;
 
 /** The text under a description's "Acceptance criteria" heading, up to the next heading; "" if there's none. */
 export function criteriaFromDescription(description: string): string {
   const lines = description.split(/\r?\n/);
-  const start = lines.findIndex((line) => CRITERIA_HEADING.test(line));
+  const start = lines.findIndex(isCriteriaHeading);
   if (start < 0) return "";
   const section: string[] = [];
   for (const line of lines.slice(start + 1)) {
@@ -88,7 +99,7 @@ export function withCriteriaInDescription(description: string, criteria: string)
   const bullets = splitCriteria(criteria).map((c) => `* ${c}`).join("\n");
   if (!bullets) return description;
   const lines = description.split(/\r?\n/);
-  const start = lines.findIndex((line) => CRITERIA_HEADING.test(line));
+  const start = lines.findIndex(isCriteriaHeading);
   if (start < 0) return `${description.trimEnd()}${description.trim() ? "\n\n" : ""}h3. Acceptance criteria\n${bullets}`;
   let end = start + 1;
   while (end < lines.length && !(NEXT_HEADING.test(lines[end]) && !/^\s*[-*•#]+\s/.test(lines[end]))) end++;

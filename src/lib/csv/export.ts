@@ -4,13 +4,15 @@ import type { Story } from "@/lib/stories/types";
 export type ExportRow = Story & { score: number | null; band: string | null; failedChecks: string[] };
 
 /**
- * Spreadsheet apps run cells that start with =, +, @ or a tab as formulas.
- * Those get a leading apostrophe. A "-" counts only when it isn't a list
- * bullet ("- item"), so acceptance criteria still round-trip into the importer.
+ * Spreadsheet apps run cells that start with =, +, -, @ or a tab as formulas,
+ * even after leading spaces. Those get a leading apostrophe, which the importer
+ * removes again. A list bullet followed by a word ("- Full refunds") isn't a
+ * formula and stays as it is, so acceptance criteria read the same in Jira.
  */
-function neutralize(cell: string): string {
-  if (/^[=+@\t\r]/.test(cell) || /^-[^\s]/.test(cell)) return `'${cell}`;
-  return cell;
+export function neutralize(cell: string): string {
+  const start = cell.trimStart();
+  const formula = /^[\t\r]/.test(cell) || /^[=+@]/.test(start) || (start.startsWith("-") && !/^-\s+[\p{L}"']/u.test(start));
+  return formula ? `'${cell}` : cell;
 }
 
 function quote(cell: string): string {

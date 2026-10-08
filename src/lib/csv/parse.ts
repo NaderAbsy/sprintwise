@@ -182,7 +182,8 @@ export function readCsvTable(
     const row = index + 1;
     const cell = (field: ImportField) => {
       const column = columns[field];
-      return column === null ? "" : (cells[column] ?? "").trim();
+      // Sprintwise's own exports put an apostrophe before anything a spreadsheet would run as a formula.
+      return column === null ? "" : (cells[column] ?? "").trim().replace(/^'(?=\s*[=+\-@])/, "");
     };
     const errors = [...(rowErrors.get(row) ?? [])];
     const warnings: string[] = [];

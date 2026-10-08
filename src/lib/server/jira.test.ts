@@ -55,3 +55,11 @@ describe("issuesAsCsv", () => {
     expect(table.rows[1]).toMatchObject({ story: { key: "ABC-2", storyPoints: null, issueType: "Bug" }, epic: "", labels: [] });
   });
 });
+
+describe("isJiraKey", () => {
+  it("accepts issue keys and refuses anything that could change the request's path", async () => {
+    const { isJiraKey } = await import("@/lib/server/jira");
+    for (const key of ["ABC-1", "SCRUM_2-345", "a1-9"]) expect(isJiraKey(key), key).toBe(true);
+    for (const key of ["..", ".", "../x", "ABC-1/../2", "ABC", "-1", "ABC-1?x", "ABC-", "TIDY 1"]) expect(isJiraKey(key), key).toBe(false);
+  });
+});

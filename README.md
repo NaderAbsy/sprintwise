@@ -134,7 +134,7 @@ Then open <http://localhost:3000>. The demo at `/demo` works without signing in.
 4. Put its client ID and secret into `ATLASSIAN_CLIENT_ID` and `ATLASSIAN_CLIENT_SECRET` in `.env`.
 5. To let people outside your own Atlassian account connect, turn on **Distribution → Sharing** in the console. It asks for a vendor name, a privacy policy URL (`/privacy`), and whether the app stores personal data: yes, Atlassian account IDs, reported through the personal data reporting API.
 
-Atlassian requires apps that store account IDs to report them weekly. Vercel Cron calls `/api/cron/atlassian-accounts` daily (`vercel.json`); each ID is reported when its cycle is up, and a connection is deleted when Atlassian says its account was closed. Set `CRON_SECRET` to refuse callers other than Vercel Cron.
+Atlassian requires apps that store account IDs to report them weekly. Vercel Cron calls `/api/cron/atlassian-accounts` daily (`vercel.json`); each ID is reported when its cycle is up, and a connection is deleted when Atlassian says its account was closed. On Vercel, set `CRON_SECRET` (any long random string): the route refuses every call without it, and Vercel Cron sends it.
 
 Without these, the Jira parts of the app don't appear. End-to-end tests use a pretend Jira (`JIRA_FAKE`), so they never need a real one.
 

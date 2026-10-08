@@ -8,7 +8,7 @@ import { readImportPayload } from "@/lib/csv/import";
 import { rememberedColumns } from "@/lib/csv/parse";
 import type { FormState } from "@/lib/form-state";
 import { db } from "@/lib/server/db";
-import { requireProject, requireUser } from "@/lib/server/dal";
+import { assertId, isId, requireProject, requireUser } from "@/lib/server/dal";
 import { projectDefaults, readinessData, settingsOf, toStory } from "@/lib/server/readiness";
 import { doneStatusesOf } from "@/lib/server/sprint";
 import { bottomRank, saveStories } from "@/lib/server/save-stories";
@@ -115,6 +115,7 @@ export async function addStory(projectId: string, _prev: FormState, formData: Fo
 /** Edit a saved story and re-score it. The key stays, because sprints match stories by key. */
 export async function updateStory(projectId: string, storyId: string, _prev: FormState, formData: FormData): Promise<FormState> {
   const project = await requireProject(projectId);
+  assertId(storyId);
   const existing = await db.story.findFirst({ where: { id: storyId, projectId: project.id } });
   if (!existing) return { error: "This story no longer exists." };
 
@@ -206,6 +207,7 @@ export async function addSampleStories(projectId: string) {
 
 export async function deleteStory(projectId: string, storyId: string) {
   const project = await requireProject(projectId);
+  assertId(storyId);
   await db.story.deleteMany({ where: { id: storyId, projectId: project.id } });
   revalidatePath(`/projects/${project.id}`);
   redirect(`/projects/${project.id}`);
@@ -280,6 +282,7 @@ export async function updateDoneStatuses(projectId: string, _prev: FormState, fo
  */
 export async function quickUpdateStory(projectId: string, storyId: string, _prev: FormState, formData: FormData): Promise<FormState> {
   const project = await requireProject(projectId);
+  assertId(storyId);
   const row = await db.story.findFirst({ where: { id: storyId, projectId: project.id } });
   if (!row) return { error: "This story no longer exists." };
 
@@ -317,7 +320,8 @@ export async function quickUpdateStory(projectId: string, storyId: string, _prev
 /** Moves a story to `index` (0 = top) in the backlog's priority order. */
 export async function moveStory(projectId: string, storyId: string, index: number, withFinished = true) {
   const project = await requireProject(projectId);
-  if (!Number.isFinite(index)) return;
+  assertId(storyId);
+  if (typeof index !== "number" || !Number.isFinite(index)) return;
   const all = await db.story.findMany({
     where: { projectId: project.id },
     orderBy: [{ rank: "asc" }, { key: "asc" }],
@@ -338,6 +342,7 @@ export async function moveStory(projectId: string, storyId: string, index: numbe
 /** The story's edits are now in Jira too, so it leaves the "Edited here" list. */
 export async function markCopiedToJira(projectId: string, storyId: string) {
   const project = await requireProject(projectId);
+  assertId(storyId);
   await db.story.updateMany({ where: { id: storyId, projectId: project.id }, data: { editedAt: null } });
   revalidatePath(`/projects/${project.id}`, "layout");
 }
@@ -361,7 +366,7 @@ export async function disableBacklogShare(projectId: string) {
   revalidatePath(`/projects/${project.id}`);
 }
 
-const selectedIds = (ids: string[]) => [...new Set(ids.filter((id) => typeof id === "string"))].slice(0, MAX_STORIES_PER_PROJECT);
+const selectedIds = (ids: string[]) => [...new Set((Array.isArray(ids) ? ids : []).filter(isId))].slice(0, MAX_STORIES_PER_PROJECT);
 
 /** Sets one status on several stories at once, e.g. moving a batch to "Ready for refinement". */
 export async function bulkSetStatus(projectId: string, ids: string[], status: string): Promise<FormState> {

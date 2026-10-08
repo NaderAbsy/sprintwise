@@ -1,5 +1,6 @@
 import "server-only";
 import { betterAuth } from "better-auth";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { db } from "@/lib/server/db";
@@ -49,7 +50,9 @@ export const auth = betterAuth({
     encryptOAuthTokens: true,
     // Connecting Jira links an Atlassian account to the signed-in user. Its email often differs from
     // GitHub's (a work address); linking needs a signed-in session, so nobody can claim an account this way.
-    accountLinking: { enabled: true, allowDifferentEmails: true },
+    // No implicit linking: without it, an Atlassian sign-in with a verified email matching a user's would
+    // be linked to that user and signed in as them.
+    accountLinking: { enabled: true, allowDifferentEmails: true, disableImplicitLinking: true },
   },
   // Every page checks the session. A signed copy in a cookie saves a database round trip on each
   // click; the cost is that a session ended elsewhere can keep working for up to five minutes.
@@ -57,5 +60,16 @@ export const auth = betterAuth({
   // Parallel test sign-ups would trip the limiter; it stays on everywhere else. Counts live in the
   // database, so every serverless instance shares them.
   rateLimit: { enabled: testSignIn ? false : undefined, storage: "database" },
+  // The browser never needs a user's stored provider tokens; the server reads them through auth.api,
+  // which these don't affect. Closed so a script injected into a page couldn't fetch them.
+  disabledPaths: ["/get-access-token", "/refresh-token", "/account-info"],
+  hooks: {
+    // Atlassian only connects Jira to a signed-in GitHub user; it never signs anyone in.
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path === "/sign-in/social" && (ctx.body as { provider?: unknown } | undefined)?.provider === "atlassian") {
+        throw new APIError("FORBIDDEN", { message: "Sign in with GitHub, then connect Jira from a project." });
+      }
+    }),
+  },
   plugins: [nextCookies()],
 });

@@ -31,8 +31,10 @@ const SAFE_URL = /^https?:\/\/[^\s]+$/i;
 /** Bold, italic, {{code}}, [links] and stray {color} tags in one line of text. */
 export function parseInline(text: string): Inline[] {
   const out: Inline[] = [];
+  // Every repeated part has an upper bound, so text full of unmatched "{{" or "[|" can't make each
+  // opener rescan the rest of a long line (that made the shared backlog slow on hostile text).
   const pattern =
-    /\{\{(.+?)\}\}|\{color(?::[^}]*)?\}|\[([^\]|\n]*)\|([^\]\s]+)\]|\[(https?:\/\/[^\]\s]+)\]|(^|[\s(\[>"'])\*(?=\S)([^*\n]*?\S)\*(?=$|[\s).,:;!?\]'"<-])|(^|[\s(\[>"'])_(?=\S)([^_\n]*?\S)_(?=$|[\s).,:;!?\]'"<-])/g;
+    /\{\{(.{1,500}?)\}\}|\{color(?::[^}]{0,50})?\}|\[([^[\]|\n]{0,300})\|([^[\]|\s]{1,2000})\]|\[(https?:\/\/[^[\]\s]{1,2000})\]|(^|[\s(\[>"'])\*(?=\S)([^*\n]{0,500}?\S)\*(?=$|[\s).,:;!?\]'"<-])|(^|[\s(\[>"'])_(?=\S)([^_\n]{0,500}?\S)_(?=$|[\s).,:;!?\]'"<-])/g;
   let last = 0;
   const pushText = (v: string) => {
     if (!v) return;
