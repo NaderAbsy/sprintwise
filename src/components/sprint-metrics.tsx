@@ -1,9 +1,14 @@
-import { formatPercent, formatPoints, type SprintMetrics } from "@/lib/sprint/metrics";
+import { formatPercent, formatPoints, unestimatedNote, type SprintMetrics } from "@/lib/sprint/metrics";
 
 /** S-4: the five metrics from the requirements doc, plus the two totals they are based on. */
 export function SprintMetricsPanel({ metrics }: { metrics: SprintMetrics }) {
   const tiles = [
-    { label: "Scope added", value: formatPoints(metrics.scopeAdded), note: "New work since the baseline" },
+    {
+      label: "Scope added",
+      value: formatPoints(metrics.scopeAdded),
+      // Bugs often arrive without points; counting them keeps a flood of them from reading as "0 pts".
+      note: metrics.addedUnestimated > 0 ? `New work, ${unestimatedNote(metrics.addedUnestimated)}` : "New work since the baseline",
+    },
     { label: "Scope removed", value: formatPoints(metrics.scopeRemoved), note: "Baseline work taken out" },
     { label: "Net change", value: formatPercent(metrics.netChange, { signed: true }), note: "Did the sprint grow or shrink" },
     { label: "Churn", value: formatPercent(metrics.churn), note: "Instability, even when net is zero" },

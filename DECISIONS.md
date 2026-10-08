@@ -2,6 +2,25 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-09 — v2.11: unplanned work, without buffers or new scales
+
+**The question:** should Sprintwise add a QA buffer, a bug buffer, or T-shirt sizes?
+
+**Decided against all three:**
+- **QA buffer.** Testing is part of each story's estimate, because a story isn't done until it's tested. A separate QA number counts testing twice, or invites "done but untested" stories. Teams with an "In QA" stage are already handled: it isn't a done status unless the project says so.
+- **Bug buffer.** Sprintwise's velocity is points of the original commitment that got done, and added work doesn't count. When bugs take time, less planned work gets done and velocity is already lower. Taking a buffer off velocity would count the same thing twice. Bug data is also weak:
+  - many bugs live only in Jira;
+  - they usually have no points;
+  - reasons are tagged by hand;
+  - three sprints is a small sample.
+- **T-shirt sizes.** They size roadmaps and epics, not sprints, and that's outside Sprintwise's job. A second scale brings mapping debates and has no standard Jira field. A story with only a T-shirt size still isn't ready to plan.
+
+**Built instead, to make the existing numbers honest and explained:**
+- **`defaultReasons`:** added work of a bug-like issue type (Bug, Defect, Incident, Hotfix) gets the reason "bug" when nobody chose one. This applies in automatic tracking and CSV snapshots.
+- **`addedUnestimated`:** the Scope added tile and the report say "plus N with no estimate".
+- **`averageVelocity` returns `unplanned` and `unplannedBugs`:** the average points added mid-sprint, and how many were bugs. The planning helper explains that velocity already allows for them; nothing is subtracted.
+- **Copy:** "testing included" in the refinement hint and the Guide's Story points entry.
+
 ## 2026-10-08 — v2.10: speed and accessibility check, and a phone pass
 
 **Lighthouse 12:**

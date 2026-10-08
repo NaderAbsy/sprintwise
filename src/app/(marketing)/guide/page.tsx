@@ -11,7 +11,7 @@ const TERMS: [string, string][] = [
   ["Backlog", "The team's to-do list: everything it might build, in priority order."],
   ["User story", "One item on the backlog, written from the user's side: “As a customer, I want to save my card, so that checkout is faster next time.”"],
   ["Acceptance criteria", "A short checklist that says when a story is done, such as “The card is saved after payment.” One per line."],
-  ["Story points", "A rough guess at a story's size. Small is 1 or 2, large is 8 or more. They measure size, not hours."],
+  ["Story points", "A rough guess at a story's size, testing included: a story isn't done until it's tested. Small is 1 or 2, large is 8 or more. They measure size, not hours, and leave room for bugs by themselves: velocity counts only planned work that got done."],
   ["Product Owner", "The person who decides what goes on the backlog and in what order, and who writes or approves the stories."],
   ["Commitment", "The stories the team agrees to finish in a sprint, chosen in sprint planning."],
   ["Baseline", "Sprintwise's frozen copy of the commitment, taken on day one. It can't be edited, so every change is measured against it."],

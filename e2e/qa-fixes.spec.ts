@@ -82,3 +82,52 @@ test("the demo's own story scores as you type", async ({ page }) => {
   await expect(page.getByText("Readiness", { exact: false }).first()).toBeVisible();
   await expect(page.getByText("The score and every reason appear here.")).toHaveCount(0);
 });
+
+test("bugs added mid-sprint are tagged by themselves, counted even without points, and explained when planning", async ({ page }) => {
+  test.setTimeout(90_000);
+  const project = await newProject(page, "Unplanned");
+  await page.getByRole("button", { name: /load 12 sample stories/ }).click();
+  await expect(page.getByText("Imported and scored 12 stories.")).toBeVisible();
+
+  // Sprint 1 ended yesterday: TIDY-101 and TIDY-102 committed.
+  const day = (offset: number) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+  await page.goto(`${project}/sprints/new`);
+  await page.getByLabel("Name").fill("Sprint 1");
+  await page.getByLabel("Start date").fill(day(-13));
+  await page.getByLabel("End date").fill(day(-1));
+  await page.getByRole("button", { name: "Create sprint" }).click();
+  for (const key of ["TIDY-101", "TIDY-102"]) await page.getByRole("checkbox", { name: new RegExp(key) }).check();
+  await page.getByRole("button", { name: "Lock as baseline" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Lock baseline" }).click();
+  await expect(page.getByRole("region", { name: "Sprint metrics" })).toBeVisible();
+  const sprint1 = page.url().split("?")[0];
+
+  // Two bugs arrive: one estimated, one not.
+  for (const [key, points] of [["BUG-1", "2"], ["BUG-2", ""]] as const) {
+    await page.goto(`${project}/stories/new`);
+    await page.getByLabel("Key").fill(key);
+    await page.getByLabel("Title").fill(`Fix crash ${key}`);
+    await page.getByLabel("Type").fill("Bug");
+    if (points) await page.getByLabel("Story points").fill(points);
+    await page.getByRole("button", { name: "Score and save" }).click();
+    await expect(page.getByRole("heading", { name: `Fix crash ${key}` })).toBeVisible();
+  }
+  await page.goto(sprint1);
+  for (const key of ["BUG-1", "BUG-2"]) await page.getByRole("checkbox", { name: new RegExp(key) }).check();
+  await page.getByRole("button", { name: "Save snapshot" }).click();
+  const metrics = page.getByRole("region", { name: "Sprint metrics" });
+  await expect(metrics.getByText("2 pts", { exact: true })).toBeVisible();
+  await expect(metrics.getByText("New work, plus 1 story with no estimate")).toBeVisible();
+
+  // Nobody tagged them, but the report knows they were bugs.
+  await page.goto(`${sprint1}/report`);
+  await expect(page.getByText(/Bug or incident: 2 pts/)).toBeVisible();
+  await expect(page.getByText("plus 1 story with no estimate")).toBeVisible();
+
+  // Planning Sprint 2: velocity already allows for that unplanned work.
+  await page.goto(`${project}/sprints/new`);
+  await page.getByLabel("Name").fill("Sprint 2");
+  await page.getByRole("button", { name: "Create sprint" }).click();
+  await page.getByRole("checkbox", { name: /TIDY-103/ }).check();
+  await expect(page.getByText(/already leaves room for the work that usually arrives mid-sprint, about\s*2\s*points a sprint\s*\(2\s*of them bugs\)/)).toBeVisible();
+});

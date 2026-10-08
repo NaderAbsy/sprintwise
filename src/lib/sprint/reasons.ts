@@ -12,6 +12,25 @@ export const REASONS = [
 export type ReasonId = (typeof REASONS)[number]["id"];
 
 export const isReason = (value: unknown): value is ReasonId => REASONS.some((r) => r.id === value);
+
+/** Issue types that are unplanned fixes, as Jira and its service desk name them. */
+const BUG_TYPES = ["bug", "defect", "incident", "hotfix"];
+export const isBugType = (issueType: string | undefined) => BUG_TYPES.includes((issueType ?? "").trim().toLowerCase());
+
+/**
+ * Work added mid-sprint whose type is a bug is tagged "Bug or incident" by itself, so the report's
+ * "why scope changed" is right without anyone tagging it. A reason someone chose is never replaced.
+ */
+export function defaultReasons<T extends { key: string; type: string; reason?: string | null }>(
+  changes: T[],
+  items: { key: string; issueType?: string }[],
+): (T & { reason: string | null })[] {
+  const bugs = new Set(items.filter((i) => isBugType(i.issueType)).map((i) => i.key.toLowerCase()));
+  return changes.map((c) => ({
+    ...c,
+    reason: c.reason ?? (c.type === "added" && bugs.has(c.key.toLowerCase()) ? "bug" : null),
+  }));
+}
 export const reasonLabel = (id: string | null | undefined) => REASONS.find((r) => r.id === id)?.label ?? "Not tagged";
 
 export const GOAL_OUTCOMES = [
