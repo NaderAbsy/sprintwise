@@ -56,11 +56,11 @@ const FAQ = [
   },
   {
     q: "Can I change the rules?",
-    a: "Each project can set its own maximum story size and vague-word list. Saving the settings re-scores every story in the project.",
+    a: "The nine rules stay the same, so scores compare across teams. Each project sets its own maximum story size and vague-word list, and can add its own Definition of Ready checks (a story that fails one can't be Ready). Saving re-scores every story in the project.",
   },
   {
     q: "Is it free and open source?",
-    a: "Yes. Sprintwise is a portfolio project: free to use, with the full code, tests and every product decision on GitHub.",
+    a: "Yes. Sprintwise is a portfolio project: free to use, and the full code, tests and every product decision are on GitHub under the MIT license.",
   },
 ];
 
@@ -235,7 +235,7 @@ export default async function Home() {
               className="group inline-flex items-center gap-2 rounded-full border border-border bg-surface/80 py-1 pr-3 pl-1 text-xs font-medium text-muted backdrop-blur transition-colors hover:border-accent hover:text-foreground"
             >
               <span className="rounded-full bg-accent px-2 py-0.5 text-accent-foreground">{latestRelease.version}</span>
-              New: catch AI drafts nobody read through
+              New: {latestRelease.title.toLowerCase()}
               <ArrowRight aria-hidden="true" className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <h1 className="mt-6 text-4xl font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl">

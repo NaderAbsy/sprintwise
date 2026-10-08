@@ -35,6 +35,7 @@ describe("trendRows", () => {
 const row = (done: number, completion: number, churn: number, ready: number): SprintTrendRow => ({
   id: String(Math.random()),
   measured: true,
+  running: false,
   name: "S",
   startDate: new Date(),
   committed: 20,
@@ -54,8 +55,8 @@ describe("summarizeTrends", () => {
 
   it("reports improvements against earlier sprints and the readiness link", () => {
     const summary = summarizeTrends([row(10, 0.5, 0.4, 0.2), row(12, 0.6, 0.3, 0.3), row(18, 0.9, 0.1, 0.8), row(19, 0.95, 0.1, 0.9), row(20, 1, 0.05, 1)]);
-    expect(summary.insights).toContain("Completion rose 40 points in the last 3 sprints, a good sign.");
-    expect(summary.insights).toContain("Churn fell 27 points in the last 3 sprints, a good sign.");
+    expect(summary.insights).toContain("Completion averaged 40 points higher over the last 3 sprints than before, a good sign.");
+    expect(summary.insights).toContain("Churn averaged 27 points lower over the last 3 sprints than before, a good sign.");
     expect(summary.insights.some((i) => i.startsWith("Sprints that started with more Ready stories finished"))).toBe(true);
   });
 
@@ -83,5 +84,19 @@ describe("summarizeTrends", () => {
     const summary = summarizeTrends([row(10, 0.5, 0.4, 0.2), row(12, 0.6, 0.3, 0.3), row(18, 0.9, 0.1, 0.8), row(20, 1, 0.05, 1)]);
     expect(summary.basis).toBe("trend");
     expect(summary.insights.some((i) => i.includes("since"))).toBe(false);
+  });
+});
+
+describe("running sprints", () => {
+  it("leaves a sprint still running out of the averages", () => {
+    const [done, running] = trendRows(
+      [
+        { id: "a", name: "Sprint 1", startDate: new Date("2026-09-01"), baseline: [], latest: [], running: false },
+        { id: "b", name: "Sprint 2", startDate: new Date("2026-09-15"), baseline: [], latest: [], running: true },
+      ],
+      DEFAULT_SETTINGS,
+    );
+    expect(done).toMatchObject({ measured: true, running: false });
+    expect(running).toMatchObject({ measured: false, running: true });
   });
 });

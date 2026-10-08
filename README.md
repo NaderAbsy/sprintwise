@@ -181,3 +181,7 @@ Report security problems privately through [GitHub's vulnerability reporting](ht
 ## Known limits in v1
 
 - CSV snapshots can't show who made a change, only between which two snapshots it happened. Who changed what arrives with the Jira integration in v2.
+
+## License
+
+[MIT](LICENSE). Free to use, change and share, with the copyright notice kept.

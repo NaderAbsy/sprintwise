@@ -18,7 +18,7 @@ const TERMS: [string, string][] = [
   ["Snapshot", "A later copy of the sprint, taken while it runs. Sprintwise compares it with the baseline, story by story."],
   ["Sprint goal", "One sentence on what the sprint should achieve. At the end, the team records whether it was met."],
   ["Definition of Ready", "The team's agreed list of what a story needs before it can be planned. Sprintwise's rules are a starting point; team checks add your own."],
-  ["Jira", "A popular tool for keeping the backlog. Sprintwise doesn't need it: you can type stories in, or upload a CSV exported from Jira or a spreadsheet."],
+  ["Jira", "A popular tool for keeping the backlog. Sprintwise doesn't need it: type stories in, or upload a CSV exported from Jira or a spreadsheet. If your team uses Jira Cloud, connect it to import from a search, sync, and send your edits back."],
 ];
 
 const STEPS = [
@@ -56,6 +56,9 @@ const STEPS = [
   },
 ];
 
+/** So the intro's count can't fall out of step with the list again. */
+const COUNT_WORDS: Record<number, string> = { 6: "Six", 7: "Seven", 8: "Eight", 9: "Nine", 10: "Ten" };
+
 const NUMBERS: [string, string][] = [
   ["Readiness score", "Out of 100, from nine fixed rules. 80 or more is Ready, 50 to 79 needs work, below 50 isn't ready."],
   ["Net change", "How much bigger or smaller the sprint got. +20% means 20% more work than the team committed to."],
@@ -74,7 +77,10 @@ export default function GuidePage() {
   return (
     <>
       <PageHero eyebrow="Guide" title="How to use Sprintwise">
-        <p>Seven steps from a messy backlog to a one-page sprint report, plus every word you&apos;ll meet along the way.</p>
+        <p>
+          {COUNT_WORDS[STEPS.length] ?? STEPS.length} steps from a messy backlog to a one-page sprint report, plus every word you&apos;ll meet along the
+          way.
+        </p>
       </PageHero>
 
       <div className="mx-auto max-w-4xl space-y-20 px-4 py-16 sm:px-6">

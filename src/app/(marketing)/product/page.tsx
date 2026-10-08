@@ -1,4 +1,4 @@
-import { ArrowRight, BarChart3, ClipboardCheck, KeyRound, Printer, Settings2, TrendingUp } from "lucide-react";
+import { ArrowRight, BarChart3, ClipboardCheck, KeyRound, Printer, Settings2, TrendingUp, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHero } from "@/components/marketing/page-hero";
@@ -31,6 +31,7 @@ const SECTIONS = [
   { id: "rules", label: "The nine rules", Icon: Settings2 },
   { id: "scope", label: "Scope tracking", Icon: BarChart3 },
   { id: "report", label: "Sprint report", Icon: Printer },
+  { id: "team", label: "Refinement and Jira", Icon: Users },
   { id: "planning", label: "Planning and trends", Icon: TrendingUp },
   { id: "privacy", label: "Accounts and data", Icon: KeyRound },
 ];
@@ -71,8 +72,13 @@ export default function ProductPage() {
                   the score: the same story always gets the same number, and every lost point comes with a reason.
                 </p>
                 <p>
+                  It also flags signs of an AI draft pasted without a careful read, such as chat leftovers
+                  (&ldquo;Certainly! Here&apos;s…&rdquo;), unfilled placeholders and criteria that would fit any story,
+                  as worth a second look. Leftovers and placeholders keep a story from being Ready.
+                </p>
+                <p>
                   The backlog keeps your priority order, which you set by dragging. You can also list it weakest first,
-                  search it, filter it by band or status, and change several stories at once.
+                  search it, filter it by band, status, epic or type, and change several stories at once.
                 </p>
               </div>
             </Reveal>
@@ -135,9 +141,10 @@ export default function ProductPage() {
                 Scope tracking
               </h2>
               <p className="mt-4 text-muted">
-                On day one, upload the sprint as committed and lock it as the baseline; it can&apos;t be edited. Upload
-                snapshots as the sprint runs. Stories are matched by key, so a renamed story isn&apos;t counted as removed and
-                added, and every change goes in a dated log.
+                On day one, tick the stories the team committed to (or upload them as a CSV) and lock them as the
+                baseline; it can&apos;t be edited. A sprint picked from the backlog records every status and estimate
+                change by itself; one built from CSVs takes a new upload as a snapshot. Stories are matched by key, so a
+                renamed story isn&apos;t counted as removed and added, and every change goes in a dated log.
               </p>
             </Reveal>
             <div className="mt-6 grid gap-3 md:grid-cols-3">
@@ -168,6 +175,28 @@ export default function ProductPage() {
                 See the sample report
                 <ArrowRight aria-hidden="true" className="h-4 w-4" />
               </Link>
+            </Reveal>
+          </section>
+
+          <section id="team" aria-labelledby="team-heading" className="scroll-mt-24">
+            <Reveal>
+              <h2 id="team-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                Refinement and Jira
+              </h2>
+              <ul className="mt-4 space-y-2 text-muted">
+                <li>
+                  <strong className="text-foreground">Refinement mode:</strong> one story at a time on the meeting
+                  screen, with what&apos;s missing. Fix it together, agree a size and record it in one click.
+                </li>
+                <li>
+                  <strong className="text-foreground">Share the backlog:</strong> a read-only link to the unfinished
+                  stories and their scores, so people can read ahead. Turn it off at any time.
+                </li>
+                <li>
+                  <strong className="text-foreground">Connect Jira Cloud:</strong> import straight from a Jira search,
+                  sync with one click, and send your edits back. Sprintwise writes to Jira only when you click Send.
+                </li>
+              </ul>
             </Reveal>
           </section>
 
@@ -215,7 +244,7 @@ export default function ProductPage() {
                 <li>The demo runs in your browser with invented data and saves nothing.</li>
                 <li>Sign in with GitHub to keep projects. Deleting your account deletes everything in it.</li>
                 <li>Usage counts are anonymous: no user ID and no story text.</li>
-                <li>Light, dark and system themes, WCAG 2.1 AA contrast, and fully usable by keyboard.</li>
+                <li>Light, dark and system themes, WCAG 2.2 AA contrast, and fully usable by keyboard.</li>
               </ul>
               <Link href="/privacy" className="mt-4 inline-block text-sm font-medium text-accent hover:underline">
                 Read the privacy page

@@ -49,8 +49,9 @@ export default function AboutPage() {
               tested every release, from the first rule to version 1.
             </p>
             <p>
-              Version 1 shipped all 18 of its stories. AI rewrites and test scenarios are built but switched off on the
-              live site to avoid running costs, and a live Jira connection is planned for version 2.
+              Version 1 shipped all 18 of its stories. Version 2 added refinement mode, shared backlogs and a live Jira
+              connection. AI rewrites and test scenarios are built but switched off on the live site to avoid running
+              costs.
             </p>
             <p>Every story, number and team name in the demo is invented.</p>
           </div>

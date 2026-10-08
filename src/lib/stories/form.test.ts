@@ -38,3 +38,17 @@ describe("readStoryForm", () => {
     expect(readStoryForm(form({ title: "A", storyPoints: "abc" })).fieldErrors.storyPoints).toBeDefined();
   });
 });
+
+describe("line breaks", () => {
+  it("keeps \\n line breaks, whatever the form sent", () => {
+    const data = new FormData();
+    data.set("title", "Refund a booking");
+    data.set("acceptanceCriteria", "- One\r\n- Two\r- Three");
+    expect(readStoryForm(data).story.acceptanceCriteria).toBe("- One\n- Two\n- Three");
+  });
+
+  it("compares a saved story's text like the text box shows it", async () => {
+    const { storyFieldValues } = await import("@/lib/stories/compare");
+    expect(storyFieldValues({ acceptanceCriteria: "- One\r\n- Two", description: "a\r\nb" })).toMatchObject({ acceptanceCriteria: "- One\n- Two", description: "a\nb" });
+  });
+});

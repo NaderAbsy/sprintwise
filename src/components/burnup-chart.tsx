@@ -42,7 +42,7 @@ export function BurnupChart({
     ]
       .map(([px, py]) => `${px},${py}`)
       .join(" ");
-  const summary = burnupSummary(series);
+  const summary = burnupSummary(series, committed);
 
   return (
     <figure className="space-y-2">

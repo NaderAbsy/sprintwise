@@ -10,11 +10,15 @@ export type SprintTrendInput = {
   latest: Story[];
   /** False while only the baseline exists: nothing has been measured yet. */
   measured?: boolean;
+  /** True until the sprint's last day: its numbers are still moving, so averages leave it out. */
+  running?: boolean;
 };
 
 export type SprintTrendRow = {
   id: string;
+  /** Has later snapshots and has ended; only these count in averages and charts. */
   measured: boolean;
+  running: boolean;
   name: string;
   startDate: Date;
   committed: number;
@@ -40,7 +44,8 @@ export function trendRows(
       const scores = s.baseline.map((story) => scoreStory(story, settings));
       return {
         id: s.id,
-        measured: s.measured ?? true,
+        measured: (s.measured ?? true) && !s.running,
+        running: s.running ?? false,
         name: s.name,
         startDate: s.startDate,
         committed: m.baselineTotal,
@@ -114,7 +119,8 @@ export function summarizeTrends(allRows: SprintTrendRow[]): TrendSummary {
       if (Math.abs(diff) < 5) return;
       const better = diff > 0 === higherIsBetter;
       insights.push(
-        `${label} ${diff > 0 ? "rose" : "fell"} ${Math.abs(diff)} points in the last 3 sprints${better ? ", a good sign." : "."}`,
+        // An average, not the latest sprint: say so, or a sharp drop in the last sprint reads as a contradiction.
+        `${label} averaged ${Math.abs(diff)} points ${diff > 0 ? "higher" : "lower"} over the last 3 sprints than before${better ? ", a good sign." : "."}`,
       );
     };
     compare("Completion", (r) => r.completion, true);

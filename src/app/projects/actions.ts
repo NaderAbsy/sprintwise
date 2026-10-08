@@ -97,7 +97,8 @@ export async function addStory(projectId: string, _prev: FormState, formData: Fo
   }
   if (Object.keys(fieldErrors).length > 0) return { fieldErrors };
 
-  const story: Story = { key, ...fields };
+  // A new story with no status starts as To Do, as the field's hint says.
+  const story: Story = { key, ...fields, status: fields.status || "To Do" };
   const created = await db.story.create({
     data: {
       projectId: project.id,

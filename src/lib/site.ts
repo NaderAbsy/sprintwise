@@ -17,6 +17,21 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.9",
+    date: "2026-10-08",
+    title: "Polished after a full click-through",
+    summary: "Every page tested by hand like a user would. Fixes for what turned up, and the code is now MIT-licensed.",
+    items: [
+      "The Backlog tab stays lit after an import; before, the Import tab could stay highlighted.",
+      "Editing a story no longer marks unchanged acceptance criteria as Changed, and a new story starts as To Do.",
+      "The second-look and edited counts follow the band filter, so the number matches what a click shows.",
+      "The sprint chart's caption compares scope with the day-one commitment, even when both happen on the same day.",
+      "Trends leave out a sprint until it ends, so a running sprint doesn't drag the averages down.",
+      "The demo video starts on the product instead of a blank white screen, and tapping a demo story on a phone shows its details.",
+      "Product, Guide and About pages describe refinement, shared backlogs and the Jira connection; the code is MIT-licensed.",
+    ],
+  },
+  {
     version: "v2.8",
     date: "2026-10-08",
     title: "Tighter on the details",

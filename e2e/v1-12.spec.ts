@@ -64,7 +64,7 @@ test("edits made here are listed for Jira, can be copied and marked done, and ar
   await page.getByRole("link", { name: "Edit story" }).click();
   await page.getByLabel("Acceptance criteria").fill("- Full and partial refunds\n- The customer gets an email\n- The refund shows on the order page");
   await page.getByRole("button", { name: "Save changes" }).click();
-  const panel = page.getByRole("region", { name: /Edited here, not yet in Jira/ });
+  const panel = page.getByRole("region", { name: /edited here, not yet in Jira/ });
   await expect(panel).toBeVisible();
   await expect(panel.getByRole("button", { name: "Copy acceptance criteria" })).toBeVisible();
   await expectAccessible(page);

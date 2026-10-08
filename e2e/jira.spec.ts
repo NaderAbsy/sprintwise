@@ -30,7 +30,7 @@ test("import from Jira, send an edit back, and sync without losing work done her
   await page.getByRole("link", { name: "Edit story" }).click();
   await page.getByLabel("Description").fill(description);
   await page.getByRole("button", { name: "Save changes" }).click();
-  const panel = page.getByRole("region", { name: /Edited here, not yet in Jira/ });
+  const panel = page.getByRole("region", { name: /edited here, not yet in Jira/ });
   await panel.getByRole("button", { name: "Send to Jira" }).click();
   await expect(panel).toHaveCount(0);
 

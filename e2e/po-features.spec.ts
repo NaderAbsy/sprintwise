@@ -81,9 +81,13 @@ test("capacity from past sprints, and the Trends tab", async ({ page }) => {
   test.setTimeout(90_000);
   const project = await projectWithSamples(page, "Capacity");
 
-  // Sprint 1: finish TIDY-102 (3 points).
+  // Sprint 1, which ended yesterday: finish TIDY-102 (3 points). A sprint counts towards velocity
+  // once it has ended; until then its numbers are still moving.
+  const day = (offset: number) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
   await page.goto(`${project}/sprints/new`);
   await page.getByLabel("Name").fill("Sprint 1");
+  await page.getByLabel("Start date").fill(day(-13));
+  await page.getByLabel("End date").fill(day(-1));
   await page.getByRole("button", { name: "Create sprint" }).click();
   await page.getByRole("checkbox", { name: /TIDY-101/ }).check();
   await expect(page.getByText("Once a sprint has a later snapshot", { exact: false })).toBeVisible();

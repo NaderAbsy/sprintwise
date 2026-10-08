@@ -28,8 +28,10 @@ describe("burnupSeries", () => {
   });
 
   it("sums it up in a sentence", () => {
-    expect(burnupSummary(series)).toBe("Scope went from 8 to 10 points, and 7 points are done (70%).");
-    expect(burnupSummary(series.slice(0, 1))).toBe("Scope stayed at 8 points, and 0 points are done (0%).");
+    expect(burnupSummary(series)).toBe("Scope went from 8 to 10 points, and 7 of those 10 are done.");
+    expect(burnupSummary(series.slice(0, 1))).toBe("Scope stayed at 8 points, and 0 of them are done.");
+    // A change on the baseline's own day: the chart has one point, but scope did change.
+    expect(burnupSummary([{ date: day("2026-10-08"), scope: 21, done: 2 }], 26)).toBe("Scope went from 26 to 21 points, and 2 of those 21 are done.");
     expect(burnupSummary([])).toBe("No snapshots yet.");
   });
 });
