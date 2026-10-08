@@ -31,11 +31,12 @@ export function DemoVideo({ transcript }: { transcript: string[] }) {
             }}
             className="group absolute inset-0 grid place-items-center bg-gradient-to-t from-black/50 via-black/10 to-transparent"
           >
-            <span className="grid h-20 w-20 place-items-center rounded-full bg-accent text-accent-foreground shadow-xl ring-8 ring-accent/25 transition-transform group-hover:scale-110">
-              <Play aria-hidden="true" className="ml-1 h-8 w-8 fill-current" />
-            </span>
-            <span className="absolute top-4 left-4 rounded-full bg-black/70 px-3 py-1 text-sm font-medium text-white">
-              Watch the 2-minute demo
+            {/* The label sits under the button, not in a corner, so it never covers the video's own header. */}
+            <span className="flex flex-col items-center gap-3">
+              <span className="grid h-20 w-20 place-items-center rounded-full bg-accent text-accent-foreground shadow-xl ring-8 ring-accent/25 transition-transform group-hover:scale-110">
+                <Play aria-hidden="true" className="ml-1 h-8 w-8 fill-current" />
+              </span>
+              <span className="rounded-full bg-black/70 px-3 py-1 text-sm font-medium text-white">Watch the 2-minute demo</span>
             </span>
           </button>
         )}

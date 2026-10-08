@@ -2,6 +2,37 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-08 — v2.9: fixes from a full click-through of the live site
+
+Every public page at desktop and phone width, light and dark, and every signed-in flow in a "QA test" project with invented stories: add, edit, import, quick edits, filters, refinement, sprint, baseline, report, share link, trends, settings, export, account.
+
+**Bugs, now with regression tests (`e2e/qa-fixes.spec.ts`):**
+- **Wrong tab lit after an import:** `ProjectTabs` kept the last click and matched it again when the address came back to where the click started. The click is now forgotten once the address moves on.
+- **False "Changed" on untouched criteria:** forms post `\r\n` line breaks, but text boxes hold `\n`. `readStoryForm` now normalises to `\n`, and the comparison normalises stories saved earlier.
+- **A new story saved with no status** while its hint said To Do. It now starts as To Do.
+- **Second-look and edited counts ignored the band filter,** so a click could show "No stories match". Both now count within the other filters.
+- **Burn-up caption:** with a change on the baseline's own day, it said "stayed at 21" (the day's merged point). It now compares with the commitment, and gives done as a count rather than a second percentage beside Completion.
+- **Trends counted a running sprint** (velocity "2 pts" on day one). A sprint now counts from its last day; until then the table marks it "in progress". The velocity e2e test's first sprint now ends yesterday.
+
+**Content:**
+- **Home badge:** names the latest release.
+- **FAQ:** mentions team checks and the MIT license.
+- **Product page:** gains "Refinement and Jira", second-look and backlog-tracking text, and WCAG 2.2.
+- **Guide:** counts its own steps, and the Jira entry mentions connecting.
+- **About:** says v2 shipped the Jira connection.
+- **Trend insights:** say "averaged … over the last 3 sprints than before".
+
+**Demo:**
+- **Video:** the first 2.32 s were blank white (narration starts later), so both files are re-encoded from there. They're smaller too: MP4 4.2 → 2.4 MB.
+- **Video label:** sits under the play button.
+- **Phones:** tapping a story scrolls to its details.
+
+**License:** MIT, chosen by the user, because the site called itself open source with no license.
+
+**Not changed:**
+- **The demo scorer's Score button:** the form mirrors the real one.
+- **Empty filter params in the URL:** cosmetic only.
+
 ## 2026-10-08 — v2.8: hardening batch
 
 Follow-ups from the v2.7 review that needed no one's accounts or secrets:

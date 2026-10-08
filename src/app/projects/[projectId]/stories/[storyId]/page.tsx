@@ -102,9 +102,10 @@ export default async function StoryPage({ params, searchParams }: PageProps<"/pr
           className="mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-accent/40 bg-accent-soft px-4 py-3 text-sm text-accent-soft-foreground"
         >
           <h2 id="jira-copy" className="mr-auto font-medium">
+            {/* New stories written here count too: they aren't in Jira until someone creates the issue. */}
             {jiraLinked
-              ? "Edited here, not yet in Jira."
-              : "Edited here, not yet in Jira. Copy each field into the Jira issue, then mark it copied."}
+              ? "Written or edited here, not yet in Jira."
+              : "Written or edited here, not yet in Jira. Copy each field into Jira, then mark it copied."}
           </h2>
           {jiraLinked && <SendToJiraButton projectId={project.id} storyIds={[row.id]} label="Send to Jira" />}
           <CopyButton text={story.description} label="Copy description" className="btn-secondary btn-sm" />

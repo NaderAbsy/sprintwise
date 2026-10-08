@@ -15,10 +15,12 @@ export type StoryCompare = { before: Record<StoryFieldName, string>; current: Re
 
 /** The saved values as the form would show them, so "changed" compares like with like. */
 export function storyFieldValues(story: StoryDefaults): Record<StoryFieldName, string> {
+  // A text box always holds "\n" line breaks; text saved from a form or a file may have "\r\n".
+  const lines = (text: string | undefined) => (text ?? "").replace(/\r\n?/g, "\n");
   return {
     title: story.title ?? "",
-    description: story.description ?? "",
-    acceptanceCriteria: story.acceptanceCriteria ?? "",
+    description: lines(story.description),
+    acceptanceCriteria: lines(story.acceptanceCriteria),
     storyPoints: story.storyPoints === null || story.storyPoints === undefined ? "" : String(story.storyPoints),
     status: story.status ?? "",
     issueType: story.issueType ?? "",

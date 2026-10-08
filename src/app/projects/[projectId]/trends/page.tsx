@@ -31,8 +31,10 @@ export default async function TrendsPage({ params }: PageProps<"/projects/[proje
             </Link>
           }
         >
-          Trends appear once a sprint has a locked baseline and a later snapshot. From the second sprint, Sprintwise
-          compares it with the one before; from the fourth, it compares averages.
+          {rows.some((r) => r.running)
+            ? "Trends appear when a sprint ends, so a sprint still running doesn't skew the averages. "
+            : "Trends appear once a sprint has a locked baseline and a later snapshot, and has ended. "}
+          From the second sprint, Sprintwise compares it with the one before; from the fourth, it compares averages.
         </EmptyState>
       ) : (
         <Trends rows={rows} summary={summarizeTrends(rows)} />

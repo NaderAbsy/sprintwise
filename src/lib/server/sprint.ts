@@ -4,6 +4,7 @@ import { formatDay } from "@/lib/sprint/dates";
 import type { ChangeType } from "@/lib/sprint/diff";
 import { computeMetrics, DONE_STATUSES } from "@/lib/sprint/metrics";
 import type { LogRow } from "@/lib/sprint/report";
+import { utcToday } from "@/lib/sprint/tracking";
 import { trendRows } from "@/lib/sprint/trends";
 import type { Story } from "@/lib/stories/types";
 import { db } from "@/lib/server/db";
@@ -77,6 +78,7 @@ export async function loadProjectTrends(
       id: true,
       name: true,
       startDate: true,
+      endDate: true,
       snapshots: {
         select: { id: true, isBaseline: true },
         orderBy: [{ asOfDate: "asc" }, { uploadedAt: "asc" }],
@@ -99,6 +101,8 @@ export async function loadProjectTrends(
       baseline: bySnapshot.get(p.baselineId) ?? [],
       latest: bySnapshot.get(p.latestId) ?? [],
       measured: p.latestId !== p.baselineId,
+      // From its last day on, a sprint counts as finished: that's when the next one is planned.
+      running: p.sprint.endDate.getTime() > utcToday().getTime(),
     })),
     settingsOf(project),
     doneStatusesOf(project),

@@ -75,7 +75,7 @@ export function Trends({ rows, summary }: { rows: SprintTrendRow[]; summary: Tre
                 <tr key={r.id}>
                   <td className="font-medium">
                     {r.name}
-                    {!r.measured && <span className="ml-2 text-xs text-subtle">baseline only</span>}
+                    {!r.measured && <span className="ml-2 text-xs text-subtle">{r.running ? "in progress" : "baseline only"}</span>}
                   </td>
                   <td className="text-right tabular-nums">{r.committed}</td>
                   <td className="text-right tabular-nums">{r.measured ? r.done : "—"}</td>

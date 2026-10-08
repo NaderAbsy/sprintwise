@@ -10,7 +10,11 @@ export type StoryForm = { story: Omit<Story, "key">; rawKey: string; fieldErrors
  * preview and the server action agree on every message.
  */
 export function readStoryForm(data: FormData): StoryForm {
-  const text = (name: string) => String(data.get(name) ?? "").trim();
+  // Forms send line breaks as "\r\n"; stories keep "\n", like text boxes and the importer.
+  const text = (name: string) =>
+    String(data.get(name) ?? "")
+      .replace(/\r\n?/g, "\n")
+      .trim();
   const fieldErrors: Record<string, string> = {};
 
   const title = text("title");

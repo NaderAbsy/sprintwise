@@ -26,15 +26,17 @@ export function burnupSeries(
     }));
 }
 
-/** One sentence for screen readers and the chart's caption. */
-export function burnupSummary(series: BurnupPoint[]): string {
+/**
+ * One sentence for screen readers and the chart's caption. Scope is compared
+ * with the day-one commitment, not the first point drawn: a change on the
+ * baseline's own day replaces that day's point. Done is a count, not a
+ * percentage, so it can't be confused with Completion (done of the commitment).
+ */
+export function burnupSummary(series: BurnupPoint[], committed?: number): string {
   const first = series[0];
   const last = series.at(-1);
   if (!first || !last) return "No snapshots yet.";
-  const scope =
-    last.scope === first.scope
-      ? `Scope stayed at ${first.scope} points`
-      : `Scope went from ${first.scope} to ${last.scope} points`;
-  const share = last.scope === 0 ? "" : ` (${Math.round((last.done / last.scope) * 100)}%)`;
-  return `${scope}, and ${last.done} ${last.done === 1 ? "point is" : "points are"} done${share}.`;
+  const start = committed ?? first.scope;
+  const scope = last.scope === start ? `Scope stayed at ${start} points` : `Scope went from ${start} to ${last.scope} points`;
+  return `${scope}, and ${last.done} of ${last.scope === start ? "them" : `those ${last.scope}`} ${last.done === 1 ? "is" : "are"} done.`;
 }

@@ -8,7 +8,7 @@ import { trendRows, type SprintTrendRow } from "@/lib/sprint/trends";
  * the team planned with more Ready stories, churn fell and completion rose,
  * until Sprint 12 committed two unclear stories again.
  */
-const EARLIER: Omit<SprintTrendRow, "id" | "measured" | "averageScore">[] = [
+const EARLIER: Omit<SprintTrendRow, "id" | "measured" | "running" | "averageScore">[] = [
   { name: "Sprint 7", startDate: new Date("2026-07-27"), committed: 34, done: 17, completion: 0.5, churn: 0.62, netChange: 0.24, readyAtBaseline: 0.3 },
   { name: "Sprint 8", startDate: new Date("2026-08-10"), committed: 30, done: 18, completion: 0.6, churn: 0.47, netChange: 0.13, readyAtBaseline: 0.4 },
   { name: "Sprint 9", startDate: new Date("2026-08-24"), committed: 29, done: 22, completion: 0.76, churn: 0.31, netChange: 0.07, readyAtBaseline: 0.57 },
@@ -29,5 +29,5 @@ export function demoTrendRows(): SprintTrendRow[] {
     ],
     DEFAULT_SETTINGS,
   );
-  return [...EARLIER.map((row, i) => ({ ...row, id: `demo-${7 + i}`, measured: true, averageScore: null })), ...current];
+  return [...EARLIER.map((row, i) => ({ ...row, id: `demo-${7 + i}`, measured: true, running: false, averageScore: null })), ...current];
 }

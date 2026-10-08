@@ -83,7 +83,7 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
 
   // Priority order by default; "weakest first" lists the lowest scores first, so they get fixed (story R-3).
   const needle = q.toLowerCase();
-  const shown = (showFinished ? stories : active)
+  const inView = (showFinished ? stories : active)
     .filter((s) => !filter || s.readiness?.band === filter.band)
     .filter((s) => !needle || s.key.toLowerCase().includes(needle) || s.title.toLowerCase().includes(needle))
     .filter((s) =>
@@ -94,9 +94,12 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
           : s.status.trim().toLowerCase() === statusFilter.toLowerCase(),
     )
     .filter((s) => !epicFilter || s.epic === epicFilter)
-    .filter((s) => !typeFilter || typeOf(s) === typeFilter)
-    .filter((s) => !editedOnly || s.editedAt)
-    .filter((s) => !lookOnly || needsLook.has(s.id));
+    .filter((s) => !typeFilter || typeOf(s) === typeFilter);
+  // The "edited here" and "second look" links count what the other filters leave, so their number
+  // is what the list shows after the click.
+  const editedInView = inView.filter((s) => s.editedAt).length;
+  const lookInView = inView.filter((s) => needsLook.has(s.id)).length;
+  const shown = inView.filter((s) => !editedOnly || s.editedAt).filter((s) => !lookOnly || needsLook.has(s.id));
   if (sort === "weakest") shown.sort((a, b) => (a.readiness?.score ?? 0) - (b.readiness?.score ?? 0) || a.rank - b.rank);
   const filtered = Boolean(filter || q || statusFilter || epicFilter || typeFilter || editedOnly || lookOnly);
   const statuses = [
@@ -131,24 +134,27 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
   };
   const actions = (
     <>
+      {/* Exporting, refining and sharing need stories; an empty project offers only ways to add them. */}
       {stories.length > 0 && (
-        <a href={`${base}/export.csv`} className="btn-ghost" download>
-          <Download aria-hidden="true" className="h-4 w-4" />
-          Export CSV
-        </a>
+        <>
+          <a href={`${base}/export.csv`} className="btn-ghost" download>
+            <Download aria-hidden="true" className="h-4 w-4" />
+            Export CSV
+          </a>
+          <Link href={`${base}/refine`} className="btn-secondary">
+            <Users aria-hidden="true" className="h-4 w-4" />
+            Refinement
+          </Link>
+          <ShareLink
+            token={project.shareToken}
+            path="/share/backlog"
+            title="Share this backlog"
+            description="Anyone with the link can view the unfinished stories, read-only and without an account: titles, descriptions, acceptance criteria, scores, statuses and points. Not your sprints, settings or other projects. Turn the link off at any time."
+            enable={enableBacklogShare.bind(null, project.id)}
+            disable={disableBacklogShare.bind(null, project.id)}
+          />
+        </>
       )}
-      <Link href={`${base}/refine`} className="btn-secondary">
-        <Users aria-hidden="true" className="h-4 w-4" />
-        Refinement
-      </Link>
-      <ShareLink
-        token={project.shareToken}
-        path="/share/backlog"
-        title="Share this backlog"
-        description="Anyone with the link can view the unfinished stories, read-only and without an account: titles, descriptions, acceptance criteria, scores, statuses and points. Not your sprints, settings or other projects. Turn the link off at any time."
-        enable={enableBacklogShare.bind(null, project.id)}
-        disable={disableBacklogShare.bind(null, project.id)}
-      />
       <Link href={`${base}/import`} className="btn-secondary">
         <FileUp aria-hidden="true" className="h-4 w-4" />
         Import CSV
@@ -255,16 +261,18 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
                   {finishedParam === "show" ? `Hide ${finishedCount} finished` : `Show ${finishedCount} finished`}
                 </Link>
               )}
-              {needsLook.size > 0 && (
+              {(lookOnly || lookInView > 0) && (
                 <Link href={toggle("look", "1")} scroll={false} className="text-accent underline underline-offset-2">
-                  {lookOnly ? "Show all, not only second looks" : `${needsLook.size} worth a second look`}
+                  {lookOnly ? "Show all, not only second looks" : `${lookInView} worth a second look`}
                 </Link>
               )}
               {editedCount > 0 && (
                 <span className="flex flex-wrap items-center gap-2">
-                  <Link href={toggle("edited", "1")} scroll={false} className="text-accent underline underline-offset-2">
-                    {editedOnly ? "Show all, not only edited" : `${editedCount} edited here, not yet in Jira`}
-                  </Link>
+                  {(editedOnly || editedInView > 0) && (
+                    <Link href={toggle("edited", "1")} scroll={false} className="text-accent underline underline-offset-2">
+                      {editedOnly ? "Show all, not only edited" : `${editedInView} edited here, not yet in Jira`}
+                    </Link>
+                  )}
                   {!jiraLinked && (
                     <a href={`${base}/jira.csv`} download className="text-accent underline underline-offset-2">
                       Download them for Jira

@@ -54,7 +54,7 @@ test("the sprint report shows the worked example on one page", async ({ page }) 
 
   // The burn-up: done counts finished work, including stories added later (A, C, D and F).
   await expect(page.getByRole("region", { name: "Scope and work done" })).toContainText(
-    "Scope went from 30 to 35 points, and 29 points are done (83%).",
+    "Scope went from 30 to 35 points, and 29 of those 35 are done.",
   );
   await expect(page.getByRole("img", { name: /^Burn-up chart\./ })).toBeVisible();
 

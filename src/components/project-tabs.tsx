@@ -10,6 +10,9 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
   // The tab just clicked lights up at once, while its page loads; once the address changes, the
   // address decides again.
   const [clicked, setClicked] = useState<{ href: string; from: string } | null>(null);
+  // Forget the click once the address has moved on, or coming back to that address later (after
+  // an import, say) would light up the old tab again.
+  if (clicked && clicked.from !== pathname) setClicked(null);
   const pending = clicked && clicked.from === pathname ? clicked.href : null;
   const base = `/projects/${projectId}`;
   const tabs = [
