@@ -2,6 +2,14 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-08 — v2.6: Atlassian personal data reporting
+
+- **Why:** before the Jira connection can be shared with other companies, Atlassian requires apps that store account IDs to report them through the personal data reporting API, and to erase data for accounts Atlassian says were closed.
+- **What Sprintwise stores from Atlassian:** the account ID and encrypted tokens in `accounts` (no name, email or profile; linking doesn't copy them).
+- **Decision:** a daily Vercel Cron (`/api/cron/atlassian-accounts`, allowed on the Hobby plan) reports each ID when its cycle is up: 7 days, or Atlassian's `Cycle-Period` header. `atlassian_reports` keeps when each ID is next due. It sends batches of 90, using any connected account's token (Atlassian accepts any token issued to the app). On `closed`, the connection is deleted; `updated` needs nothing, as no profile data is kept. On 429 it stops, and the remaining IDs stay due for the next run.
+- **Open endpoint:** the route is safe to call without a secret, because each ID is reported at most once per cycle, so extra calls do nothing. `CRON_SECRET`, if set, restricts it to Vercel Cron.
+- **Not done:** a lighter backlog page. Measured at 300 stories: 927 KB raw but 53 KB compressed (about 180 bytes a story), and the page is interactive within 0.2 s on a 4× slowed CPU, so it isn't worth changing.
+
 ## 2026-10-07 — v2.5: status is picked from a list
 
 - **Why:** the user found the table's status box confusing: it was a text box with suggestions (`<datalist>`), so the text could be edited, and the browser's arrow showed only suggestions matching the current text (nothing useful once a status was set).
