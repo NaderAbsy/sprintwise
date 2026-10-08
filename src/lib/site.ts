@@ -17,6 +17,19 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.8",
+    date: "2026-10-08",
+    title: "Tighter on the details",
+    summary: "Deleting your account also cancels GitHub access and signs you out at once, and the code is scanned for security bugs on every change.",
+    items: [
+      "Deleting your account cancels Sprintwise's access to your GitHub account and signs the browser out straight away.",
+      "Deleting a project or your account, and sending to or syncing with Jira, check your sign-in afresh, so signing out elsewhere applies to them at once.",
+      "GitHub's code scanning checks every change for security bugs.",
+      "New versions of the libraries Sprintwise uses wait a day before they can be installed.",
+      "The Privacy page says sessions record the browser type and IP address they started from.",
+    ],
+  },
+  {
     version: "v2.7",
     date: "2026-10-08",
     title: "Security check",

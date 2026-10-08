@@ -1,3 +1,6 @@
+# New package versions must be a day old before pnpm will install them: most
+# poisoned releases are spotted and pulled within hours.
+minimumReleaseAge: 1440
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver

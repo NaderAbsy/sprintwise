@@ -8,7 +8,7 @@ import { readImportPayload } from "@/lib/csv/import";
 import { rememberedColumns } from "@/lib/csv/parse";
 import type { FormState } from "@/lib/form-state";
 import { db } from "@/lib/server/db";
-import { assertId, isId, requireProject, requireUser } from "@/lib/server/dal";
+import { assertId, isId, requireFreshUser, requireProject, requireUser } from "@/lib/server/dal";
 import { projectDefaults, readinessData, settingsOf, toStory } from "@/lib/server/readiness";
 import { doneStatusesOf } from "@/lib/server/sprint";
 import { bottomRank, saveStories } from "@/lib/server/save-stories";
@@ -63,6 +63,7 @@ export async function renameProject(projectId: string, _prev: FormState, formDat
 }
 
 export async function deleteProject(projectId: string) {
+  await requireFreshUser();
   const project = await requireProject(projectId);
   // Cascades to stories, scores, sprints, snapshots and changes.
   await db.project.delete({ where: { id: project.id } });

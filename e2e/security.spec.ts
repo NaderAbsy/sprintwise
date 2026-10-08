@@ -63,3 +63,22 @@ test("the content security policy blocks nothing the app itself uses", async ({ 
   expect(csp).toContain("connect-src 'self'");
   expect(csp).toContain("form-action 'self';");
 });
+
+test("deleting an account removes it and signs the browser out at once", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/projects");
+  await page.getByLabel("Name").fill("To be deleted");
+  await page.getByRole("button", { name: "Create project" }).click();
+  await expect(page).toHaveURL(/\/projects\/[^/?]+/);
+  const project = page.url().split("?")[0];
+
+  await page.goto("/account");
+  await page.getByRole("button", { name: "Delete my account" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Delete everything" }).click();
+  await expect(page).toHaveURL(/\/$/);
+
+  // The session went with the account, even though a cookie copy of it is kept for five minutes.
+  expect(await (await page.request.get("/api/auth/get-session")).json()).toBeNull();
+  await page.goto(project);
+  await expect(page).toHaveURL(/\/$/);
+});
