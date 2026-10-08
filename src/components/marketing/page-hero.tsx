@@ -6,7 +6,7 @@ export function PageHero({ eyebrow, title, children }: { eyebrow: string; title:
         <div className="bg-grid absolute inset-0 [mask-image:radial-gradient(ellipse_60%_80%_at_50%_0%,black,transparent)]" />
         <div className="aurora-blob absolute -top-32 left-1/4 h-80 w-80 rounded-full bg-accent/20 blur-3xl" />
       </div>
-      <div className="animate-fade-up mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:py-20">
+      <div className="animate-rise mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:py-20">
         <p className="eyebrow">{eyebrow}</p>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight text-balance sm:text-5xl">{title}</h1>
         {children && <div className="mx-auto mt-4 max-w-2xl text-lg text-muted text-pretty">{children}</div>}

@@ -62,3 +62,23 @@ test("after an import the Backlog tab is the one lit, and second-look counts fol
   await expect(page).toHaveURL(/band=not-ready/);
   await expect(page.getByRole("link", { name: /worth a second look/ })).toHaveCount(0);
 });
+
+test("a backlog search leaves empty filters out of the address", async ({ page }) => {
+  await newProject(page, "Search address");
+  await page.getByRole("button", { name: /load 12 sample stories/ }).click();
+  await expect(page.getByText("Imported and scored 12 stories.")).toBeVisible();
+  await page.getByLabel("Search").fill("cleaner");
+  await page.getByLabel("Search").press("Enter");
+  await expect(page).toHaveURL(/\?q=cleaner&sort=priority$/);
+  // The fields work again for the next search.
+  await page.getByLabel("Status", { exact: true }).selectOption("To Do");
+  await expect(page).toHaveURL(/status=To\+Do/);
+  await expect(page).not.toHaveURL(/epic=&|type=&/);
+});
+
+test("the demo's own story scores as you type", async ({ page }) => {
+  await page.goto("/demo#try-it");
+  await page.getByLabel("Title").fill("Rebook my last cleaner");
+  await expect(page.getByText("Readiness", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText("The score and every reason appear here.")).toHaveCount(0);
+});

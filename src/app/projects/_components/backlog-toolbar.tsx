@@ -46,7 +46,26 @@ export function BacklogToolbar({
   const form = useRef<HTMLFormElement>(null);
   const submit = () => form.current?.requestSubmit();
   return (
-    <Form ref={form} action={action} scroll={false} role="search" aria-label="Find stories" className="flex flex-wrap items-end gap-3">
+    <Form
+      ref={form}
+      action={action}
+      scroll={false}
+      role="search"
+      aria-label="Find stories"
+      className="flex flex-wrap items-end gap-3"
+      onSubmit={(event) => {
+        // Empty fields stay out of the address (no "status=&epic="): disabled fields aren't sent, and
+        // next/form reads the fields right after this handler, so they're switched back on straight after.
+        const empty = [...event.currentTarget.elements].filter(
+          (el): el is HTMLInputElement | HTMLSelectElement =>
+            (el instanceof HTMLInputElement || el instanceof HTMLSelectElement) && el.name !== "" && el.value === "" && !el.disabled,
+        );
+        for (const el of empty) el.disabled = true;
+        setTimeout(() => {
+          for (const el of empty) el.disabled = false;
+        });
+      }}
+    >
       {band && <input type="hidden" name="band" value={band} />}
       {finished && <input type="hidden" name="finished" value={finished} />}
       {edited && <input type="hidden" name="edited" value="1" />}

@@ -229,7 +229,7 @@ export default async function Home() {
         </div>
 
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pt-14 pb-20 sm:px-6 lg:grid-cols-[1fr_1.05fr] lg:pt-24 lg:pb-28">
-          <div className="animate-fade-up">
+          <div className="animate-rise">
             <Link
               href="/changelog"
               className="group inline-flex items-center gap-2 rounded-full border border-border bg-surface/80 py-1 pr-3 pl-1 text-xs font-medium text-muted backdrop-blur transition-colors hover:border-accent hover:text-foreground"
@@ -262,7 +262,7 @@ export default async function Home() {
             <p className="mt-3 text-sm text-subtle">The demo needs no account and saves nothing.</p>
           </div>
 
-          <div className="animate-fade-up [animation-delay:150ms]">
+          <div className="animate-rise [animation-delay:150ms]">
             <HeroScorer />
           </div>
         </div>

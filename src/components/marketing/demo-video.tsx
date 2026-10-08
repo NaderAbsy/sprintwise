@@ -14,7 +14,7 @@ export function DemoVideo({ transcript }: { transcript: string[] }) {
           controls={started}
           preload="metadata"
           playsInline
-          poster="/media/demo-poster.jpg"
+          poster="/media/demo-poster.webp"
           className="aspect-[1440/900] w-full"
           aria-label="Sprintwise demo video, 2 minutes, with voice-over and captions"
           onPlay={() => setStarted(true)}

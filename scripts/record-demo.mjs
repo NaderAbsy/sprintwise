@@ -1,9 +1,10 @@
 // Records the demo video (docs/demo-video-script.md) from the live site.
 //
-//   pnpm record-demo [base URL]            captions only, WebM (needs nothing else)
+//   pnpm record-demo [base URL]            captions only, WebM
 //   pnpm record-demo --voice [base URL]    adds a natural AI voice-over, MP4 + WebM
-//                                          (Kokoro, an open-source neural voice that runs locally;
-//                                          needs a full ffmpeg: brew install ffmpeg)
+//                                          (Kokoro, an open-source neural voice that runs locally)
+//
+// Both need a full ffmpeg (brew install ffmpeg): the blank start, while the first page loads, is cut.
 //
 // Only the public demo is used, so every story and number on screen is invented sample data.
 // Each scene lasts as long as its narration, and every caption repeats what's said, so the
@@ -113,6 +114,9 @@ async function scrollTo(selector) {
 
 // Landing
 await page.goto(BASE);
+// The recording starts on a blank page while the first one loads; everything before this moment is cut.
+await page.waitForLoadState("networkidle");
+const trimMs = Date.now() - t0;
 await wait(800);
 await say("intro");
 await say("answer");
@@ -172,15 +176,17 @@ await browser.close();
 const silent = `${TMP}/silent.webm`;
 renameSync(await video.path(), silent);
 
+const trim = ["-ss", (trimMs / 1000).toFixed(2)];
 if (!VOICE) {
-  renameSync(silent, `${OUT}.webm`);
+  execFileSync("ffmpeg", ["-y", ...trim, "-i", silent, "-c:v", "libvpx-vp9", "-b:v", "0", "-crf", "36", `${OUT}.webm`], { stdio: "ignore" });
   console.log(`Saved ${OUT}.webm (captions only)`);
 } else {
   // Lay each line at the moment its caption appeared, mix them into one track, and encode MP4 and WebM.
   const inputs = clips.flatMap((c) => ["-i", c.file]);
-  const delayed = clips.map((c, i) => `[${i + 1}:a]adelay=${c.at}|${c.at}[a${i}]`).join(";");
+  const at = (c) => Math.max(0, c.at - trimMs);
+  const delayed = clips.map((c, i) => `[${i + 1}:a]adelay=${at(c)}|${at(c)}[a${i}]`).join(";");
   const mix = `${delayed};${clips.map((_, i) => `[a${i}]`).join("")}amix=inputs=${clips.length}:normalize=0,apad[voice]`;
-  const common = ["-y", "-i", silent, ...inputs, "-filter_complex", mix, "-map", "0:v", "-map", "[voice]", "-shortest"];
+  const common = ["-y", ...trim, "-i", silent, ...inputs, "-filter_complex", mix, "-map", "0:v", "-map", "[voice]", "-shortest"];
   execFileSync("ffmpeg", [...common, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "23", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", `${OUT}.mp4`], { stdio: "ignore" });
   execFileSync("ffmpeg", [...common, "-c:v", "libvpx-vp9", "-b:v", "0", "-crf", "36", "-c:a", "libopus", "-b:a", "96k", `${OUT}.webm`], { stdio: "ignore" });
   console.log(`Saved ${OUT}.mp4 and ${OUT}.webm with a Kokoro ${VOICE_NAME} voice-over (${clips.length} lines)`);
