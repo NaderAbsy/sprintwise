@@ -29,6 +29,17 @@ export const requireUser = cache(async () => {
   return { id: session.user.id, name: session.user.name, email: session.user.email };
 });
 
+/**
+ * The signed-in user, checked against the database rather than the five-minute
+ * cookie copy, for actions that can't be undone or that act in Jira: a session
+ * signed out elsewhere stops working for these at once.
+ */
+export const requireFreshUser = cache(async () => {
+  const session = await auth.api.getSession({ headers: await headers(), query: { disableCookieCache: true } });
+  if (!session) redirect("/");
+  return { id: session.user.id, name: session.user.name, email: session.user.email };
+});
+
 /** The project if the signed-in user owns it; 404 otherwise, so ids can't be probed. */
 export const requireProject = cache(async (projectId: string) => {
   const user = await requireUser();

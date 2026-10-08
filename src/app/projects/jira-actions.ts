@@ -5,7 +5,7 @@ import { readCsvTable } from "@/lib/csv/parse";
 import type { FormState } from "@/lib/form-state";
 import { MAX_STORIES_PER_PROJECT } from "@/lib/limits";
 import { db } from "@/lib/server/db";
-import { isId, requireProject, requireUser } from "@/lib/server/dal";
+import { isId, requireFreshUser, requireProject, requireUser } from "@/lib/server/dal";
 import { issuesAsCsv, JIRA_MAX_ISSUES, JiraError, jiraSites, searchJira, updateJiraIssue } from "@/lib/server/jira";
 import { saveStories } from "@/lib/server/save-stories";
 import { doneStatusesOf } from "@/lib/server/sprint";
@@ -54,8 +54,8 @@ export async function previewFromJira(
  * new issues that are already finished aren't added.
  */
 export async function syncFromJira(projectId: string): Promise<FormState> {
+  const user = await requireFreshUser();
   const project = await requireProject(projectId);
-  const user = await requireUser();
   if (!project.jiraCloudId || !project.jiraJql) return { error: "Import from Jira once first, so Sprintwise knows which search to run." };
 
   let csv: string;
@@ -120,8 +120,8 @@ export async function syncFromJira(projectId: string): Promise<FormState> {
  * acceptance criteria and points. Each one that lands is no longer "edited here".
  */
 export async function sendToJira(projectId: string, storyIds: string[]): Promise<FormState> {
+  const user = await requireFreshUser();
   const project = await requireProject(projectId);
-  const user = await requireUser();
   if (!project.jiraCloudId) return { error: "Import from Jira once first, so Sprintwise knows which Jira site to write to." };
   const ids = [...new Set((Array.isArray(storyIds) ? storyIds : []).filter(isId))].slice(0, SEND_MAX);
   const stories = await db.story.findMany({

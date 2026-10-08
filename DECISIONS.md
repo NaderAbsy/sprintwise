@@ -2,6 +2,19 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-08 — v2.8: hardening batch
+
+Follow-ups from the v2.7 review that needed no one's accounts or secrets:
+- **CodeQL** as a workflow (`codeql.yml`: JavaScript/TypeScript and the workflows, on pull requests, pushes to main and weekly), instead of switching on default setup in the repo settings.
+- **The CI Postgres image** is pinned by digest.
+- **`minimumReleaseAge: 1440`** in pnpm, plus a matching Dependabot cooldown: versions under a day old aren't installed or proposed.
+- **`requireFreshUser`** reads the session from the database (no cookie cache) for deleting a project or the account, and for Jira send and sync. A session ended elsewhere stops these at once.
+- **Account deletion:**
+  - revokes the GitHub OAuth grant first (best effort; it never blocks the deletion);
+  - then signs out, which clears the cookie cache. Before this, a new e2e test showed the browser still looked signed in for up to five minutes after deletion.
+  - Atlassian has no revocation API for 3LO grants; the Privacy page says where to remove the app.
+- **Privacy:** sessions keep the browser type and IP address they started from.
+
 ## 2026-10-08 — v2.7: security review and fixes
 
 A full review: three parallel code audits (access control; injection and input; auth, secrets and supply chain) plus black-box tests of the live site. No cross-user data access was found: every action, route and page checks ownership through the DAL, and share links are 256-bit tokens. Fixed:

@@ -16,6 +16,10 @@ export default function PrivacyPage() {
         <h2 className="text-base font-semibold text-foreground">What is stored</h2>
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>From GitHub sign-in: your GitHub account id, name, email and avatar link. No password.</li>
+          <li>
+            Your sign-in sessions, each with the browser type and IP address it started from, so a session can be
+            recognised. A session ends when you sign out, after a week unused, or when you delete your account.
+          </li>
           <li>The projects, stories, sprints and snapshots you create or upload, and their scores.</li>
           {aiConfigured && <li>A count of how many AI suggestions you asked for each day, to enforce the daily limit.</li>}
           <li>Anonymous usage counts (checks run, imports, reports) with no user id or story text.</li>
@@ -88,7 +92,9 @@ export default function PrivacyPage() {
         <h2 className="text-base font-semibold text-foreground">Deleting your data</h2>
         <p className="mt-2">
           Deleting a project removes everything in it. Deleting your account on the Account page removes your account
-          and all your data at once.
+          and all your data at once, and cancels Sprintwise&apos;s access to your GitHub account. To be sure, you can
+          also check GitHub&apos;s settings (Applications, then Authorized OAuth Apps) and, if you connected Jira, your
+          Atlassian account&apos;s connected apps.
         </p>
       </section>
 
