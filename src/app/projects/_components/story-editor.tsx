@@ -15,6 +15,7 @@ import { secondLook, type SecondLook } from "@/lib/readiness/second-look";
 import { hasPlaceholders, SCENARIO_TEMPLATE, SPLIT_PATTERNS, STORY_TEMPLATE, vagueWordTips } from "@/lib/stories/helpers";
 import { storyFieldValues, type StoryDefaults, type StoryFieldName } from "@/lib/stories/compare";
 import { readStoryForm } from "@/lib/stories/form";
+import { keepValuesOnSubmit } from "@/lib/keep-values-on-submit";
 
 type EditedStory = { id: string; key: string } & StoryDefaults;
 
@@ -101,6 +102,7 @@ export function StoryEditor({
   return (
     <form
       action={action}
+      onSubmit={keepValuesOnSubmit(action)}
       ref={form}
       onInput={(event) => {
         setDirty(true);

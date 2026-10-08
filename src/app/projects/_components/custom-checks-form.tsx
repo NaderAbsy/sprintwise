@@ -6,6 +6,7 @@ import { FieldError, FormAlert } from "@/components/form-feedback";
 import { emptyFormState } from "@/lib/form-state";
 import type { CustomCheck } from "@/lib/readiness/rules";
 import { SETTINGS_LIMITS } from "@/lib/readiness/settings";
+import { keepValuesOnSubmit } from "@/lib/keep-values-on-submit";
 
 type Row = CustomCheck & { uid: number };
 
@@ -27,7 +28,7 @@ export function CustomChecksForm({ projectId, checks }: { projectId: string; che
   };
 
   return (
-    <form action={action} className="space-y-4" noValidate>
+    <form action={action} onSubmit={keepValuesOnSubmit(action)} className="space-y-4" noValidate>
       {rows.length === 0 ? (
         <div className="rounded-lg bg-surface-2 p-4 text-sm text-muted">
           <p>No team checks yet. For example:</p>

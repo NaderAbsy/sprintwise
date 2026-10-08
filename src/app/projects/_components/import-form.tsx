@@ -19,6 +19,7 @@ import {
 import { emptyFormState } from "@/lib/form-state";
 import { readySummary, scoreStory, type RuleSettings } from "@/lib/readiness/rules";
 import { isDone } from "@/lib/sprint/metrics";
+import { keepValuesOnSubmit } from "@/lib/keep-values-on-submit";
 
 const NONE = "__none__";
 const ALL = "__all__";
@@ -170,7 +171,7 @@ export function ImportForm({
   const showMatcher = table !== null && headers.length > 0 && (!table.ok ? table.missing.length > 0 : true);
 
   return (
-    <form action={action} className="space-y-5">
+    <form action={action} onSubmit={keepValuesOnSubmit(action)} className="space-y-5">
       {jira && (
         <JiraSource
           projectId={projectId}

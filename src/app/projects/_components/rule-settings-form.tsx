@@ -3,6 +3,7 @@ import { useActionState } from "react";
 import { updateRuleSettings } from "@/app/projects/actions";
 import { FieldError, FormAlert } from "@/components/form-feedback";
 import { emptyFormState } from "@/lib/form-state";
+import { keepValuesOnSubmit } from "@/lib/keep-values-on-submit";
 
 /** R-6: the max points and vague-word list that this project's rules use. */
 export function RuleSettingsForm({
@@ -20,7 +21,7 @@ export function RuleSettingsForm({
   const errors = state.fieldErrors ?? {};
   return (
     // key: after a reset the inputs re-mount with the saved values.
-    <form key={`${maxPoints}:${vagueWords.join("|")}`} action={action} className="space-y-4" noValidate>
+    <form key={`${maxPoints}:${vagueWords.join("|")}`} action={action} onSubmit={keepValuesOnSubmit(action)} className="space-y-4" noValidate>
       <div>
         <label htmlFor="maxPoints" className="label">
           Max story points

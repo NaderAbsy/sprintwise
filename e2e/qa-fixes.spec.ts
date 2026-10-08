@@ -115,13 +115,16 @@ test("bugs added mid-sprint are tagged by themselves, counted even without point
   await page.goto(sprint1);
   for (const key of ["BUG-1", "BUG-2"]) await page.getByRole("checkbox", { name: new RegExp(key) }).check();
   await page.getByRole("button", { name: "Save snapshot" }).click();
+  await expect(page.getByText("Snapshot saved with 2 changes.")).toBeVisible();
+  // After saving, the ticks still match what's in the sprint.
+  for (const key of ["TIDY-101", "BUG-1", "BUG-2"]) await expect(page.getByRole("checkbox", { name: new RegExp(key) })).toBeChecked();
   const metrics = page.getByRole("region", { name: "Sprint metrics" });
   await expect(metrics.getByText("2 pts", { exact: true })).toBeVisible();
   await expect(metrics.getByText("New work, plus 1 story with no estimate")).toBeVisible();
 
   // Nobody tagged them, but the report knows they were bugs.
   await page.goto(`${sprint1}/report`);
-  await expect(page.getByText(/Bug or incident: 2 pts/)).toBeVisible();
+  await expect(page.getByText("Bug or incident: 2 pts from 2 changes (100%)")).toBeVisible();
   await expect(page.getByText("plus 1 story with no estimate")).toBeVisible();
 
   // Planning Sprint 2: velocity already allows for that unplanned work.
@@ -129,5 +132,23 @@ test("bugs added mid-sprint are tagged by themselves, counted even without point
   await page.getByLabel("Name").fill("Sprint 2");
   await page.getByRole("button", { name: "Create sprint" }).click();
   await page.getByRole("checkbox", { name: /TIDY-103/ }).check();
-  await expect(page.getByText(/already leaves room for the work that usually arrives mid-sprint, about\s*2\s*points a sprint\s*\(2\s*of them bugs\)/)).toBeVisible();
+  await expect(page.getByText(/already allows for about\s*2\s*points a\s*sprint of unplanned work\s*\(2\s*from bugs\)/)).toBeVisible();
+});
+
+test("a story that can't be saved keeps everything typed into it", async ({ page }) => {
+  const project = await newProject(page, "Keep typing");
+  await page.goto(`${project}/stories/new`);
+  await page.getByLabel("Key").fill("DUP-1");
+  await page.getByLabel("Title").fill("First story");
+  await page.getByRole("button", { name: "Score and save" }).click();
+  await expect(page.getByRole("heading", { name: "First story" })).toBeVisible();
+
+  await page.goto(`${project}/stories/new`);
+  await page.getByLabel("Key").fill("DUP-1");
+  await page.getByLabel("Title").fill("Second story with a taken key");
+  await page.getByLabel("Description").fill("As a shopper, I want this kept so that I don't type it twice.");
+  await page.getByRole("button", { name: "Score and save" }).click();
+  await expect(page.getByText(/DUP-1 is already in this project/)).toBeVisible();
+  await expect(page.getByLabel("Title")).toHaveValue("Second story with a taken key");
+  await expect(page.getByLabel("Description")).toHaveValue("As a shopper, I want this kept so that I don't type it twice.");
 });

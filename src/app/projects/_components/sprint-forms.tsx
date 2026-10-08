@@ -14,6 +14,7 @@ import { formatPoints } from "@/lib/sprint/metrics";
 import type { Story } from "@/lib/stories/types";
 import { BandBadge } from "@/components/band-badge";
 import { scoreStory, type RuleSettings } from "@/lib/readiness/rules";
+import { keepValuesOnSubmit } from "@/lib/keep-values-on-submit";
 
 const totalPoints = (stories: Story[]) => stories.reduce((sum, s) => sum + (s.storyPoints ?? 0), 0);
 
@@ -30,7 +31,7 @@ export function CreateSprintForm({ projectId }: { projectId: string }) {
   // A two-week sprint starting today: the most common shape, easy to change.
   const today = localToday();
   return (
-    <form action={action} className="card max-w-lg space-y-4 p-5" noValidate>
+    <form action={action} onSubmit={keepValuesOnSubmit(action)} className="card max-w-lg space-y-4 p-5" noValidate>
       <div>
         <label htmlFor="sprint-name" className="label">
           Name
@@ -199,7 +200,7 @@ export function SnapshotUploadForm(props: UploadProps) {
   const id = props.mode;
 
   return (
-    <form ref={form} action={action} className="card space-y-5 p-5" noValidate>
+    <form ref={form} action={action} onSubmit={keepValuesOnSubmit(action)} className="card space-y-5 p-5" noValidate>
       <fieldset>
         <legend className="label">Where are the stories?</legend>
         <div className="mt-2 inline-flex rounded-lg border border-border bg-surface-2 p-0.5">
@@ -369,15 +370,15 @@ export function SnapshotUploadForm(props: UploadProps) {
                   </div>
                   {capacity.unplanned > 0 && (
                     <p className="text-xs text-muted">
-                      That already leaves room for the work that usually arrives mid-sprint, about{" "}
-                      <span className="tabular-nums">{capacity.unplanned}</span> points a sprint
+                      This already allows for about <span className="tabular-nums">{capacity.unplanned}</span> points a
+                      sprint of unplanned work
                       {capacity.unplannedBugs > 0 && (
                         <>
                           {" "}
-                          (<span className="tabular-nums">{capacity.unplannedBugs}</span> of them bugs)
+                          (<span className="tabular-nums">{capacity.unplannedBugs}</span> from bugs)
                         </>
                       )}
-                      , because only planned work that got done counts. No extra buffer needed.
+                      : velocity counts only planned work that got done, so no extra buffer is needed.
                     </p>
                   )}
                   {overCapacity && (
