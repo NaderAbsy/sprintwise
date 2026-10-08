@@ -249,6 +249,13 @@ select:not([multiple]) {
     transform: translateY(16px);
   }
 }
+/* Hero text only moves, never starts invisible: browsers don't count transparent text as the page's
+   main content, so a fade-in made the first screen count as "ready" later than it looked. */
+@keyframes rise {
+  from {
+    transform: translateY(16px);
+  }
+}
 @keyframes pulse-dot {
   0%,
   100% {
@@ -267,6 +274,9 @@ select:not([multiple]) {
 }
 .animate-fade-up {
   animation: fade-up 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.animate-rise {
+  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 .animate-pulse-dot {
   animation: pulse-dot 2s ease-in-out infinite;
@@ -314,6 +324,7 @@ select:not([multiple]) {
   .aurora-blob,
   .animate-float,
   .animate-fade-up,
+  .animate-rise,
   .animate-pulse-dot {
     animation: none;
   }

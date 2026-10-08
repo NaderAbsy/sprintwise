@@ -34,11 +34,12 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
             if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
             setClicked({ href, from: pathname });
           }}
-          className={`inline-flex items-center gap-2 border-b-2 px-3 py-2.5 text-sm whitespace-nowrap transition-colors ${
+          // On a phone the icons go and the padding shrinks, so all five tabs fit without scrolling.
+          className={`inline-flex items-center gap-2 border-b-2 px-2 py-2.5 text-sm whitespace-nowrap transition-colors sm:px-3 ${
             active ? "border-accent font-medium text-foreground" : "border-transparent text-muted hover:text-foreground"
           }`}
         >
-          <Icon aria-hidden="true" className="h-4 w-4" />
+          <Icon aria-hidden="true" className="hidden h-4 w-4 sm:block" />
           {label}
         </Link>
       ))}

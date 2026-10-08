@@ -129,7 +129,8 @@ export function SprintReport({
         <h2 id="report-metrics" className="sr-only">
           Metrics
         </h2>
-        <dl className="grid grid-cols-5 gap-2">
+        {/* Five across on paper and wider screens; two rows on a phone, where five would squash the labels. */}
+        <dl className="grid grid-cols-2 gap-2 sm:grid-cols-5 print:grid-cols-5">
           {tiles.map((t) => (
             <div key={t.label} className="card px-3 py-2">
               <dt className="text-xs text-muted">{t.label}</dt>

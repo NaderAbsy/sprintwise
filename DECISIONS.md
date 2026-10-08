@@ -2,6 +2,39 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-08 — v2.10: speed and accessibility check, and a phone pass
+
+**Lighthouse 12:**
+- **Live public pages:** 8 pages, phone and desktop presets.
+- **Signed-in screens:** 11 screens on a local production build, with the 12 sample stories, a sprint and a baseline.
+- **Results:**
+  - Accessibility, best practices and SEO: 100 on every page.
+  - Speed: 100 on desktop, 91–98 on phone, except the home page on phone at 84.
+
+**Home page on phone:**
+- **Cause:**
+  - The hero faded in from `opacity: 0`, so the browser didn't count it as the main content; it picked the header logo, with a long render delay.
+  - The video poster was a 124 KB JPEG.
+- **Fix:**
+  - `animate-rise` (transform only) for the hero and page heroes.
+  - The poster as WebP (63 KB).
+- **Result:** measured locally, the score went from 84 to 94–95 and TBT from 160 to 45 ms. The main content is now the intro paragraph, painted about 0.2 s after the request; Lighthouse's slow-phone simulation estimates 3.0 s.
+
+**Not changed:**
+- **bf-cache:** pages are `no-store` because they read the session.
+- **"Legacy JavaScript" and "unused JavaScript":** estimated at about 150 ms on a simulated slow phone, inside libraries.
+- **The large DOM on the backlog:** one row per story.
+
+**Phone pass of the signed-in screens:** screenshots of every screen at 390 px; nothing is wider than the screen. Two fixes:
+- **Project tabs:** they lose their icons and some padding below `sm`, so all five fit.
+- **Report metric cards:** two columns on phones, five on paper and wider screens.
+
+**Small fixes:**
+- **Empty filters:** they stay out of backlog search addresses. Empty fields are disabled for the moment `next/form` reads them, then switched back on.
+- **Demo scorer:** scores as you type once there's a title.
+- **README:** the "Known limits" section is up to date.
+- **`record-demo`:** it cuts the blank start itself.
+
 ## 2026-10-08 — v2.9: fixes from a full click-through of the live site
 
 Every public page at desktop and phone width, light and dark, and every signed-in flow in a "QA test" project with invented stories: add, edit, import, quick edits, filters, refinement, sprint, baseline, report, share link, trends, settings, export, account.

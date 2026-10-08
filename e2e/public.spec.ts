@@ -103,7 +103,7 @@ test("the home page scores a story live as you type", async ({ page }) => {
 test("the home page has the demo video with a transcript", async ({ page }) => {
   await page.goto("/");
   const video = page.locator("video");
-  await expect(video).toHaveAttribute("poster", "/media/demo-poster.jpg");
+  await expect(video).toHaveAttribute("poster", "/media/demo-poster.webp");
   await expect(video.locator("source")).toHaveCount(2);
   for (const src of await video.locator("source").evaluateAll((els) => els.map((e) => e.getAttribute("src")))) {
     expect((await page.request.head(src!)).ok()).toBe(true);

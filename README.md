@@ -178,9 +178,12 @@ CI runs all of these on every push and pull request (`.github/workflows/ci.yml`)
 
 Report security problems privately through [GitHub's vulnerability reporting](https://github.com/NaderAbsy/sprintwise/security/advisories/new), not in a public issue. [SECURITY.md](SECURITY.md) covers scope, response times and safe testing. The live site also serves [`/.well-known/security.txt`](https://sprintwise-omega.vercel.app/.well-known/security.txt).
 
-## Known limits in v1
+## Known limits
 
-- CSV snapshots can't show who made a change, only between which two snapshots it happened. Who changed what arrives with the Jira integration in v2.
+- Snapshots record what changed and on which day, not who changed it. The Jira connection reads issues, not their change history.
+- Jira Cloud only (not Jira Data Center), up to 1,000 issues per search. Until the Atlassian app's sharing is switched on, only its owner's Atlassian account can connect.
+- One owner per project: teammates can read a shared backlog or report link, but can't edit.
+- AI suggestions are built but switched off on the live site, to avoid running costs.
 
 ## License
 
