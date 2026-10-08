@@ -52,7 +52,7 @@ test("after an import the Backlog tab is the one lit, and second-look counts fol
   await page.getByLabel("CSV file").setInputFiles({ name: "qa.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
   await page.getByRole("button", { name: "Import 2 stories" }).click();
   await expect(page.getByText("Imported and scored 2 stories.")).toBeVisible();
-  await expect(page).toHaveURL(new RegExp(`${project.replace(/[/.]/g, "\\$&")}\\?imported=2$`));
+  await expect(page).toHaveURL(`${project}?imported=2`);
   await expect(tabs(page).getByRole("link", { name: "Backlog" })).toHaveAttribute("aria-current", "page");
   await expect(tabs(page).locator("[aria-current=page]")).toHaveCount(1);
 
