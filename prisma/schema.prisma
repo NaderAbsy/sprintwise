@@ -267,3 +267,12 @@ model AiUsage {
   @@id([userId, day])
   @@map("ai_usage")
 }
+
+/// When each stored Atlassian account ID is next due in Atlassian's personal data report (weekly by default).
+model AtlassianReport {
+  /// The Atlassian account ID, as stored in accounts.accountId.
+  accountId    String   @id
+  nextReportAt DateTime
+
+  @@map("atlassian_reports")
+}

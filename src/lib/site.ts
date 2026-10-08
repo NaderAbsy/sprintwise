@@ -17,6 +17,16 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.6",
+    date: "2026-10-08",
+    title: "Ready to share the Jira connection",
+    summary: "Sprintwise now does the weekly privacy check Atlassian requires before other companies can connect.",
+    items: [
+      "Once a week, Sprintwise tells Atlassian which Atlassian account IDs it keeps. If Atlassian says an account was closed, its Jira connection is deleted.",
+      "Sprintwise keeps only the account ID from your Atlassian account, not your name, email or profile. The Privacy page says so.",
+    ],
+  },
+  {
     version: "v2.5",
     date: "2026-10-07",
     title: "Tidier dropdowns",

@@ -25,3 +25,9 @@ test("security.txt points researchers to private reporting", async ({ request })
   const expires = new Date(/Expires: (\S+)/.exec(text)![1]);
   expect(expires.getTime()).toBeGreaterThan(Date.now());
 });
+
+test("the Atlassian account report runs safely when called, and with no Jira accounts reports nothing", async ({ request }) => {
+  const response = await request.get("/api/cron/atlassian-accounts");
+  expect(response.status()).toBe(200);
+  expect(await response.json()).toEqual({ reported: 0, closed: 0 });
+});

@@ -46,6 +46,11 @@ export default function PrivacyPage() {
           edited here. The project keeps the Jira site and search you chose. Disconnect from your Account page, which
           deletes the tokens; you can also revoke access from your Atlassian account settings.
         </p>
+        <p className="mt-2">
+          From your Atlassian account, Sprintwise keeps only its account ID, to know which tokens are yours; not your
+          name, email or profile. As Atlassian requires, Sprintwise reports the account IDs it keeps to Atlassian once a
+          week, and if Atlassian says an account was closed, Sprintwise deletes its connection.
+        </p>
       </section>
 
       <section>
