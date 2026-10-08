@@ -204,7 +204,8 @@ export function SprintReport({
                   aria-hidden="true"
                   className={`h-2 w-2 rounded-full ${r.id === null ? "bg-border-strong" : REASON_COLORS[i % REASON_COLORS.length]}`}
                 />
-                {r.label}: {r.points} pts ({Math.round(r.share * 100)}%)
+                {/* The number of changes too: a bug added with no points moves 0 points but still happened. */}
+                {r.label}: {r.points} pts from {r.count} {r.count === 1 ? "change" : "changes"} ({Math.round(r.share * 100)}%)
               </li>
             ))}
           </ul>

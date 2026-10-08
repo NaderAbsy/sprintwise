@@ -3,6 +3,7 @@ import { Check, LoaderCircle } from "lucide-react";
 import { useActionState, useRef } from "react";
 import { quickUpdateStory } from "@/app/projects/actions";
 import { emptyFormState } from "@/lib/form-state";
+import { keepValuesOnSubmit } from "@/lib/keep-values-on-submit";
 
 /**
  * A story's status or points, edited in place in a list. A status is picked
@@ -35,7 +36,7 @@ export function QuickField({
 
   return (
     // key: after a save the page re-renders with the stored value, and the input starts from it.
-    <form key={value} ref={form} action={action} className="relative flex items-center gap-1.5">
+    <form key={value} ref={form} action={action} onSubmit={keepValuesOnSubmit(action)} className="relative flex items-center gap-1.5">
       <input type="hidden" name="field" value={field} />
       {field === "status" ? (
         <select

@@ -81,7 +81,14 @@ export function BurnupChart({
         {now && (
           <g>
             <line x1={x(now)} x2={x(now)} y1={PAD.top} y2={H - PAD.bottom} className="stroke-subtle" strokeDasharray="2 3" />
-            <text x={x(now)} y={PAD.top + 8} textAnchor="middle" className="fill-subtle text-[10px]">
+            {/* Near the right edge the label sits left of the line, so it isn't cut off, and a little lower,
+                clear of a scope line running along the top. */}
+            <text
+              x={x(now) > W - PAD.right - 30 ? x(now) - 4 : x(now)}
+              y={x(now) > W - PAD.right - 30 ? PAD.top + 20 : PAD.top + 8}
+              textAnchor={x(now) > W - PAD.right - 30 ? "end" : "middle"}
+              className="fill-subtle text-[10px]"
+            >
               Today
             </text>
           </g>

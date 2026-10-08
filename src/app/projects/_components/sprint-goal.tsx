@@ -5,6 +5,7 @@ import { setChangeReason, updateSprintGoal } from "@/app/projects/sprint-actions
 import { FieldError, FormAlert } from "@/components/form-feedback";
 import { emptyFormState } from "@/lib/form-state";
 import { GOAL_OUTCOMES, REASONS } from "@/lib/sprint/reasons";
+import { keepValuesOnSubmit } from "@/lib/keep-values-on-submit";
 
 /** Tags a scope change with why it happened. Saves on change, no submit button. */
 export function ReasonSelect({
@@ -87,7 +88,7 @@ export function SprintGoalForm({
   }
 
   return (
-    <form action={action} className="card space-y-3 p-4" noValidate>
+    <form action={action} onSubmit={keepValuesOnSubmit(action)} className="card space-y-3 p-4" noValidate>
       <div>
         <label htmlFor="goal" className="label">
           Sprint goal

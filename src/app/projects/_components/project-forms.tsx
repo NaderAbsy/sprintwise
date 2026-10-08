@@ -4,12 +4,13 @@ import { createProject, deleteProject, renameProject } from "@/app/projects/acti
 import { ConfirmButton } from "@/components/confirm-button";
 import { FieldError, FormAlert } from "@/components/form-feedback";
 import { emptyFormState } from "@/lib/form-state";
+import { keepValuesOnSubmit } from "@/lib/keep-values-on-submit";
 
 /** `framed={false}` drops the card and heading, for the empty projects page that already explains it. */
 export function CreateProjectForm({ framed = true }: { framed?: boolean }) {
   const [state, action, pending] = useActionState(createProject, emptyFormState);
   return (
-    <form action={action} className={framed ? "card max-w-xl space-y-4 p-5" : "w-full max-w-md space-y-3 text-left"} noValidate>
+    <form action={action} onSubmit={keepValuesOnSubmit(action)} className={framed ? "card max-w-xl space-y-4 p-5" : "w-full max-w-md space-y-3 text-left"} noValidate>
       {framed && (
         <div>
           <h2 className="font-semibold">New project</h2>
@@ -43,7 +44,7 @@ export function CreateProjectForm({ framed = true }: { framed?: boolean }) {
 export function RenameProjectForm({ projectId, name }: { projectId: string; name: string }) {
   const [state, action, pending] = useActionState(renameProject.bind(null, projectId), emptyFormState);
   return (
-    <form action={action} className="space-y-3" noValidate>
+    <form action={action} onSubmit={keepValuesOnSubmit(action)} className="space-y-3" noValidate>
       <label htmlFor="rename" className="label">
         Project name
       </label>

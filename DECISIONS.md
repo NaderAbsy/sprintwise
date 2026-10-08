@@ -2,6 +2,24 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-09 — v2.12: forms keep what was typed
+
+**Found while testing v2.11 on the live site:**
+- **Snapshot tick boxes:** after saving a sprint snapshot, the newly ticked stories showed unticked while the form's state still counted them.
+- **Story errors:** a story that failed to save (a duplicate key, say) had everything typed cleared.
+
+**Cause:** React 19 resets a form after its `action` runs. That resets uncontrolled fields to their initial values, and the DOM of controlled checkboxes without telling React.
+
+**Fix:**
+- **`keepValuesOnSubmit(action)`:** an `onSubmit` that sends the same `FormData`, including the submitter, to the useActionState action in a transition. That skips the reset.
+- **Every action form now uses it.** The `action` stays, so the forms still work before JavaScript loads.
+- **Regression tests:** the snapshot ticks, and the story kept after a duplicate-key error. Both failed before the fix.
+
+**Also:**
+- **"Why scope changed":** the reason legend gives the number of changes as well as points.
+- **Planning helper:** "about 2 points a sprint of unplanned work (2 from bugs)".
+- **Chart:** the burn-up's Today label stays inside the chart at the right edge.
+
 ## 2026-10-09 — v2.11: unplanned work, without buffers or new scales
 
 **The question:** should Sprintwise add a QA buffer, a bug buffer, or T-shirt sizes?

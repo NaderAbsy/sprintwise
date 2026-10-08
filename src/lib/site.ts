@@ -17,6 +17,18 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.12",
+    date: "2026-10-09",
+    title: "Forms keep what you typed",
+    summary: "Fixes from testing the unplanned-work features on the live site.",
+    items: [
+      "If a story can't be saved (say its key is taken), everything you typed stays in the form instead of being cleared.",
+      "After saving a sprint snapshot, the stories you ticked stay ticked.",
+      "\"Why scope changed\" counts changes as well as points, so a bug added without points still shows.",
+      "The planning helper's note on unplanned work reads more clearly, and the chart's Today label no longer runs off the edge.",
+    ],
+  },
+  {
     version: "v2.11",
     date: "2026-10-09",
     title: "Honest about unplanned work",
