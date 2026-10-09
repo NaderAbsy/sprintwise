@@ -69,7 +69,7 @@ export default function ProductPage() {
               <div className="mt-4 space-y-3 text-muted">
                 <p>
                   Paste a story or import a CSV, and each story gets a score out of 100 from nine fixed rules. No AI sets
-                  the score: the same story always gets the same number, and every lost point comes with a reason.
+                  the score: in a project, the same story always gets the same number, and every lost point comes with a reason.
                 </p>
                 <p>
                   It also flags signs of an AI draft pasted without a careful read, such as chat leftovers
@@ -244,7 +244,7 @@ export default function ProductPage() {
                 <li>The demo runs in your browser with invented data and saves nothing.</li>
                 <li>Sign in with GitHub to keep projects. Deleting your account deletes everything in it.</li>
                 <li>Usage counts are anonymous: no user ID and no story text.</li>
-                <li>Light, dark and system themes, WCAG 2.2 AA contrast, and fully usable by keyboard.</li>
+                <li>Light, dark and system themes, WCAG 2.2 AA contrast, and keyboard use checked by automated tests.</li>
               </ul>
               <Link href="/privacy" className="mt-4 inline-block text-sm font-medium text-accent hover:underline">
                 Read the privacy page

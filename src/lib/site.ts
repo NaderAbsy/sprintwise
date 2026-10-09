@@ -17,6 +17,19 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.13",
+    date: "2026-10-09",
+    title: "Terms, cookies and tidier claims",
+    summary: "A terms of use page, a plain list of the cookies Sprintwise sets, and site text that says only what's true.",
+    items: [
+      "New Terms of use page, linked from the footer and the Privacy page.",
+      "The Privacy page lists each cookie and what it's for, the encrypted GitHub sign-in tokens, and the sign-in attempt counts kept per IP address.",
+      "Sign-in attempt counts older than a day and ended sessions are deleted every night.",
+      "Wording on the home, Product and About pages no longer claims more than Sprintwise can show.",
+      "The database connection asks for full certificate checks by name, as it already did in practice.",
+    ],
+  },
+  {
     version: "v2.12",
     date: "2026-10-09",
     title: "Forms keep what you typed",
@@ -89,7 +102,7 @@ export const RELEASES: Release[] = [
       "Atlassian can only connect Jira to a signed-in account; it can never be used to sign in.",
       "Text written to slow the site down (in a story or a Jira ticket) is now read as fast as any other.",
       "Exported CSV files can't run as spreadsheet formulas, and re-import exactly as before.",
-      "Pages may only load content from Sprintwise itself, and stored GitHub or Atlassian keys can't be read from a page.",
+      "Pages may only load content from Sprintwise itself (plus GitHub profile pictures), and stored GitHub or Atlassian keys can't be read from a page.",
       "Sign-in limits repeated tries, and the weekly Atlassian check only runs when Vercel calls it.",
     ],
   },
@@ -143,7 +156,7 @@ export const RELEASES: Release[] = [
     version: "v2.2",
     date: "2026-10-07",
     title: "Connect Jira",
-    summary: "Import straight from a Jira search, sync with one click, and send your edits back. No more CSV files.",
+    summary: "Import straight from a Jira search, sync with one click, and send your edits back. No CSV needed.",
     items: [
       "Connect your Atlassian account once from a project's Import page; tokens are stored encrypted.",
       "Pick a Jira site and a search (JQL); the issues open in the same preview as a CSV, to filter and tick.",
@@ -169,7 +182,7 @@ export const RELEASES: Release[] = [
     version: "v2.0",
     date: "2026-10-07",
     title: "Share the backlog",
-    summary: "The first step towards teams: a read-only backlog link for refinement, and a home page for the AI era.",
+    summary: "A first way to share with the team: a read-only backlog link for refinement, and a home page for the AI era.",
     items: [
       "Share a read-only link to the backlog: the team sees every unfinished story, its score and what to fix, without an account.",
       "Order the shared backlog by priority or weakest first; open a story to see its description, criteria and second-look hints.",

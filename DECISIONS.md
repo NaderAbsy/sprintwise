@@ -2,6 +2,31 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-09 — v2.13: terms, cookies, honest copy, data clean-up
+
+**Asked for:** fix the database SSL warning; a security check; cookie policy and consent banner; remove unsupported claims; alt text, contrast and keyboard checks; terms of service.
+
+**No cookie banner.** Sprintwise sets only the cookies sign-in needs (`better-auth.session_token`, `session_data`, `state`; `__Secure-` on the live site), keeps the theme choice in local storage, and Vercel Analytics is cookieless. Strictly necessary storage and a preference the visitor chose don't need consent, so a banner would add friction and imply tracking that doesn't exist. Instead the Privacy page lists each cookie, and an end-to-end test fails if sign-in sets a cookie the page doesn't name.
+
+**Terms of use page.** Plain English: free and as is, only add work you're allowed to, don't attack the site, content stays yours, Jira changes only on Send, may change or shut down, liability limited as far as the law allows. Not legal advice; written to set honest expectations for a portfolio project.
+
+**Copy audit (a read-only pass over every public page, README and changelog):** no invented stats, testimonials or "secure/GDPR" claims. Fixed:
+- "scores compare across teams" contradicted per-project settings;
+- "the same story always gets the same score" is true within a project, so it now says so;
+- "which writing tools don't do", "The whole product in two minutes" (the video predates Jira and refinement), "Teams rarely answer either with data", "fully usable by keyboard" softened to what tests show;
+- changelog lines: the CSP also allows GitHub avatars; "No more CSV files" → "No CSV needed"; "The first step towards teams" → no teammates feature is planned;
+- Privacy page omissions: encrypted GitHub tokens, IP-keyed sign-in attempt counts, the `read:me` scope; the demo saves nothing at all;
+- README status and Jira limits were stale.
+Left alone: the 2-minute video's narration (baked into the audio, and true in its one-project demo) and "0 tickets sent to an AI" (true while AI is off; revisit if it's ever switched on).
+
+**Data clean-up.** Better Auth's `rate_limits` rows are keyed by IP address and were never deleted, for visitors with or without an account. The daily cron now also deletes attempt counts older than a day, ended sessions (IP and browser type) and expired verifications. Same route, so no new `vercel.json` entry or secret.
+
+**SSL warning.** pg 8 treats `sslmode=require` as `verify-full` but warns that pg 9 will weaken it to libpq's "encrypt, don't verify". `withVerifiedSsl` rewrites require/prefer/verify-ca to `verify-full` before connecting, so behaviour is unchanged today and stays strict after the upgrade. Neon's certificates are publicly trusted.
+
+**Checked, nothing to change:**
+- **Accessibility:** a temporary sweep ran axe (WCAG 2.2 AA plus best-practice, every impact level) on 20 public and signed-in pages in light and dark themes: 0 findings. 489 Tab stops, every one with a visible focus ring. Images: no `image-alt` findings.
+- **Security:** `pnpm audit --prod` clean; open alerts are the dev-only braces and sprintf-js (no patch exists); no CodeQL or secret-scanning alerts; live headers (CSP, HSTS preload, frame DENY, nosniff) in place; protected routes redirect; token endpoints 404; email sign-up disabled; foreign callback URLs refused.
+
 ## 2026-10-09 — v2.12: forms keep what was typed
 
 **Found while testing v2.11 on the live site:**

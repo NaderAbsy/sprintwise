@@ -28,10 +28,14 @@ test("security.txt points researchers to private reporting", async ({ request })
   expect(expires.getTime()).toBeGreaterThan(Date.now());
 });
 
-test("the Atlassian account report runs safely when called, and with no Jira accounts reports nothing", async ({ request }) => {
+test("the daily job runs safely when called: with no Jira accounts it reports nothing, and it clears expired sign-in data", async ({ request }) => {
   const response = await request.get("/api/cron/atlassian-accounts");
   expect(response.status()).toBe(200);
-  expect(await response.json()).toEqual({ reported: 0, closed: 0 });
+  expect(await response.json()).toEqual({
+    reported: 0,
+    closed: 0,
+    cleanedUp: { sessions: expect.any(Number), verifications: expect.any(Number), rateLimits: expect.any(Number) },
+  });
 });
 
 test("the browser can't fetch a user's stored GitHub or Atlassian tokens", async ({ page }) => {
@@ -81,4 +85,14 @@ test("deleting an account removes it and signs the browser out at once", async (
   expect(await (await page.request.get("/api/auth/get-session")).json()).toBeNull();
   await page.goto(project);
   await expect(page).toHaveURL(/\/$/);
+});
+
+test("signing in sets only cookies the Privacy page lists", async ({ page }) => {
+  await page.goto("/privacy");
+  const listed = await page.locator("li code").allTextContents();
+  await signIn(page);
+  await page.goto("/projects");
+  const names = (await page.context().cookies()).map((c) => c.name.replace(/^__Secure-/, ""));
+  expect(names.length).toBeGreaterThan(0);
+  for (const name of names) expect(listed, name).toContain(name);
 });

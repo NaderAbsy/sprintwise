@@ -5,13 +5,13 @@ Teams often start sprints with vague stories, and mid-sprint scope changes go un
 - **Readiness check:** nine fixed rules (C1–C9) give each story a score out of 100. Every point lost comes with a plain-English reason, one per missing thing. A story that isn't estimated, or is too big, can't be Ready. The score never uses AI.
 - **Scope tracking:** lock the day-one sprint as a baseline and see scope added, removed, net change, churn and completion. A sprint built from the backlog records status and points changes as they're made; a sprint kept with Jira CSVs takes a fresh export as a snapshot. A burn-up chart shows scope against work done, day by day.
 
-No Jira setup in v1: paste a story or upload a CSV. Light and dark themes. All sample data is invented.
+Paste a story, upload a CSV, or connect Jira Cloud to import, sync and send edits back. Light and dark themes. All sample data is invented.
 
 **Live:** <https://sprintwise-omega.vercel.app> · try the [demo](https://sprintwise-omega.vercel.app/demo) without signing in · watch the [2-minute demo video with voice-over](https://sprintwise-omega.vercel.app/#video) on the home page.
 
 ## Status
 
-**Version 1 is done** (v1.0) and deployed. See the requirements doc for the backlog and the build plan.
+**Version 2 is live** (see the [changelog](https://sprintwise-omega.vercel.app/changelog)). Version 1's phases, from the requirements doc:
 
 | Phase | Stories | State |
 | --- | --- | --- |
@@ -19,7 +19,7 @@ No Jira setup in v1: paste a story or upload a CSV. Light and dark themes. All s
 | 2 · Readiness rules | R-1 paste a story, R-2 CSV import, R-3 sorted backlog, R-6 rule settings | Done, live |
 | 3 · AI layer | R-4 rewrites, R-5 test scenarios | Built and tested, switched off on the live site; moved to v2 (see below) |
 | 4 · Scope tracking | S-1 to S-4, S-6 | Done, live |
-| 5 · Report and polish | S-5, F-2 demo, L-2 accessibility, F-5 privacy | S-5 done; F-2 demo with sample sprint built; F-5 waits for the AI notice; L-2 ongoing |
+| 5 · Report and polish | S-5, F-2 demo, L-2 accessibility, F-5 privacy | Done: S-5 report, F-2 demo with a sample sprint, F-5 [privacy](https://sprintwise-omega.vercel.app/privacy) and [terms](https://sprintwise-omega.vercel.app/terms) pages, L-2 accessibility (axe and keyboard tests) |
 | 6 · Launch | L-1, L-3 | Done: README, screenshots, demo video and usage counts |
 
 ## Screenshots
@@ -181,7 +181,7 @@ Report security problems privately through [GitHub's vulnerability reporting](ht
 ## Known limits
 
 - Snapshots record what changed and on which day, not who changed it. The Jira connection reads issues, not their change history.
-- Jira Cloud only (not Jira Data Center), up to 1,000 issues per search. Until the Atlassian app's sharing is switched on, only its owner's Atlassian account can connect.
+- Jira Cloud only (not Jira Data Center), up to 1,000 issues per search.
 - One owner per project: teammates can read a shared backlog or report link, but can't edit.
 - AI suggestions are built but switched off on the live site, to avoid running costs.
 

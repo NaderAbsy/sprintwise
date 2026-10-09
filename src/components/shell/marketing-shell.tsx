@@ -85,6 +85,11 @@ export async function MarketingShell({ children }: { children: React.ReactNode }
                 </Link>
               </li>
               <li>
+                <Link href="/terms" className="hover:text-foreground">
+                  Terms
+                </Link>
+              </li>
+              <li>
                 <a href={FEEDBACK_URL} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">
                   Send feedback<span className="sr-only"> (opens GitHub in a new tab)</span>
                 </a>

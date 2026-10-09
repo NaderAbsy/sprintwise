@@ -9,7 +9,9 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
-const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+// verify-full, as in src/lib/server/database-url.ts: the same check pg does today, without its warning.
+const connectionString = process.env.DATABASE_URL.replace(/([?&]sslmode=)(?:require|prefer|verify-ca)(?=&|$)/i, "$1verify-full");
+const client = new pg.Client({ connectionString });
 await client.connect();
 try {
   const { rows } = await client.query(`
