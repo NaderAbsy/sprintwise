@@ -109,7 +109,7 @@ test("the home page has the demo video with a transcript", async ({ page }) => {
     expect((await page.request.head(src!)).ok()).toBe(true);
   }
   await page.getByText("Read the transcript").click();
-  await expect(page.getByText("Every story gets a score out of 100 from nine fixed rules.", { exact: false })).toBeVisible();
+  await expect(page.getByText("Nine fixed rules score every story out of 100", { exact: false })).toBeVisible();
 });
 
 test("the header tabs reach every public page and mark the current one", async ({ page }) => {

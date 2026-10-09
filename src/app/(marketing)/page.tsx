@@ -239,7 +239,7 @@ export default async function Home() {
               <ArrowRight aria-hidden="true" className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <h1 className="mt-6 text-4xl font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl">
-              AI writes the tickets. <span className="text-gradient">Sprintwise checks they&apos;re ready.</span>
+              Know your stories are ready <span className="text-gradient">before the sprint starts.</span>
             </h1>
             <p className="mt-5 max-w-xl text-lg text-muted text-pretty">
               Import your backlog, AI-drafted or not. Nine fixed rules score every story before planning and flag what a
@@ -348,9 +348,9 @@ export default async function Home() {
         <Reveal className="mx-auto max-w-2xl text-center">
           <p className="eyebrow">Watch</p>
           <h2 id="video-heading" className="mt-2 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-            The core idea in two minutes
+            Sprintwise in three minutes
           </h2>
-          <p className="mt-3 text-muted">A narrated walkthrough of the public demo, with captions so it also works muted.</p>
+          <p className="mt-3 text-muted">A narrated walkthrough with invented sample data, and captions so it also works muted.</p>
         </Reveal>
         <Reveal delay={100} className="mt-10">
           <DemoVideo transcript={transcript} />

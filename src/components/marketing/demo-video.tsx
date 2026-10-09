@@ -16,7 +16,7 @@ export function DemoVideo({ transcript }: { transcript: string[] }) {
           playsInline
           poster="/media/demo-poster.webp"
           className="aspect-[1440/900] w-full"
-          aria-label="Sprintwise demo video, 2 minutes, with voice-over and captions"
+          aria-label="Sprintwise demo video, 3 minutes, with voice-over and captions"
           onPlay={() => setStarted(true)}
         >
           <source src="/media/sprintwise-demo.webm" type="video/webm" />
@@ -36,7 +36,7 @@ export function DemoVideo({ transcript }: { transcript: string[] }) {
               <span className="grid h-20 w-20 place-items-center rounded-full bg-accent text-accent-foreground shadow-xl ring-8 ring-accent/25 transition-transform group-hover:scale-110">
                 <Play aria-hidden="true" className="ml-1 h-8 w-8 fill-current" />
               </span>
-              <span className="rounded-full bg-black/70 px-3 py-1 text-sm font-medium text-white">Watch the 2-minute demo</span>
+              <span className="rounded-full bg-black/70 px-3 py-1 text-sm font-medium text-white">Watch the 3-minute demo</span>
             </span>
           </button>
         )}

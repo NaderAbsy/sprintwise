@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { signIn } from "./helpers";
 
-const HOME_HEADING = "AI writes the tickets. Sprintwise checks they're ready.";
+const HOME_HEADING = "Know your stories are ready before the sprint starts.";
 
 async function logoGoesHome(page: Page, path: string) {
   await page.goto(path);
