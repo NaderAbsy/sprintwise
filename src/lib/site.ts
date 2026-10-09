@@ -8,7 +8,6 @@ export const MARKETING_LINKS = [
   { href: "/product", label: "Product" },
   { href: "/guide", label: "Guide" },
   { href: "/demo", label: "Demo" },
-  { href: "/changelog", label: "Changelog" },
   { href: "/about", label: "About" },
 ];
 
