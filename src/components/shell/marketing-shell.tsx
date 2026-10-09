@@ -50,8 +50,8 @@ export async function MarketingShell({ children }: { children: React.ReactNode }
           <div className="space-y-3">
             <Logo />
             <p className="max-w-xs text-muted">
-              Checks that stories are ready before a sprint, then measures how much the sprint changes. A portfolio
-              project; all sample data is invented.
+              Checks that stories are ready before a sprint, then measures how much the sprint changes. Free to use;
+              all sample data is invented.
             </p>
           </div>
           <div>

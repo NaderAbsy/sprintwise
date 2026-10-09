@@ -45,7 +45,7 @@ export default function AboutPage() {
           </h2>
           <div className="mt-4 space-y-3 text-muted">
             <p>
-              Sprintwise is a portfolio project. I wrote the requirements, kept the backlog, made the product calls and
+              Sprintwise is an independent project. I wrote the requirements, kept the backlog, made the product calls and
               tested every release, from the first rule to version 1.
             </p>
             <p>

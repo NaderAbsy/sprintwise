@@ -58,12 +58,12 @@
   "planning": {
     "caption": "When planning, Sprintwise shows how many points the team usually finishes, from the last three sprints."
   },
-  "owner": {
-    "caption": "I owned the requirements, backlog and testing end to end. Every rule and metric has an automated test."
+  "start": {
+    "caption": "Try the demo without an account, or sign in with GitHub to use it on your own backlog. It's free."
   },
   "close": {
-    "caption": "Sprintwise: sprintwise-omega.vercel.app · code on github.com/NaderAbsy/sprintwise",
-    "spoken": "Sprintwise. Try the demo, and find the code, at the links below.",
+    "caption": "Sprintwise: sprintwise-omega.vercel.app",
+    "spoken": "Sprintwise. Free to use, at sprintwise omega dot vercel dot app.",
     "minMs": 4500
   }
 }
