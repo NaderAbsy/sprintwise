@@ -2,6 +2,16 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-10 — v2.16: link previews and a private insights page
+
+**Link previews.** Shared report and backlog links are how stakeholders first meet Sprintwise, and they showed as bare addresses in Slack and Teams. Next's `opengraph-image` files draw a 1200 × 630 card: the site card for every public page, and for share links the sprint or project name with the numbers the page already shows. The image route checks the token exactly like the page, so turning a link off stops the card (a chat app may keep one it already fetched; the Privacy page says so). `metadataBase` comes from `BETTER_AUTH_URL`, falling back to the live address.
+
+**Insights, for whoever runs the site.** Now that Sprintwise is for other people, the question is where new users stop. Options: per-user event tracking (new data about people, needs a privacy change and maybe consent) or totals counted from what's already stored. Chose totals: no new tracking, no cookies, nothing that says who.
+- **Funnel:** signed up → created a project → added stories → locked a baseline → tracked a sprint, each as a count of accounts and a share of the step before. Plus Jira connected, links shared, new accounts per week, and the existing anonymous monthly counts.
+- **Who sees it:** `/account/insights`, for GitHub account 147534134 (a public number, not a secret). Everyone else gets "Page not found". The owner's own account is left out of the counts.
+- **Testing:** with test sign-in on (never on a deploy), a `site-owner-…@example.test` address counts as the owner, so e2e can check both sides.
+- **Privacy page:** "Whoever runs Sprintwise sees totals, such as how many accounts have created a project, never who."
+
 ## 2026-10-10 — Team editing: parked, co-owner first if users ask
 
 **Question:** should projects get members who can edit, now that Sprintwise is meant for other people to use?

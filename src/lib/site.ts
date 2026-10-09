@@ -16,6 +16,17 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.16",
+    date: "2026-10-10",
+    title: "Link previews",
+    summary: "Links to Sprintwise, shared reports and shared backlogs show a preview card in Slack, Teams and elsewhere.",
+    items: [
+      "Pasting a Sprintwise link shows a card with what it does.",
+      "A shared report's card shows the sprint's name, dates, scope change, churn and completion; a shared backlog's shows how many stories are ready.",
+      "Turning a link off stops its card too, though a chat app may keep one it already showed.",
+    ],
+  },
+  {
     version: "v2.15",
     date: "2026-10-10",
     title: "Made for your team",

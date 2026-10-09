@@ -9,8 +9,12 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  // Link previews need absolute image addresses; previews and local builds use their own.
+  metadataBase: new URL(process.env.BETTER_AUTH_URL ?? "https://sprintwise-omega.vercel.app"),
   title: { default: "Sprintwise", template: "%s · Sprintwise" },
   description: "Sprintwise checks your stories are ready before the sprint starts, then measures how much the sprint changes.",
+  openGraph: { siteName: "Sprintwise", type: "website" },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {

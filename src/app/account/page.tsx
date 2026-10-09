@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { db } from "@/lib/server/db";
 import { requireUser } from "@/lib/server/dal";
 import { jiraAccount, jiraConfigured } from "@/lib/server/jira";
+import { isSiteOwner } from "@/lib/server/site-owner";
 import { disconnectJira } from "@/app/projects/jira-actions";
 
 export const metadata: Metadata = { title: "Account" };
@@ -14,6 +15,7 @@ export default async function AccountPage() {
   const user = await requireUser();
   const projects = await db.project.count({ where: { userId: user.id } });
   const jira = await jiraAccount(user.id);
+  const owner = await isSiteOwner(user);
 
   return (
     <>
@@ -36,6 +38,20 @@ export default async function AccountPage() {
             ))}
           </dl>
         </section>
+
+        {owner && (
+          <section aria-labelledby="insights-heading" className="card flex flex-wrap items-center justify-between gap-3 p-5">
+            <div>
+              <h2 id="insights-heading" className="font-semibold">
+                Insights
+              </h2>
+              <p className="text-sm text-muted">Only you see this: where new users get to, as totals.</p>
+            </div>
+            <Link href="/account/insights" className="btn-secondary">
+              Open insights
+            </Link>
+          </section>
+        )}
 
         {jiraConfigured && (
           <section aria-labelledby="jira-heading" className="card space-y-3 p-5">
