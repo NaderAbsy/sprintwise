@@ -314,11 +314,12 @@ for (const key of ["TIDY-101", "TIDY-102", "TIDY-104", "TIDY-109"]) {
 await pointAt(page.getByText(/the team usually finishes/));
 await say("planning");
 
-// Close
-await open("https://github.com/NaderAbsy/sprintwise");
-await wait(3000); // the file list fills in after the page loads
-await say("owner");
+// Close, signed out again, on what a visitor can do next
+await context.clearCookies();
 await open("/");
+await pointAt(page.getByRole("link", { name: "Try the demo" }).first());
+await say("start");
+await pointAt(page.getByRole("button", { name: "Sign in with GitHub" }).first());
 await say("close");
 
 const video = page.video();

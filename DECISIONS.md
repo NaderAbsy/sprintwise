@@ -2,6 +2,19 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-10 — v2.15: written for users, not reviewers
+
+**The goal, from the user:** Sprintwise is mainly for other Product Owners and teams to use, not only a portfolio piece. Copy that called it a "portfolio project" (footer, FAQ, About, Privacy, Terms) told visitors not to rely on it.
+
+**Changed:**
+- **Wording:** "a free, independent tool" in Privacy and Terms, "Free to use" in the footer and FAQ, "an independent project" on About. No name in these lines, at the user's request; Terms says "Sprintwise's developer".
+- **Video ending:** the recruiter-facing "I owned the requirements, backlog and testing…" over the GitHub repo is replaced by a call to action on the signed-out home page: try the demo, or sign in with GitHub. The browser's cookies are cleared first so the visitor's view is filmed.
+- **Changelog** moved from the header to the footer (PR #68): first-time visitors need Product, Guide, Demo and About; the changelog is for returning users. The home page's "New: …" badge still links to it.
+
+**Not now:**
+- **Google sign-in.** Most POs the user knows have GitHub; revisit later.
+- **Team editing.** One owner per project today. Needs planning; to be discussed.
+
 ## 2026-10-09 — v2.14: new headline and a re-recorded demo video
 
 **Headline.** "AI writes the tickets. Sprintwise checks they're ready." read as if Sprintwise had an AI that writes tickets, and left out people who write their own. Options offered: "However your stories are written, Sprintwise checks they're ready", "Ready stories in. Scope changes measured.", and "Know your stories are ready before the sprint starts." The user chose the last. The paragraph under it still says "AI-drafted or not".

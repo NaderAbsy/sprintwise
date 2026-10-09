@@ -12,8 +12,8 @@ export default function TermsPage() {
       <header className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">Terms of use</h1>
         <p className="text-base text-muted">
-          Sprintwise is a free personal portfolio project run by Nader Absy. These terms cover the site at
-          sprintwise-omega.vercel.app. Last updated 9 October 2026.
+          Sprintwise is a free, independent tool. These terms cover the site at sprintwise-omega.vercel.app.
+          Last updated 10 October 2026.
         </p>
       </header>
 
@@ -64,7 +64,7 @@ export default function TermsPage() {
           Sprintwise is provided as is, without any warranty. It may have bugs, and it may change, pause or shut down,
           possibly without notice. Keep your own copy of anything that matters: Jira or your CSV files stay the place of
           record. Scores and metrics are aids to a team&apos;s judgement, not a verdict on anyone&apos;s work. As far as
-          the law allows, Nader Absy isn&apos;t liable for any loss from using the site.
+          the law allows, Sprintwise&apos;s developer isn&apos;t liable for any loss from using the site.
         </p>
       </section>
 

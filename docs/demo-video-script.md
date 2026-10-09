@@ -28,4 +28,4 @@ Before filming, the script signs up a test user ("Sam Taylor") and, off camera, 
 | Refinement | Tidyhome app → Refinement, next story | `refine` |
 | Share | Backlog → Share → Create link | `share` |
 | Planning | Sprint 12: tick four stories; the helper shows the usual points and an unready story | `planning` |
-| Close | The GitHub repository, then the home page | `owner`, `close` |
+| Close | The home page, signed out: Try the demo, then Sign in with GitHub | `start`, `close` |

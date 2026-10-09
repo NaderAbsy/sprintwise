@@ -10,7 +10,7 @@ export default function PrivacyPage() {
     <article className="mx-auto max-w-2xl space-y-8 px-4 py-12 text-sm leading-6 sm:px-6">
       <header className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">Privacy</h1>
-        <p className="text-base text-muted">Sprintwise is a personal portfolio project. It stores only what it needs to work.</p>
+        <p className="text-base text-muted">Sprintwise is a free, independent tool. It stores only what it needs to work.</p>
       </header>
 
       <section>
