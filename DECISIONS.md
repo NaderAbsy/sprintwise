@@ -2,6 +2,16 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-09 — v2.14: new headline and a re-recorded demo video
+
+**Headline.** "AI writes the tickets. Sprintwise checks they're ready." read as if Sprintwise had an AI that writes tickets, and left out people who write their own. Options offered: "However your stories are written, Sprintwise checks they're ready", "Ready stories in. Scope changes measured.", and "Know your stories are ready before the sprint starts." The user chose the last. The paragraph under it still says "AI-drafted or not".
+
+**Video.** The old one was from v0.6 (3 October) and said "No Jira setup", which stopped being true in v2.2. The user approved a new 17-line script covering Jira import, the AI-draft check, trends, the burn-up, refinement, sharing and the planning helper.
+- **Filmed on a local production build**, not the live site: the signed-in scenes need a test user and the pretend Jira, and filming locally keeps every project, sprint and story invented. The script sets the data up off camera, films the public pages signed out, then adds the test session's cookies to the same browser.
+- **The share dialog shows the live address.** The local link would read localhost; the script swaps the origin on screen, which is what the live site shows.
+- **Length:** 2:57. The labels now say 3 minutes, and the video heading is "Sprintwise in three minutes".
+- **Web copies:** MP4 5.3 MB (`-crf 30`) and WebM 4.8 MB (VP9 `-crf 48`; text stays sharp), both with `preload="metadata"`, so nothing downloads until play.
+
 ## 2026-10-09 — v2.13: terms, cookies, honest copy, data clean-up
 
 **Asked for:** fix the database SSL warning; a security check; cookie policy and consent banner; remove unsupported claims; alt text, contrast and keyboard checks; terms of service.

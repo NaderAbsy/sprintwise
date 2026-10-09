@@ -17,6 +17,16 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.14",
+    date: "2026-10-09",
+    title: "A new demo video",
+    summary: "A three-minute walkthrough of today's Sprintwise, and a headline for everyone, however their stories are written.",
+    items: [
+      "The demo video is re-recorded: Jira import, the AI-draft check, trends, the burn-up, refinement, sharing and the planning helper are all in it now.",
+      "The home page headline says what Sprintwise does for you, without suggesting it writes tickets: \"Know your stories are ready before the sprint starts.\"",
+    ],
+  },
+  {
     version: "v2.13",
     date: "2026-10-09",
     title: "Terms, cookies and tidier claims",

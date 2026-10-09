@@ -3,43 +3,60 @@
     "caption": "Product Owners face two questions every sprint: were our stories ready, and did we stick to what we committed?"
   },
   "answer": {
-    "caption": "Sprintwise answers both with data. No Jira setup: paste a story or upload a CSV."
+    "caption": "Sprintwise answers both. Paste a story, upload a CSV, or connect Jira Cloud.",
+    "spoken": "Sprintwise answers both. Paste a story, upload a C.S.V., or connect Jira Cloud."
+  },
+  "aiDraft": {
+    "caption": "It also spots signs of an AI draft nobody re-read, like chat leftovers and criteria that would fit any story.",
+    "spoken": "It also spots signs of an A.I. draft nobody re-read, like chat leftovers, and criteria that would fit any story."
   },
   "rules": {
-    "caption": "Every story gets a score out of 100 from nine fixed rules. The weakest stories come first."
+    "caption": "Nine fixed rules score every story out of 100, with a reason for every point lost. The weakest come first.",
+    "spoken": "Nine fixed rules score every story out of a hundred, with a reason for every point lost. The weakest come first."
   },
   "weak": {
     "caption": "This one uses vague words like 'fast' and 'easy', and states no benefit, so it scores 50."
   },
   "noAi": {
-    "caption": "No AI sets the score: the same story always scores the same, and every lost point has a reason.",
-    "spoken": "No A.I. sets the score. The same story always scores the same, and every lost point has a reason."
+    "caption": "No AI sets the score. In a project, the same story always gets the same number.",
+    "spoken": "No A.I. sets the score. In a project, the same story always gets the same number."
   },
   "tryIt": {
-    "caption": "You can score your own story. It runs in the browser; nothing is sent or saved.",
+    "caption": "Try your own. A vague one-line story scores low…",
+    "spoken": "Try your own. A vague, one-line story scores low.",
     "minMs": 3000
   },
-  "vague": {
-    "caption": "A vague one-line story scores low…",
-    "spoken": "A vague, one-line story scores low.",
-    "minMs": 2500
-  },
   "climbs": {
-    "caption": "…and the score climbs as the story gets clear. Only the word 'fast' still costs points.",
-    "spoken": "And the score climbs as the story gets clearer. Only the word fast still costs points."
+    "caption": "…and the score climbs as it gets clear.",
+    "spoken": "And the score climbs as it gets clearer."
   },
   "baseline": {
-    "caption": "On day one the team locks a baseline it can't edit. Later CSV snapshots are compared against it, story by story."
+    "caption": "On day one, the team locks a baseline. Every later change is compared against it."
   },
   "metrics": {
-    "caption": "Here scope grew 18.8%, churn was 50%, and only 37.5% of the original commitment was done.",
-    "spoken": "Here, scope grew eighteen point eight percent, churn was fifty percent, and only thirty-seven and a half percent of the original commitment was done."
+    "caption": "Here scope grew 18.8%, churn was 50%, and only 37.5% of the commitment was done.",
+    "spoken": "Here, scope grew eighteen point eight percent, churn was fifty percent, and only thirty-seven and a half percent of the commitment was done."
   },
   "finding": {
-    "caption": "And the finding that matters: the stories that changed scored 40 points lower before planning."
+    "caption": "The stories that changed scored 40 points lower before planning."
+  },
+  "trends": {
+    "caption": "Across sprints, trends show velocity, churn and completion."
   },
   "report": {
-    "caption": "It all fits on one printable page for the retrospective."
+    "caption": "Each sprint fits on one printable page for the retrospective, with a burn-up of scope against work done."
+  },
+  "jira": {
+    "caption": "Signed in, you can import straight from a Jira search, and send edits back. Sprintwise writes to Jira only when you click Send."
+  },
+  "refine": {
+    "caption": "Refinement takes the team through one story at a time: read it, fix what's missing, agree a size."
+  },
+  "share": {
+    "caption": "Share a read-only backlog or report with the team, no account needed."
+  },
+  "planning": {
+    "caption": "When planning, Sprintwise shows how many points the team usually finishes, from the last three sprints."
   },
   "owner": {
     "caption": "I owned the requirements, backlog and testing end to end. Every rule and metric has an automated test."

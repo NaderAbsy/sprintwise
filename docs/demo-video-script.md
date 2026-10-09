@@ -1,29 +1,31 @@
-# Demo video script (under 3 minutes)
+# Demo video script (about 3 minutes)
 
-`pnpm record-demo --voice` records this script from the live site with a natural AI voice-over and matching captions (`docs/demo.mp4` and `docs/demo.webm`). The voice is [Kokoro](https://github.com/hexgrad/kokoro), an open-source neural model (Apache 2.0) that runs locally with no account or cost; the first run downloads it (about 300 MB). It needs `brew install ffmpeg`. Without `--voice` it records captions only. Choose a voice with `DEMO_VOICE`: `af_heart` (default, US), `am_michael` (US), `bf_emma` or `bm_george` (UK).
+`pnpm record-demo --voice` records this script with a natural AI voice-over and matching captions (`docs/demo.mp4` and `docs/demo.webm`). The voice is [Kokoro](https://github.com/hexgrad/kokoro), an open-source neural model (Apache 2.0) that runs locally with no account or cost; the first run downloads it (about 300 MB). It needs `brew install ffmpeg`. Without `--voice` it records captions only. Choose a voice with `DEMO_VOICE`: `af_heart` (default, US), `am_michael` (US), `bf_emma` or `bm_george` (UK).
 
-The video sells one idea: Sprintwise tells you whether stories are ready before planning, and how much the sprint changed after it. Record the live site at <https://sprintwise-omega.vercel.app>. Everything shown is invented sample data.
+The narration lives in `src/demo/video-lines.json`, which is also the transcript under the video on the home page.
 
-**Set-up:**
+**Where it's filmed:** a local production build with test sign-in and the pretend Jira, never the live site:
 
-- Browser at 1440 × 900, zoom at 100%, light theme.
-- Bookmarks bar hidden.
-- Open two tabs: `/demo` and `/demo/report`.
-- Record a quiet screen capture with a voice-over, then trim the pauses.
+```bash
+export ENABLE_TEST_SIGN_IN=true JIRA_FAKE=true BETTER_AUTH_URL=http://localhost:3100
+pnpm build && pnpm start --port 3100
+pnpm record-demo --voice
+```
 
-| Time | On screen | Say (roughly) |
+Before filming, the script signs up a test user ("Sam Taylor") and, off camera, creates an empty "Online shop" project, a "Tidyhome app" project with the 12 sample stories, three finished sprints of invented work (for the velocity), and an empty Sprint 12. The public pages are filmed signed out; then the same browser signs in for the rest. Everything on screen is invented. The share dialog shows the live site's address, since the link it makes would have that address on the live site.
+
+**Publishing:** copy smaller encodes to `public/media/` (MP4 `-crf 30`, WebM VP9 `-crf 48`), and refresh `demo-poster.webp` from a frame of the opening scene.
+
+| Scene | On screen | Line in `video-lines.json` |
 | --- | --- | --- |
-| 0:00–0:15 | Landing page. Hover the score card and the three metrics. | "Product Owners face two questions every sprint: were our stories ready, and did we stick to what we committed? Teams rarely answer either with data. Sprintwise does both." |
-| 0:15–0:45 | `/demo`. The backlog sorted weakest first. Click TIDY-103 "Fast and easy checkout". | "Every story gets a score out of 100 from nine fixed rules. No AI sets the score, so the same story always gets the same number, and every point lost has a reason. This one uses vague words like 'fast' and 'easy' and has no benefit stated, so it scores 50." |
-| 0:45–1:10 | Scroll to **Score your own**. Type a weak title, score it, then add a "so that" clause and score again. | "You can paste your own story. It runs in the browser, so nothing is sent or saved. Watch the score move as the story gets clearer." |
-| 1:10–1:50 | **Sample sprint** section. Point to the finding banner, then the five metric tiles, then the change log. | "On day one the team locks a baseline it can't edit. Later CSV snapshots are compared against it by story key. A renamed story isn't counted as removed and added. Here scope grew 18.8%, churn was 50%, and only 37.5% of the original commitment was done." |
-| 1:50–2:20 | The finding: "Stories that changed scored 40 points lower at the baseline". Open the sprint report. | "And the finding that matters: the stories that changed mid-sprint were the ones that scored low before planning. That's the case for fixing stories before you commit to them." |
-| 2:20–2:40 | The report page. Click **Print or save as PDF** to show the one-page preview. | "It all fits on one printable page for the retrospective." |
-| 2:40–2:55 | GitHub repo README: the Product decisions section and the passing CI badge or Actions tab. | "I owned the requirements, backlog and testing end to end. Every rule and metric has an automated test, and every decision is written down." |
-| 2:55–3:00 | Landing page. | "Sprintwise. Links below." |
-
-**Tips:**
-
-- Keep the cursor slow, and pause half a second before each click.
-- Don't show the sign-in flow; the demo covers everything without an account.
-- For a dark-mode variant, switch the theme in the header before recording. Don't switch mid-video.
+| Home | Hero, then the AI-draft example | `intro`, `answer`, `aiDraft` |
+| Demo backlog | Weakest first; open TIDY-103 "Fast and easy checkout" | `rules`, `weak`, `noAi` |
+| Score your own | Type a vague title, score it, add a description, criteria and points, score again | `tryIt`, `climbs` |
+| Sample sprint | Metrics, then the finding banner | `baseline`, `metrics`, `finding` |
+| Trends | The trends section of the demo | `trends` |
+| Report | `/demo/report`, the burn-up and the print button | `report` |
+| Jira (signed in) | Online shop → Import: the Jira search, preview, import 3 issues | `jira` |
+| Refinement | Tidyhome app → Refinement, next story | `refine` |
+| Share | Backlog → Share → Create link | `share` |
+| Planning | Sprint 12: tick four stories; the helper shows the usual points and an unready story | `planning` |
+| Close | The GitHub repository, then the home page | `owner`, `close` |

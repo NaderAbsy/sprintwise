@@ -10,7 +10,7 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 
 export const metadata: Metadata = {
   title: { default: "Sprintwise", template: "%s · Sprintwise" },
-  description: "AI writes the tickets; Sprintwise checks they're ready for the sprint, then measures how much the sprint changes.",
+  description: "Sprintwise checks your stories are ready before the sprint starts, then measures how much the sprint changes.",
 };
 
 export const viewport: Viewport = {
