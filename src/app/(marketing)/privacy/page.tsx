@@ -30,7 +30,10 @@ export default function PrivacyPage() {
             day are deleted daily, as are ended sessions.
           </li>
           {aiConfigured && <li>A count of how many AI suggestions you asked for each day, to enforce the daily limit.</li>}
-          <li>Anonymous usage counts (checks run, imports, reports) with no user id or story text.</li>
+          <li>
+            Anonymous usage counts (checks run, imports, reports) with no user id or story text. Whoever runs
+            Sprintwise sees totals, such as how many accounts have created a project, never who.
+          </li>
         </ul>
       </section>
 
@@ -100,6 +103,8 @@ export default function PrivacyPage() {
           project&apos;s unfinished stories (titles, descriptions, acceptance criteria, scores, statuses and points),
           never its sprints, settings or other projects. Anyone with a link can view it without an account. Each link
           carries a long random secret, stays out of search engines, and stops working the moment you turn it off.
+          Pasted into a chat app, a link shows a preview card with the sprint or project name and its headline
+          numbers, which the chat app may keep after the link is turned off.
         </p>
       </section>
 
