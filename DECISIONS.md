@@ -2,6 +2,30 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-10 — Team editing: parked, co-owner first if users ask
+
+**Question:** should projects get members who can edit, now that Sprintwise is meant for other people to use?
+
+**Plan considered:** Owner and Member roles, invite links (no email service), "edited by" on stories and changes, a check against two people overwriting the same story, each member sending to Jira with their own connection, ownership handover, then live Planning Poker as a later phase.
+
+**Decided: not now.** Sprintwise is built around the Product Owner's job: check stories are ready, then measure how the sprint changed. The team is the audience, and that's already covered:
+- **Viewing** scores, the backlog and reports: share links, no account needed.
+- **Status and points during the sprint:** the team updates Jira, and Sprintwise picks it up on sync. Asking them to do it here too is double work.
+- **Fixing weak stories** is the PO's job; **refinement** works with the PO driving on a shared screen.
+
+Most of the plan (roles, conflict checks, per-person Jira) solves problems users don't have yet.
+
+**If users ask, build a co-owner first:**
+- Invite one or two people by link (expires after 7 days, cancellable).
+- Same rights as the owner; no roles.
+- Show who made each change ("edited by", a "By" column in the change log).
+- Decide what happens to the project if the original owner deletes their account (hand over first).
+- Privacy and Terms: co-owners see each other's names and pictures.
+
+It covers the real cases, a second PO or the Scrum Master keeping the sprint numbers, and holiday cover, at about a quarter of the full plan's work. Live Planning Poker stays the only truly team-wide idea, worth it only if POs say they'd use it instead of their current tool.
+
+**Revisit when:** feedback asks for shared projects, or two people are found sharing one login.
+
 ## 2026-10-10 — v2.15: written for users, not reviewers
 
 **The goal, from the user:** Sprintwise is mainly for other Product Owners and teams to use, not only a portfolio piece. Copy that called it a "portfolio project" (footer, FAQ, About, Privacy, Terms) told visitors not to rely on it.
