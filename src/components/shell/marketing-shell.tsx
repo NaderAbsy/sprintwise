@@ -80,6 +80,11 @@ export async function MarketingShell({ children }: { children: React.ReactNode }
                 </a>
               </li>
               <li>
+                <Link href="/changelog" className="hover:text-foreground">
+                  Changelog
+                </Link>
+              </li>
+              <li>
                 <Link href="/privacy" className="hover:text-foreground">
                   Privacy
                 </Link>

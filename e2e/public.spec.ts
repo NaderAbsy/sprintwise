@@ -118,13 +118,16 @@ test("the header tabs reach every public page and mark the current one", async (
   for (const [name, heading] of [
     ["Product", "Everything Sprintwise does, and how"],
     ["Guide", "How to use Sprintwise"],
-    ["Changelog", "What's new in Sprintwise"],
     ["About", "Built by a Product Owner, for Product Owners"],
   ]) {
     await nav.getByRole("link", { name }).click();
     await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
     await expect(nav.getByRole("link", { name })).toHaveAttribute("aria-current", "page");
   }
+  // The changelog is for returning visitors: in the footer, not the header.
+  await expect(nav.getByRole("link", { name: "Changelog" })).toHaveCount(0);
+  await page.getByRole("contentinfo").getByRole("link", { name: "Changelog" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "What's new in Sprintwise" })).toBeVisible();
 });
 
 test("on a phone, the menu opens, links work, and Escape closes it", async ({ page }) => {
@@ -136,8 +139,8 @@ test("on a phone, the menu opens, links work, and Escape closes it", async ({ pa
   await page.keyboard.press("Escape");
   await expect(toggle).toBeFocused();
   await toggle.click();
-  await page.locator("#marketing-menu").getByRole("link", { name: "Changelog" }).click();
-  await expect(page).toHaveURL(/\/changelog$/);
+  await page.locator("#marketing-menu").getByRole("link", { name: "About" }).click();
+  await expect(page).toHaveURL(/\/about$/);
   await expect(page.locator("#marketing-menu")).toHaveCount(0);
 });
 
