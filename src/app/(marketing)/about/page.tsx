@@ -34,7 +34,7 @@ export default function AboutPage() {
       <PageHero eyebrow="About" title="Built by a Product Owner, for Product Owners">
         <p>
           Sprintwise started from two questions every sprint review circles back to: were our stories ready, and did we
-          stick to what we committed? Teams rarely answer either with data.
+          stick to what we committed? Both are hard to answer with data.
         </p>
       </PageHero>
 

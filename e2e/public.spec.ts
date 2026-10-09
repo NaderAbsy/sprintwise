@@ -141,7 +141,7 @@ test("on a phone, the menu opens, links work, and Escape closes it", async ({ pa
   await expect(page.locator("#marketing-menu")).toHaveCount(0);
 });
 
-for (const path of ["/", "/product", "/guide", "/changelog", "/about", "/demo", "/demo/report", "/privacy"]) {
+for (const path of ["/", "/product", "/guide", "/changelog", "/about", "/demo", "/demo/report", "/privacy", "/terms"]) {
   test(`${path} has no serious accessibility issues`, async ({ page }) => {
     await page.goto(path);
     await expectAccessible(page);

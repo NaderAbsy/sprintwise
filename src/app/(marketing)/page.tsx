@@ -23,7 +23,7 @@ const STEPS = [
   {
     Icon: ClipboardCheck,
     title: "Check every story",
-    text: "Paste a story or import your Jira backlog, AI-drafted or not. Nine fixed rules score each one out of 100, with a reason for every point lost and a flag on anything an AI draft left behind.",
+    text: "Paste a story or import your Jira backlog, AI-drafted or not. Nine fixed rules score each one out of 100, with a reason for every point lost and a flag on common signs of an AI draft nobody re-read.",
   },
   {
     Icon: Lock,
@@ -40,11 +40,11 @@ const STEPS = [
 const FAQ = [
   {
     q: "We write our tickets with AI. Why use this?",
-    a: "Because a draft that reads well isn't the same as a story the team can start on. AI drafts often keep chat text (\u201cCertainly! Here's\u2026\u201d), placeholders, criteria that fit any story, filler words and made-up figures, and they can't know your team's estimate. Sprintwise checks for all of that before planning, then tracks whether the sprint stuck to the plan, which writing tools don't do.",
+    a: "Because a draft that reads well isn't the same as a story the team can start on. AI drafts often keep chat text (\u201cCertainly! Here's\u2026\u201d), placeholders, criteria that fit any story, filler words and made-up figures, and they can't know your team's estimate. Sprintwise checks for all of that before planning, then tracks whether the sprint stuck to the plan.",
   },
   {
     q: "Does AI decide the score, or read my tickets?",
-    a: "No. The score comes from nine fixed rules, so the same story always gets the same number and every lost point has a reason you can read. Your tickets are never sent to an AI model. AI rewrites are built but switched off on the live site.",
+    a: "No. The score comes from nine fixed rules, so in a project the same story always gets the same number, and every lost point has a reason you can read. Your tickets are never sent to an AI model. AI rewrites are built but switched off on the live site.",
   },
   {
     q: "Do I need to connect Jira?",
@@ -56,11 +56,11 @@ const FAQ = [
   },
   {
     q: "Can I change the rules?",
-    a: "The nine rules stay the same, so scores compare across teams. Each project sets its own maximum story size and vague-word list, and can add its own Definition of Ready checks (a story that fails one can't be Ready). Saving re-scores every story in the project.",
+    a: "The nine rules are the same in every project. Each project sets its own maximum story size and vague-word list, and can add its own Definition of Ready checks (a story that fails one can't be Ready). Saving re-scores every story in the project.",
   },
   {
     q: "Is it free and open source?",
-    a: "Yes. Sprintwise is a portfolio project: free to use, and the full code, tests and every product decision are on GitHub under the MIT license.",
+    a: "Yes. Sprintwise is a portfolio project: free to use, and the full code, tests and the product decisions are on GitHub under the MIT license.",
   },
 ];
 
@@ -272,7 +272,7 @@ export default async function Home() {
       <section aria-label="Sprintwise in numbers" className="border-y border-border bg-surface/60">
         <dl className="mx-auto grid max-w-6xl grid-cols-2 gap-px px-4 sm:px-6 lg:grid-cols-4">
           {[
-            { value: 9, label: "fixed rules", note: "the same story always gets the same score" },
+            { value: 9, label: "fixed rules", note: "same story, same project, same score" },
             { value: 100, label: "point score", note: "with a reason for every point lost" },
             { value: 1, label: "printable page", note: "for the whole sprint retrospective" },
             { value: 0, label: "tickets sent to an AI", note: "fixed rules, not a model" },
@@ -348,7 +348,7 @@ export default async function Home() {
         <Reveal className="mx-auto max-w-2xl text-center">
           <p className="eyebrow">Watch</p>
           <h2 id="video-heading" className="mt-2 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-            The whole product in two minutes
+            The core idea in two minutes
           </h2>
           <p className="mt-3 text-muted">A narrated walkthrough of the public demo, with captions so it also works muted.</p>
         </Reveal>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { aiConfigured } from "@/lib/server/ai";
 import { FEEDBACK_URL, GITHUB_URL } from "@/lib/site";
 
@@ -15,12 +16,19 @@ export default function PrivacyPage() {
       <section>
         <h2 className="text-base font-semibold text-foreground">What is stored</h2>
         <ul className="mt-2 list-disc space-y-1 pl-5">
-          <li>From GitHub sign-in: your GitHub account id, name, email and avatar link. No password.</li>
+          <li>
+            From GitHub sign-in: your GitHub account id, name, email and avatar link, and GitHub&apos;s sign-in tokens,
+            stored encrypted and not used after sign-in. No password.
+          </li>
           <li>
             Your sign-in sessions, each with the browser type and IP address it started from, so a session can be
             recognised. A session ends when you sign out, after a week unused, or when you delete your account.
           </li>
           <li>The projects, stories, sprints and snapshots you create or upload, and their scores.</li>
+          <li>
+            A count of sign-in attempts per IP address, signed in or not, to slow down repeated tries. Counts older than a
+            day are deleted daily, as are ended sessions.
+          </li>
           {aiConfigured && <li>A count of how many AI suggestions you asked for each day, to enforce the daily limit.</li>}
           <li>Anonymous usage counts (checks run, imports, reports) with no user id or story text.</li>
         </ul>
@@ -41,10 +49,38 @@ export default function PrivacyPage() {
       </section>
 
       <section>
+        <h2 className="text-base font-semibold text-foreground">Cookies and browser storage</h2>
+        <p className="mt-2">
+          Sprintwise sets cookies only to sign you in, and none for tracking or advertising, so there&apos;s no cookie
+          banner. Without them, signing in can&apos;t work.
+        </p>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          <li>
+            <code>better-auth.session_token</code>: keeps you signed in. Set when you sign in; ends when you sign out or
+            after a week unused.
+          </li>
+          <li>
+            <code>better-auth.session_data</code>: a signed copy of your session that saves a database check on each
+            click. Lasts five minutes.
+          </li>
+          <li>
+            <code>better-auth.state</code>: checks that a GitHub sign-in or Jira connection came back to the browser that
+            started it. Lasts five minutes.
+          </li>
+        </ul>
+        <p className="mt-2">
+          On the live site each name starts with <code>__Secure-</code>, and none can be read by page scripts. Your
+          light or dark theme choice is kept in your browser&apos;s local storage and never sent anywhere. Visit counts
+          use no cookies (see above).
+        </p>
+      </section>
+
+      <section>
         <h2 className="text-base font-semibold text-foreground">Jira connection</h2>
         <p className="mt-2">
           Connecting Jira is optional. When you connect, Atlassian gives Sprintwise tokens to read issues
-          (<code>read:jira-work</code>) and to update them (<code>write:jira-work</code>). The tokens are stored
+          (<code>read:jira-work</code>), to update them (<code>write:jira-work</code>), and to see which Atlassian account
+          connected (<code>read:me</code>). The tokens are stored
           encrypted and refreshed automatically. Sprintwise reads only the issues your saved search returns, and writes
           only when you click Send to Jira: the title, description, acceptance criteria and story points of stories you
           edited here. The project keeps the Jira site and search you chose. Disconnect from your Account page, which
@@ -85,7 +121,9 @@ export default function PrivacyPage() {
 
       <section>
         <h2 className="text-base font-semibold text-foreground">The demo</h2>
-        <p className="mt-2">The demo uses invented sample data. Stories you score there stay in your browser.</p>
+        <p className="mt-2">
+          The demo uses invented sample data. Stories you score there are scored in your browser and never sent or saved.
+        </p>
       </section>
 
       <section>
@@ -123,6 +161,14 @@ export default function PrivacyPage() {
           says what&apos;s in scope and what to expect.
         </p>
       </section>
+
+      <p className="text-muted">
+        Using Sprintwise is also covered by the{" "}
+        <Link href="/terms" className="text-accent underline underline-offset-2">
+          terms of use
+        </Link>
+        .
+      </p>
     </article>
   );
 }
