@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { funnel, weeklyCounts } from "@/lib/insights";
+import { funnel, jobHealth, weeklyCounts } from "@/lib/insights";
 
 describe("funnel", () => {
   it("gives each step's share of the step before", () => {
@@ -25,5 +25,15 @@ describe("weeklyCounts", () => {
       { weekOf: new Date("2026-09-28T00:00:00Z"), count: 1 },
       { weekOf: new Date("2026-10-05T00:00:00Z"), count: 2 },
     ]);
+  });
+});
+
+describe("jobHealth", () => {
+  const now = new Date("2026-10-11T03:30:00Z");
+  it("is late after 26 hours, and otherwise says whether the last run worked", () => {
+    expect(jobHealth(null, now)).toBe("never");
+    expect(jobHealth({ ranAt: new Date("2026-10-10T03:10:00Z"), ok: true }, now)).toBe("ok");
+    expect(jobHealth({ ranAt: new Date("2026-10-10T03:10:00Z"), ok: false }, now)).toBe("failed");
+    expect(jobHealth({ ranAt: new Date("2026-10-10T01:00:00Z"), ok: true }, now)).toBe("late");
   });
 });

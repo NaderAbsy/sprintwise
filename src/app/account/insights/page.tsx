@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
+import { jobHealth } from "@/lib/insights";
 import { requireUser } from "@/lib/server/dal";
 import { loadInsights } from "@/lib/server/insights";
 import { isSiteOwner } from "@/lib/server/site-owner";
@@ -8,13 +9,22 @@ import { isSiteOwner } from "@/lib/server/site-owner";
 export const metadata: Metadata = { title: "Insights" };
 
 const percent = (value: number | null) => (value === null ? "" : `${Math.round(value * 100)}%`);
+const when = (date: Date) =>
+  `${date.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" })}, ${date.toISOString().slice(11, 16)} UTC`;
+const HEALTH = {
+  ok: { label: "Worked", tone: "bg-ready-bg text-ready" },
+  failed: { label: "Failed", tone: "bg-not-ready-bg text-not-ready" },
+  late: { label: "Late", tone: "bg-needs-work-bg text-needs-work" },
+  never: { label: "Hasn't run yet", tone: "bg-surface-2 text-muted" },
+} as const;
 const week = (date: Date) => date.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
 
 /** For the people who run Sprintwise only: where new users get to, as totals. Everyone else gets a 404. */
 export default async function InsightsPage() {
   const user = await requireUser();
   if (!(await isSiteOwner(user))) notFound();
-  const { steps, signals, weeks, months } = await loadInsights(user.id);
+  const { jobs, steps, signals, weeks, months } = await loadInsights(user.id);
+  const now = new Date();
   const top = Math.max(steps[0].count, 1);
   const busiestWeek = Math.max(...weeks.map((w) => w.count), 1);
 
@@ -25,6 +35,29 @@ export default async function InsightsPage() {
         description="Where new users get to, counted from what Sprintwise already stores. Totals only, never who; your own account is left out."
       />
       <div className="max-w-3xl space-y-6">
+        <section aria-labelledby="jobs-heading" className="card p-5">
+          <h2 id="jobs-heading" className="font-semibold">
+            Nightly jobs
+          </h2>
+          <p className="mt-1 text-sm text-muted">Each runs once a day. Late means it hasn&apos;t run for over a day.</p>
+          <ul className="mt-3 divide-y divide-border">
+            {jobs.map((job) => {
+              const health = HEALTH[jobHealth(job.run, now)];
+              return (
+                <li key={job.name} className="flex items-start justify-between gap-4 py-3 text-sm">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">
+                      {job.label} <span className="font-normal text-muted">· {job.schedule}</span>
+                    </p>
+                    <p className="text-muted">{job.run ? `${when(job.run.ranAt)}: ${job.run.summary}` : "No run recorded yet."}</p>
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${health.tone}`}>{health.label}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+
         <section aria-labelledby="funnel-heading" className="card p-5">
           <h2 id="funnel-heading" className="font-semibold">
             From sign-up to a tracked sprint

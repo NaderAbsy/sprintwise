@@ -20,3 +20,10 @@ export function weeklyCounts(dates: Date[], now: Date, weeks = 8): { weekOf: Dat
     count: dates.filter((d) => d.getTime() >= start && d.getTime() < start + 7 * day).length,
   }));
 }
+
+/** How a daily job is doing: it runs once a day within an hour, so more than 26 hours since the last run is late. */
+export function jobHealth(run: { ranAt: Date; ok: boolean } | null, now: Date): "never" | "late" | "failed" | "ok" {
+  if (!run) return "never";
+  if (now.getTime() - run.ranAt.getTime() > 26 * 60 * 60 * 1000) return "late";
+  return run.ok ? "ok" : "failed";
+}

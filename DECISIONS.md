@@ -16,6 +16,8 @@ One entry per decision: date, decision, options considered, reason. Newest first
 - **Shown:** "last synced 10 Oct automatically" (`jiraAutoSynced`).
 - **Privacy page:** says the search also runs once a night while a sprint is running, and that it can be turned off.
 
+**Nightly jobs box (added the same day).** Vercel's free plan keeps about an hour of logs, so a nightly run couldn't be checked the next morning, and longer logs need Pro. Each job now upserts one row in `job_runs` (when, worked or not, one-line summary), and the owner's Insights page shows it, marked Late after 26 hours. Two small writes a day: no cost.
+
 **Later:** following Jira's own sprint membership, so issues pulled into the Jira sprint count as scope added without the PO adding them here.
 
 ## 2026-10-10 — v2.16: link previews and a private insights page
