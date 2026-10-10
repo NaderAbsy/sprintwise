@@ -282,3 +282,14 @@ model AtlassianReport {
 
   @@map("atlassian_reports")
 }
+
+/// When each nightly job last ran and how it went, for the owner's Insights page
+/// (Vercel's free plan keeps only about an hour of logs). One row per job.
+model JobRun {
+  name    String   @id
+  ranAt   DateTime
+  ok      Boolean
+  summary String
+
+  @@map("job_runs")
+}

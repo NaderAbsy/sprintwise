@@ -67,6 +67,14 @@ test("insights are only for whoever runs the site, and show totals, never who", 
   const funnel = owner.getByRole("region", { name: "From sign-up to a tracked sprint" });
   await expect(funnel.getByRole("listitem")).toHaveCount(5);
   await expect(funnel).toContainText("Signed up");
+
+  // Each nightly job's last run is kept, since the free Vercel plan keeps only an hour of logs.
+  for (const job of ["/api/cron/jira-sync", "/api/cron/atlassian-accounts"]) expect((await owner.request.get(job)).ok()).toBe(true);
+  await owner.reload();
+  const jobs = owner.getByRole("region", { name: "Nightly jobs" });
+  await expect(jobs.getByRole("listitem")).toHaveCount(2);
+  await expect(jobs.getByRole("listitem").filter({ hasText: "Jira sync" })).toContainText(/Synced \d+ projects?/);
+  await expect(jobs.getByRole("listitem").filter({ hasText: "Atlassian report" })).toContainText("Worked");
   // Only numbers: the regular user's name and email appear nowhere.
   await expect(owner.locator("main")).not.toContainText("E2E Tester");
   await expect(owner.locator("main")).not.toContainText("@example.test");

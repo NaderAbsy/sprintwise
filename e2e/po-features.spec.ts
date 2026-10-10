@@ -40,7 +40,7 @@ test("goal, scope reasons, the report and a share link that can be turned off", 
   await page.getByRole("button", { name: "Save snapshot" }).click();
   await expect(page.getByText("Snapshot saved with 1 change.")).toBeVisible();
   await page.getByLabel("Why TIDY-107 changed").selectOption({ label: "Stakeholder request" });
-  await expect(page.getByLabel("Saved")).toBeVisible();
+  await expect(page.getByLabel("Saved", { exact: true })).toBeVisible();
 
   // Record the outcome.
   await page.getByRole("button", { name: /Edit goal/ }).click();

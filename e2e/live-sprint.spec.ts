@@ -62,7 +62,7 @@ test("a sprint built from the backlog records status and points changes by itsel
 
   // A reason tagged on today's change survives further edits the same day.
   await page.getByLabel("Why TIDY-101 changed").selectOption({ label: "Discovered work" });
-  await expect(page.getByLabel("Saved")).toBeVisible();
+  await expect(page.getByLabel("Saved", { exact: true })).toBeVisible();
   await quickEdit(page, "Status of TIDY-102", "In Progress");
   await expect(page.getByLabel("Why TIDY-101 changed")).toHaveValue("discovered");
   await expect(page.getByText("Recorded automatically")).toHaveCount(1);

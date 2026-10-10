@@ -1,6 +1,7 @@
 import "server-only";
 import { funnel, weeklyCounts } from "@/lib/insights";
 import { db } from "@/lib/server/db";
+import { lastRuns } from "@/lib/server/job-runs";
 
 const EVENT_LABELS: Record<string, string> = {
   check_run: "Stories checked",
@@ -18,7 +19,7 @@ export async function loadInsights(leaveOut: string, now = new Date()) {
   const count = (where: object) => db.user.count({ where: { ...others, ...where } });
   const sprintWith = (isBaseline: boolean) => ({ projects: { some: { sprints: { some: { snapshots: { some: { isBaseline } } } } } } });
 
-  const [signedUp, withProject, withStories, withBaseline, tracked, jira, shared, recent, events] = await Promise.all([
+  const [signedUp, withProject, withStories, withBaseline, tracked, jira, shared, recent, events, jobs] = await Promise.all([
     count({}),
     count({ projects: { some: {} } }),
     count({ projects: { some: { stories: { some: {} } } } }),
@@ -33,9 +34,11 @@ export async function loadInsights(leaveOut: string, now = new Date()) {
       WHERE "createdAt" >= date_trunc('month', now()) - interval '5 months'
       GROUP BY date_trunc('month', "createdAt"), 1, 2
       ORDER BY date_trunc('month', "createdAt") DESC, 2`,
+    lastRuns(),
   ]);
 
   return {
+    jobs,
     steps: funnel([
       { label: "Signed up", hint: "Accounts created", count: signedUp },
       { label: "Created a project", hint: "At least one project", count: withProject },

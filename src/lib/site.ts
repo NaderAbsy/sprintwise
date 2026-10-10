@@ -26,6 +26,7 @@ export const RELEASES: Release[] = [
       "Stories you edited here and haven't sent to Jira are left as they are, as with Sync from Jira.",
       "The backlog says when the last sync was automatic, and why if a nightly sync couldn't run.",
       "Turn it off for a project in its Settings.",
+      "For whoever runs Sprintwise, Insights shows when each nightly job last ran and whether it worked.",
     ],
   },
   {
