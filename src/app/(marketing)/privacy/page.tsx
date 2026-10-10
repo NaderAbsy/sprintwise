@@ -86,7 +86,9 @@ export default function PrivacyPage() {
           connected (<code>read:me</code>). The tokens are stored
           encrypted and refreshed automatically. Sprintwise reads only the issues your saved search returns, and writes
           only when you click Send to Jira: the title, description, acceptance criteria and story points of stories you
-          edited here. The project keeps the Jira site and search you chose. Disconnect from your Account page, which
+          edited here. The project keeps the Jira site and search you chose. While a sprint built from the backlog is
+          running, Sprintwise also runs that search once a night to record the day&apos;s changes; you can turn this off
+          in the project&apos;s Settings. Disconnect from your Account page, which
           deletes the tokens; you can also revoke access from your Atlassian account settings.
         </p>
         <p className="mt-2">

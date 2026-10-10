@@ -3,6 +3,7 @@ import { DeleteProjectButton, RenameProjectForm } from "@/app/projects/_componen
 import { SectionHeader } from "@/components/section-header";
 import { CustomChecksForm } from "@/app/projects/_components/custom-checks-form";
 import { DoneStatusesForm } from "@/app/projects/_components/done-statuses-form";
+import { NightlySyncToggle } from "@/app/projects/_components/nightly-sync-toggle";
 import { RuleSettingsForm } from "@/app/projects/_components/rule-settings-form";
 import { isDefault } from "@/lib/readiness/settings";
 import { settingsOf } from "@/lib/server/readiness";
@@ -66,6 +67,22 @@ export default async function ProjectSettingsPage({ params }: PageProps<"/projec
           </div>
           <DoneStatusesForm projectId={project.id} statuses={doneStatusesOf(project)} />
         </section>
+
+        {project.jiraJql && (
+          <section aria-labelledby="jira-heading" className="card space-y-4 p-5">
+            <div>
+              <h2 id="jira-heading" className="font-semibold">
+                Jira sync
+              </h2>
+              <p className="mt-0.5 text-sm text-muted">
+                While a sprint built from the backlog is running, Sprintwise runs this project&apos;s Jira search every
+                night, between 22:00 and 23:00 UTC, and records the day&apos;s changes, so the burn-up fills in by itself. Stories
+                you edited here and haven&apos;t sent to Jira are left as they are.
+              </p>
+            </div>
+            <NightlySyncToggle projectId={project.id} on={project.nightlySync} />
+          </section>
+        )}
 
         <section aria-labelledby="danger-heading" className="card space-y-3 border-not-ready/30 p-5">
           <h2 id="danger-heading" className="font-semibold text-not-ready">

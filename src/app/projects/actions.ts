@@ -177,7 +177,7 @@ export async function importStories(projectId: string, _prev: FormState, formDat
     stories,
     fromJira
       ? // Sync adds issues created after this moment; ones left unticked now stay out.
-        [db.project.update({ where: { id: project.id }, data: { jiraSyncedAt: new Date() } })]
+        [db.project.update({ where: { id: project.id }, data: { jiraSyncedAt: new Date(), jiraAutoSynced: false, jiraSyncError: null } })]
       : [db.project.update({ where: { id: project.id }, data: { importColumns: rememberedColumns(mapping) } })],
   );
   await recordSprintChanges(project.id);
@@ -276,6 +276,13 @@ export async function updateDoneStatuses(projectId: string, _prev: FormState, fo
   await db.project.update({ where: { id: project.id }, data: { doneStatuses: parsed.statuses } });
   revalidatePath(`/projects/${project.id}`, "layout");
   return { message: `Saved. Stories marked ${parsed.statuses.join(", ")} now count as done.` };
+}
+
+/** Turns the nightly Jira sync on or off for one project. `on` arrives from the browser, so only `true` counts. */
+export async function setNightlySync(projectId: string, on: unknown) {
+  const project = await requireProject(projectId);
+  await db.project.update({ where: { id: project.id }, data: { nightlySync: on === true } });
+  revalidatePath(`/projects/${project.id}`, "layout");
 }
 
 /**

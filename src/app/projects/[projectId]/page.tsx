@@ -243,6 +243,8 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
               projectId={project.id}
               siteName={project.jiraSiteName ?? "Jira"}
               syncedAt={project.jiraSyncedAt ? formatDay(project.jiraSyncedAt) : null}
+              automatic={project.jiraAutoSynced}
+              nightlyError={project.jiraSyncError}
               editedIds={stories.filter((s) => s.editedAt).map((s) => s.id)}
             />
           )}
