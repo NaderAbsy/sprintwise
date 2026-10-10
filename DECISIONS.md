@@ -2,6 +2,22 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-10 — v2.17: nightly Jira sync
+
+**Why:** a sprint built from the backlog records one snapshot a day from the backlog, but a Jira project's backlog only changed when the PO clicked Sync. Skipped days left gaps in the burn-up and dated several days' changes to one.
+
+**Decided (the user took the recommendations):**
+- **Which projects:** those with a saved Jira search and a running sprint that follows the backlog (started on or before today, ending today or yesterday at the latest). Others have nothing to record, so they cost no Jira calls.
+- **On by default,** with "Turn off nightly sync" in the project's Settings (`Project.nightlySync`).
+- **When:** `0 22 * * *` UTC. Hobby crons start within the hour, so 22:00–23:00 UTC: late enough that the day's work lands on that UTC date for Europe, the Middle East and the Americas.
+- **Whose connection:** the project owner's own. `accessToken` now asks Better Auth by user id rather than the browser session (as the Atlassian report already did); Better Auth refreshes and stores Atlassian's rotating refresh token. Nightly use keeps it alive past Atlassian's 90-day inactivity limit; it still ends on disconnect, revoke or an Atlassian password change.
+- **Same rules as Sync:** the core moved to `syncProjectFromJira` (used by the button and the cron), so edited-here stories stay put and finished new issues aren't added.
+- **Failures:** one project's error doesn't stop the others. The reason is stored (`jiraSyncError`) and shown on the backlog until a sync works; no emails. Projects that waited longest go first, and after four of the function's five minutes the rest wait for the next night.
+- **Shown:** "last synced 10 Oct automatically" (`jiraAutoSynced`).
+- **Privacy page:** says the search also runs once a night while a sprint is running, and that it can be turned off.
+
+**Later:** following Jira's own sprint membership, so issues pulled into the Jira sprint count as scope added without the PO adding them here.
+
 ## 2026-10-10 — v2.16: link previews and a private insights page
 
 **Link previews.** Shared report and backlog links are how stakeholders first meet Sprintwise, and they showed as bare addresses in Slack and Teams. Next's `opengraph-image` files draw a 1200 × 630 card: the site card for every public page, and for share links the sprint or project name with the numbers the page already shows. The image route checks the token exactly like the page, so turning a link off stops the card (a chat app may keep one it already fetched; the Privacy page says so). `metadataBase` comes from `BETTER_AUTH_URL`, falling back to the live address.

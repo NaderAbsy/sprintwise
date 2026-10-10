@@ -1,5 +1,4 @@
 import "server-only";
-import { headers } from "next/headers";
 import { auth } from "@/lib/server/auth";
 import { db } from "@/lib/server/db";
 import { withCriteriaInDescription } from "@/lib/stories/types";
@@ -132,7 +131,9 @@ async function accessToken(userId: string): Promise<string> {
   const account = await jiraAccount(userId);
   if (!account) throw new JiraError("Connect Jira first.");
   try {
-    const { accessToken } = await auth.api.getAccessToken({ body: { accountId: account.id }, headers: await headers() });
+    // By user id rather than the browser's session, so the nightly sync can use it too. Better Auth
+    // refreshes an expired token and stores Atlassian's new refresh token.
+    const { accessToken } = await auth.api.getAccessToken({ body: { accountId: account.id, userId } });
     if (!accessToken) throw new Error("no token");
     return accessToken;
   } catch {

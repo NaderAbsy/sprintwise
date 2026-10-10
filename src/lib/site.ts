@@ -16,6 +16,19 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.17",
+    date: "2026-10-10",
+    title: "Nightly Jira sync",
+    summary: "While a sprint is running, Sprintwise syncs from Jira every night, so the burn-up fills in by itself.",
+    items: [
+      "Projects connected to Jira with a sprint built from the backlog sync between 22:00 and 23:00 UTC, using your own Jira connection.",
+      "Each day's changes land on that day, even when nobody clicked Sync.",
+      "Stories you edited here and haven't sent to Jira are left as they are, as with Sync from Jira.",
+      "The backlog says when the last sync was automatic, and why if a nightly sync couldn't run.",
+      "Turn it off for a project in its Settings.",
+    ],
+  },
+  {
     version: "v2.16",
     date: "2026-10-10",
     title: "Link previews",

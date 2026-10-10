@@ -51,11 +51,17 @@ export function JiraBar({
   projectId,
   siteName,
   syncedAt,
+  automatic = false,
+  nightlyError = null,
   editedIds,
 }: {
   projectId: string;
   siteName: string;
   syncedAt: string | null;
+  /** Whether the last sync was the nightly one. */
+  automatic?: boolean;
+  /** Why last night's sync didn't run, until a sync works. */
+  nightlyError?: string | null;
   editedIds: string[];
 }) {
   const [pending, startTransition] = useTransition();
@@ -84,8 +90,13 @@ export function JiraBar({
       )}
       <span>
         From {siteName}
-        {syncedAt ? `, last synced ${syncedAt}` : ""}.
+        {syncedAt ? `, last synced ${syncedAt}${automatic ? " automatically" : ""}` : ""}.
       </span>
+      {nightlyError && !state?.message && (
+        <p role="status" className="w-full text-needs-work">
+          Last night&apos;s sync didn&apos;t run: {nightlyError}
+        </p>
+      )}
       <Result state={state} />
     </div>
   );
