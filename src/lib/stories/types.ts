@@ -105,3 +105,8 @@ export function withCriteriaInDescription(description: string, criteria: string)
   while (end < lines.length && !(NEXT_HEADING.test(lines[end]) && !/^\s*[-*•#]+\s/.test(lines[end]))) end++;
   return [...lines.slice(0, start + 1), bullets, ...(end < lines.length ? ["", ...lines.slice(end)] : [])].join("\n");
 }
+
+/** Epics group stories; they're never planned into a sprint, so imports and syncs leave them out unless asked. */
+export function isEpic(issueType: string | undefined): boolean {
+  return issueType?.trim().toLowerCase() === "epic";
+}

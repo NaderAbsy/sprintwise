@@ -16,6 +16,7 @@ export async function GET(_request: Request, { params }: RouteContext<"/projects
   const csv = backlogCsv(
     stories.map((s) => ({
       ...toStory(s),
+      epic: s.epic,
       score: s.readiness?.score ?? null,
       band: s.readiness?.band ?? null,
       failedChecks: Array.isArray(s.readiness?.failedRules)

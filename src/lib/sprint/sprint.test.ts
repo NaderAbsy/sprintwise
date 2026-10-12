@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { diffSnapshots } from "@/lib/sprint/diff";
-import { computeMetrics, formatPercent, formatPoints, isDone, statusChoices } from "@/lib/sprint/metrics";
+import { computeMetrics, formatPercent, formatPoints, isDone, reestimateNote, statusChoices } from "@/lib/sprint/metrics";
 import { story } from "@/test/story";
 import { baseline, latest } from "@/test/worked-example";
 
@@ -162,5 +162,13 @@ describe("added stories with no estimate", () => {
     expect(m).toMatchObject({ scopeAdded: 2, addedUnestimated: 2 });
     expect(unestimatedNote(2)).toBe("plus 2 stories with no estimate");
     expect(unestimatedNote(0)).toBe("");
+  });
+});
+
+describe("reestimateNote", () => {
+  it("names the points that came from re-estimates, if any", () => {
+    expect(reestimateNote({ baselineTotal: 10, latestTotal: 13, scopeAdded: 0, scopeRemoved: 0 })).toBe("Re-estimates: +3 pts");
+    expect(reestimateNote({ baselineTotal: 10, latestTotal: 12, scopeAdded: 5, scopeRemoved: 2 })).toBe("Re-estimates: −1 pt");
+    expect(reestimateNote({ baselineTotal: 10, latestTotal: 15, scopeAdded: 5, scopeRemoved: 0 })).toBe("");
   });
 });

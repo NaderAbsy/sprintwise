@@ -152,3 +152,46 @@ test("a story that can't be saved keeps everything typed into it", async ({ page
   await expect(page.getByLabel("Title")).toHaveValue("Second story with a taken key");
   await expect(page.getByLabel("Description")).toHaveValue("As a shopper, I want this kept so that I don't type it twice.");
 });
+
+// Found in a full user cycle on 2026-10-12.
+test("a long project name doesn't push the page sideways on a phone", async ({ page }) => {
+  await signIn(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/projects");
+  await page.getByLabel("Project name").fill("A project with a rather long name for the sidebar and headings");
+  await page.getByRole("button", { name: "Create project" }).click();
+  await expect(page).toHaveURL(/\/projects\/[^/?]+$/);
+  const project = page.url();
+  for (const path of [project, "/projects"]) {
+    await page.goto(path);
+    await page.waitForLoadState("networkidle");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), path).toBeLessThanOrEqual(0);
+  }
+});
+
+test("an empty project points to Jira as well as CSV, and epics are left unticked at import", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/projects");
+  await page.getByLabel("Project name").fill("Epics");
+  await page.getByRole("button", { name: "Create project" }).click();
+  await expect(page.getByText(/a CSV file, a Jira export, or a\s+search straight from Jira/)).toBeVisible();
+  await page.getByRole("link", { name: "Import stories" }).click();
+  const csv = [
+    "Issue key,Summary,Issue Type,Status,Custom field (Story Points)",
+    "MOB-1,Log in with Face ID,Story,To Do,3",
+    "MOB-2,Onboarding redesign,Epic,To Do,",
+  ].join("\n");
+  await page.locator("input[type=file]").setInputFiles({ name: "jira.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
+  await expect(page.getByText("1 epic left unticked: epics group stories and aren't planned into a sprint.")).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: /MOB-2/ })).not.toBeChecked();
+  await expect(page.getByRole("button", { name: "Import 1 story" })).toBeVisible();
+});
+
+test("a new story's key explains STORY-1 and when to use the Jira key", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/projects");
+  await page.getByLabel("Project name").fill("Keys");
+  await page.getByRole("button", { name: "Create project" }).click();
+  await page.getByRole("link", { name: "Score a story" }).first().click();
+  await expect(page.getByText("Leave it blank and Sprintwise numbers it STORY-1, STORY-2…")).toBeVisible();
+});

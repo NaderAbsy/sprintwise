@@ -157,7 +157,7 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
       )}
       <Link href={`${base}/import`} className="btn-secondary">
         <FileUp aria-hidden="true" className="h-4 w-4" />
-        Import CSV
+        Import stories
       </Link>
       <Link href={`${base}/stories/new`} className="btn-primary">
         <Plus aria-hidden="true" className="h-4 w-4" />
@@ -204,8 +204,8 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
             </div>
           }
         >
-          Paste one story to score it, or bring in your whole backlog. Sample stories are invented, and you can delete
-          them any time.
+          Paste one story to score it, or bring in your whole backlog: Import stories takes a CSV file, a Jira export, or a
+          search straight from Jira. Sample stories are invented, and you can delete them any time.
         </EmptyState>
       ) : (
         <div className="space-y-4">

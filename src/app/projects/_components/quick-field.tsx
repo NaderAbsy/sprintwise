@@ -43,7 +43,7 @@ export function QuickField({
           name="value"
           aria-label={label}
           defaultValue={current}
-          className="field h-8 w-28 py-1 pl-2 text-sm sm:w-36"
+          className="field h-8 w-32 py-1 pl-2 text-sm sm:w-36"
           aria-invalid={state.error ? true : undefined}
           aria-describedby={state.error ? errorId : undefined}
           onChange={() => form.current?.requestSubmit()}

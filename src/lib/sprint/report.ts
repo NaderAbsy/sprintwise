@@ -50,10 +50,16 @@ export function compareReadiness(baseline: Story[], latest: Story[], settings: R
   return { changed: group(changed), unchanged: group(unchanged), changedKeys: [...changedKeys] };
 }
 
+/** Fewer stories than this on either side, and one story would decide the comparison. */
+export const MIN_TO_COMPARE = 3;
+
 /** One plain sentence for the report, so the reader doesn't have to compare two numbers. */
 export function readinessFinding({ changed, unchanged }: ReadinessComparison): string {
   if (changed.averageScore === null) return "No committed story changed scope during the sprint.";
   if (unchanged.averageScore === null) return "Every committed story changed scope during the sprint.";
+  if (changed.count < MIN_TO_COMPARE || unchanged.count < MIN_TO_COMPARE) {
+    return `Too few stories to compare yet: ${changed.count} changed scope and ${unchanged.count} didn't. It takes at least ${MIN_TO_COMPARE} of each to say whether readiness made a difference.`;
+  }
   const gap = Math.round(unchanged.averageScore - changed.averageScore);
   if (Math.abs(gap) < 5) return "Stories that changed scored about the same at the baseline as those that didn't.";
   return gap > 0

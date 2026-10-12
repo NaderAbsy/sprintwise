@@ -19,20 +19,21 @@ export function CreateProjectForm({ framed = true }: { framed?: boolean }) {
       )}
       <div className="flex flex-wrap items-start gap-3">
         <div className="min-w-56 flex-1">
-          <label htmlFor="project-name" className="sr-only">
-            Name
+          <label htmlFor="project-name" className="label">
+            Project name
           </label>
           <input
             id="project-name"
             name="name"
-            className="field"
+            className="field mt-1"
             placeholder="e.g. Payments team backlog"
             aria-invalid={state.fieldErrors?.name ? true : undefined}
             aria-describedby="project-name-error"
           />
           <FieldError id="project-name-error" message={state.fieldErrors?.name} />
         </div>
-        <button className="btn-primary" disabled={pending}>
+        {/* Lined up with the field, below its label. */}
+        <button className="btn-primary sm:mt-6" disabled={pending}>
           {pending ? "Creating…" : "Create project"}
         </button>
       </div>

@@ -1,4 +1,4 @@
-import { formatPercent, formatPoints, unestimatedNote, type SprintMetrics } from "@/lib/sprint/metrics";
+import { formatPercent, formatPoints, reestimateNote, unestimatedNote, type SprintMetrics } from "@/lib/sprint/metrics";
 
 /** S-4: the five metrics from the requirements doc, plus the two totals they are based on. */
 export function SprintMetricsPanel({ metrics }: { metrics: SprintMetrics }) {
@@ -10,7 +10,11 @@ export function SprintMetricsPanel({ metrics }: { metrics: SprintMetrics }) {
       note: metrics.addedUnestimated > 0 ? `New work, ${unestimatedNote(metrics.addedUnestimated)}` : "New work since the baseline",
     },
     { label: "Scope removed", value: formatPoints(metrics.scopeRemoved), note: "Baseline work taken out" },
-    { label: "Net change", value: formatPercent(metrics.netChange, { signed: true }), note: "Did the sprint grow or shrink" },
+    {
+      label: "Net change",
+      value: formatPercent(metrics.netChange, { signed: true }),
+      note: reestimateNote(metrics) || "Did the sprint grow or shrink",
+    },
     { label: "Churn", value: formatPercent(metrics.churn), note: "Instability, even when net is zero" },
     { label: "Completion", value: formatPercent(metrics.completion), note: "Of the original commitment, done" },
   ];

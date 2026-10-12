@@ -1,7 +1,9 @@
 import { burnupSummary, type BurnupPoint } from "@/lib/sprint/burnup";
 import { formatDay } from "@/lib/sprint/dates";
 
-const W = 600;
+/** Drawing widths: on a phone the narrower one keeps the labels readable instead of shrinking them. */
+const WIDE = 600;
+const NARROW = 360;
 const PAD = { top: 12, right: 12, bottom: 26, left: 36 };
 
 /**
@@ -25,41 +27,31 @@ export function BurnupChart({
   today?: Date;
   height?: number;
 }) {
-  const H = height;
-  const max = Math.max(1, committed, ...series.map((p) => p.scope));
-  const span = Math.max(1, end.getTime() - start.getTime());
-  const x = (d: Date) => PAD.left + ((W - PAD.left - PAD.right) * (d.getTime() - start.getTime())) / span;
-  const y = (v: number) => PAD.top + (H - PAD.top - PAD.bottom) * (1 - v / max);
-  const last = series.at(-1);
-  const now = today && last && today > last.date && today <= end ? today : null;
-  // Step lines: flat until the next snapshot, then a jump; flat on to today while the sprint runs.
-  const steps = (pick: (p: BurnupPoint) => number) =>
-    [
-      ...series.flatMap((p, i) =>
-        i === 0 ? [[x(p.date), y(pick(p))]] : [[x(p.date), y(pick(series[i - 1]))], [x(p.date), y(pick(p))]],
-      ),
-      ...(now && last ? [[x(now), y(pick(last))]] : []),
-    ]
-      .map(([px, py]) => `${px},${py}`)
-      .join(" ");
   const summary = burnupSummary(series, committed);
-
-  return (
-    <figure className="space-y-2">
-      <ul className="flex flex-wrap gap-3 text-xs text-muted" aria-hidden="true">
-        <li className="flex items-center gap-1.5">
-          <span className="h-0.5 w-4 bg-sky-500" />
-          Scope
-        </li>
-        <li className="flex items-center gap-1.5">
-          <span className="h-0.5 w-4 bg-accent" />
-          Done
-        </li>
-        <li className="flex items-center gap-1.5">
-          <span className="h-0 w-4 border-t-2 border-dashed border-border-strong" />
-          Committed on day one
-        </li>
-      </ul>
+  const plot = (W: number) => {
+    const H = height;
+    const max = Math.max(1, committed, ...series.map((p) => p.scope));
+    const span = Math.max(1, end.getTime() - start.getTime());
+    const x = (d: Date) => PAD.left + ((W - PAD.left - PAD.right) * (d.getTime() - start.getTime())) / span;
+    const y = (v: number) => PAD.top + (H - PAD.top - PAD.bottom) * (1 - v / max);
+    const last = series.at(-1);
+    const now = today && last && today > last.date && today <= end ? today : null;
+    // Step lines: flat until the next snapshot, then a jump; flat on to today while the sprint runs.
+    const steps = (pick: (p: BurnupPoint) => number) =>
+      [
+        ...series.flatMap((p, i) =>
+          i === 0
+            ? [[x(p.date), y(pick(p))]]
+            : [
+                [x(p.date), y(pick(series[i - 1]))],
+                [x(p.date), y(pick(p))],
+              ],
+        ),
+        ...(now && last ? [[x(now), y(pick(last))]] : []),
+      ]
+        .map(([px, py]) => `${px},${py}`)
+        .join(" ");
+    return (
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Burn-up chart. ${summary}`} className="w-full">
         {[0, Math.round(max / 2), max].map((t) => (
           <g key={t}>
@@ -82,7 +74,7 @@ export function BurnupChart({
           <g>
             <line x1={x(now)} x2={x(now)} y1={PAD.top} y2={H - PAD.bottom} className="stroke-subtle" strokeDasharray="2 3" />
             {/* Near the right edge the label sits left of the line, so it isn't cut off, and a little lower,
-                clear of a scope line running along the top. */}
+                    clear of a scope line running along the top. */}
             <text
               x={x(now) > W - PAD.right - 30 ? x(now) - 4 : x(now)}
               y={x(now) > W - PAD.right - 30 ? PAD.top + 20 : PAD.top + 8}
@@ -93,7 +85,13 @@ export function BurnupChart({
             </text>
           </g>
         )}
-        <polyline points={steps((p) => p.scope)} fill="none" strokeWidth={2.5} strokeLinejoin="round" className="stroke-sky-500" />
+        <polyline
+          points={steps((p) => p.scope)}
+          fill="none"
+          strokeWidth={2.5}
+          strokeLinejoin="round"
+          className="stroke-sky-500"
+        />
         <polyline points={steps((p) => p.done)} fill="none" strokeWidth={2.5} strokeLinejoin="round" className="stroke-accent" />
         {series.map((p) => (
           <g key={p.date.getTime()}>
@@ -112,6 +110,27 @@ export function BurnupChart({
           {formatDay(end)}
         </text>
       </svg>
+    );
+  };
+
+  return (
+    <figure className="space-y-2">
+      <ul className="flex flex-wrap gap-3 text-xs text-muted" aria-hidden="true">
+        <li className="flex items-center gap-1.5">
+          <span className="h-0.5 w-4 bg-sky-500" />
+          Scope
+        </li>
+        <li className="flex items-center gap-1.5">
+          <span className="h-0.5 w-4 bg-accent" />
+          Done
+        </li>
+        <li className="flex items-center gap-1.5">
+          <span className="h-0 w-4 border-t-2 border-dashed border-border-strong" />
+          Committed on day one
+        </li>
+      </ul>
+      <div className="sm:hidden">{plot(NARROW)}</div>
+      <div className="hidden sm:block">{plot(WIDE)}</div>
       <figcaption className="text-sm text-muted">{summary}</figcaption>
     </figure>
   );

@@ -17,7 +17,7 @@ const row = {
 describe("backlogCsv", () => {
   it("quotes, neutralizes formulas and keeps list bullets", () => {
     const csv = backlogCsv([row]);
-    expect(csv.startsWith("﻿key,title,description,acceptance_criteria,story_points,status,readiness_score,band,failed_checks\r\n")).toBe(true);
+    expect(csv.startsWith("﻿key,title,description,acceptance_criteria,story_points,status,type,epic,readiness_score,band,failed_checks\r\n")).toBe(true);
     expect(csv).toContain('"Refund, ""fast"""');
     expect(csv).toContain(`"'=HYPERLINK(""http://evil"")"`);
     expect(csv).toContain('"- Full refunds\n- Partial refunds"');
@@ -25,9 +25,12 @@ describe("backlogCsv", () => {
   });
 
   it("re-imports with the same stories", () => {
-    const parsed = parseStoriesCsv(backlogCsv([{ ...row, description: "As a user" }]).slice(1));
+    const parsed = parseStoriesCsv(backlogCsv([{ ...row, description: "As a user", issueType: "Bug", epic: "Payments" }]).slice(1));
     expect(parsed.ok).toBe(true);
-    if (parsed.ok) expect(parsed.stories[0]).toMatchObject({ key: "PAY-1", acceptanceCriteria: "- Full refunds\n- Partial refunds", storyPoints: 3 });
+    // Type and epic come back too, so a bug stays a bug.
+    if (parsed.ok) {
+      expect(parsed.stories[0]).toMatchObject({ key: "PAY-1", acceptanceCriteria: "- Full refunds\n- Partial refunds", storyPoints: 3, issueType: "Bug" });
+    }
   });
 
   it("neutralizes a minus that starts a formula", () => {

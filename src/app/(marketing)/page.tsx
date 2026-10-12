@@ -19,6 +19,9 @@ import { compareReadiness, readinessFinding } from "@/lib/sprint/report";
 import { getSession } from "@/lib/server/dal";
 import { GITHUB_URL, RELEASES } from "@/lib/site";
 
+// The sample sprint is dated from today (src/demo/sprint.ts), so rebuild the page daily.
+export const revalidate = 86400;
+
 const STEPS = [
   {
     Icon: ClipboardCheck,

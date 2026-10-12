@@ -73,7 +73,9 @@ test("a sprint reproduces the worked example from baseline to metrics", async ({
   const metrics = page.getByRole("region", { name: "Sprint metrics" });
   await expect(metrics.getByText("Baseline 30 points · latest snapshot 35 points")).toBeVisible();
   await expect(metrics.locator("dd", { hasText: "5 pts" }).first()).toBeVisible();
-  await expect(metrics.getByText("3 pts")).toBeVisible();
+  await expect(metrics.getByText("3 pts", { exact: true })).toBeVisible();
+  // The +16.7% comes partly from re-estimates, and the tile says how much.
+  await expect(metrics.getByText("Re-estimates: +3 pts")).toBeVisible();
   await expect(metrics.getByText("+16.7%")).toBeVisible();
   await expect(metrics.getByText("36.7%")).toBeVisible();
   await expect(metrics.getByText("70.0%")).toBeVisible();

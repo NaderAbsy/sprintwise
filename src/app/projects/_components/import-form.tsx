@@ -19,6 +19,7 @@ import {
 import { emptyFormState } from "@/lib/form-state";
 import { readySummary, scoreStory, type RuleSettings } from "@/lib/readiness/rules";
 import { isDone } from "@/lib/sprint/metrics";
+import { isEpic } from "@/lib/stories/types";
 import { keepValuesOnSubmit } from "@/lib/keep-values-on-submit";
 
 const NONE = "__none__";
@@ -113,7 +114,7 @@ export function ImportForm({
   if (table?.ok && text !== null && tickedFor !== text) {
     setTickedFor(text);
     const ready = table.rows.filter(
-      (r) => r.errors.length === 0 && !isDone(r.story.status, doneStatuses) && !edited.has(r.story.key),
+      (r) => r.errors.length === 0 && !isDone(r.story.status, doneStatuses) && !isEpic(r.story.issueType) && !edited.has(r.story.key),
     );
     setTicked(ready.length <= IMPORT_MAX_STORIES ? new Set(ready.map((r) => r.row)) : new Set());
   }
@@ -143,6 +144,7 @@ export function ImportForm({
   const problems = rows.filter((r) => !usable(r));
   const finished = rows.filter((r) => usable(r) && isDone(r.story.status, doneStatuses));
   const overwriting = rows.filter((r) => usable(r) && edited.has(r.story.key));
+  const epicRows = rows.filter((r) => usable(r) && !isDone(r.story.status, doneStatuses) && isEpic(r.story.issueType));
   const noText = table?.ok
     ? [table.columns.description === null && "Description", table.columns.acceptance_criteria === null && "Acceptance criteria"].filter(
         (c): c is string => Boolean(c),
@@ -266,6 +268,13 @@ export function ImportForm({
               <p className="w-full text-muted">
                 {count(finished.length)} already finished ({[...new Set(finished.map((r) => r.story.status))].join(", ")}) left
                 unticked: finished work needs no readiness check.
+              </p>
+            )}
+            {epicRows.length > 0 && (
+              <p className="w-full text-muted">
+                {epicRows.length === 1 ? "1 epic" : `${epicRows.length} epics`} left unticked: epics group stories and
+                aren&apos;t planned into a sprint. Tick {epicRows.length === 1 ? "it" : "them"} to score{" "}
+                {epicRows.length === 1 ? "it" : "them"} anyway.
               </p>
             )}
             {overwriting.length > 0 && (

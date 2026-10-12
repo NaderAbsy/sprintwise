@@ -179,8 +179,13 @@ export function StoryFields({
             className="field mt-1 max-w-48 font-mono"
             placeholder="PROJ-12"
             aria-invalid={invalid("key")}
-            aria-describedby="key-error"
+            aria-describedby="key-help key-error"
           />
+          {/* Never a made-up key in the Jira project's style: Send to Jira would overwrite the real issue with that key. */}
+          <p id="key-help" className="mt-1 text-xs text-muted">
+            Leave it blank and Sprintwise numbers it STORY-1, STORY-2… If the story is already in Jira, use its Jira
+            key so imports and syncs match it.
+          </p>
           <FieldError id="key-error" message={errors.key} />
         </div>
       )}

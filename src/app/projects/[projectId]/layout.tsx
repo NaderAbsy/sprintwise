@@ -10,14 +10,14 @@ export default async function ProjectLayout({ children, params }: LayoutProps<"/
     <>
       <div className="no-print mb-6 border-b border-border">
         <nav aria-label="Breadcrumb" className="mb-2">
-          <ol className="flex items-center gap-1 text-sm text-muted">
+          <ol className="flex min-w-0 items-center gap-1 text-sm text-muted">
             <li>
               <Link href="/projects" className="rounded hover:text-foreground">
                 Projects
               </Link>
             </li>
-            <li className="flex items-center gap-1">
-              <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 text-subtle" />
+            <li className="flex min-w-0 items-center gap-1">
+              <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-subtle" />
               <span className="truncate text-foreground">{project.name}</span>
             </li>
           </ol>

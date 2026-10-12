@@ -2,6 +2,21 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-12 — v2.18: fixes from a full user cycle
+
+A run through everything a new PO does (sign up, import a messy Jira export, fix and add stories, refinement, settings, plan, lock, change, report, share, trends, export, phone, dark mode, bad files) on a local build with test sign-in and the pretend Jira. No crashes or console errors; ten fixes:
+
+1. **Long names on a phone:** the projects grid items and the breadcrumb couldn't shrink (`min-w-0`), so a long name widened the page.
+2. **Epics:** left unticked at import with a note, like finished work, and Sync doesn't add new ones (`isEpic`). Epics group stories and aren't planned into a sprint; an epic ticked in at import keeps syncing.
+3. **Small samples:** the readiness finding needs at least 3 changed and 3 unchanged stories (`MIN_TO_COMPARE`); below that it says so instead of stating a gap one story decides. The demo has 3 and 5.
+4. **Re-estimates:** "Re-estimates: +3 pts" under Net change (`reestimateNote`), in grey, since a sprint that grew only through re-estimates showed 0 added and 0 removed.
+5. **Keys, changed from the first proposal:** suggesting the project's own prefix (MOB-108) was rejected, because Send to Jira updates the issue with that key and could overwrite an unrelated real issue. Instead the Key field explains STORY-n and says to use the Jira key when the story already exists.
+6. **Jira from an empty project:** "Import stories" instead of "Import CSV" (it couldn't be just "Import", which is also a tab), and the empty state and Getting started mention Jira.
+7. **Export:** `type` and `epic` columns, names the importer already reads.
+8. **Demo dates:** the sample sprint is the last finished Monday-to-Friday fortnight before today (`demoSprintDates`), the history dated from it, and the home and demo pages revalidate daily.
+9. **Phone details:** the status select is wider, and the burn-up draws a 360-wide version on phones so its labels aren't shrunk to about 6px.
+10. **Label:** the first project's name field has a visible "Project name" label.
+
 ## 2026-10-10 — v2.17: nightly Jira sync
 
 **Why:** a sprint built from the backlog records one snapshot a day from the backlog, but a Jira project's backlog only changed when the PO clicked Sync. Skipped days left gaps in the burn-up and dated several days' changes to one.

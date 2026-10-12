@@ -49,7 +49,8 @@ export default async function ProjectsPage() {
             const ready = open.filter((s) => s.readiness?.band === "Ready").length;
             const share = total === 0 ? 0 : Math.round((ready / total) * 100);
             return (
-              <li key={project.id}>
+              // min-w-0 lets a long name truncate instead of widening the page on a phone.
+              <li key={project.id} className="min-w-0">
                 <Link
                   href={`/projects/${project.id}`}
                   className="card group block h-full p-5 transition-colors hover:border-accent/50"

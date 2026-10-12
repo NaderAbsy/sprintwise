@@ -37,7 +37,7 @@ test("a PO creates a project, scores a story and imports a backlog", async ({ pa
 
   // R-2: import a Jira-style CSV with a preview first.
   await page.getByRole("link", { name: "Backlog" }).first().click();
-  await page.getByRole("link", { name: "Import CSV" }).click();
+  await page.getByRole("link", { name: "Import stories" }).click();
   await page.getByLabel("CSV file").setInputFiles({ name: "backlog.csv", mimeType: "text/csv", buffer: Buffer.from(CSV) });
   await expect(page.getByText("3 stories ticked · 1 of 3 stories ready")).toBeVisible();
   await expect(page.getByText(/Story points "XL" isn't a number/)).toBeVisible();
@@ -69,7 +69,7 @@ test("a CSV with a missing column is rejected with the column named, and can be 
   await page.goto("/projects");
   await page.getByLabel("Name").fill("Bad CSV");
   await page.getByRole("button", { name: "Create project" }).click();
-  await page.getByRole("link", { name: "Import CSV" }).click();
+  await page.getByRole("link", { name: "Import stories" }).click();
   await page.getByLabel("CSV file").setInputFiles({ name: "bad.csv", mimeType: "text/csv", buffer: Buffer.from("key,points\nA-1,3") });
   await expect(page.getByText("Missing required column: title.")).toBeVisible();
   await expect(page.getByRole("button", { name: /Import/ })).toHaveCount(0);
@@ -87,7 +87,7 @@ test("a CSV can be dragged onto the picker, and other files are turned away", as
   await page.goto("/projects");
   await page.getByLabel("Name").fill("Dropped");
   await page.getByRole("button", { name: "Create project" }).click();
-  await page.getByRole("link", { name: "Import CSV" }).click();
+  await page.getByRole("link", { name: "Import stories" }).click();
 
   await expect(page.getByText("Or drag a CSV file here.")).toBeVisible();
   const zone = page.getByLabel("CSV file").locator("..");
@@ -124,7 +124,7 @@ test("a Numbers file saved with a .csv name is explained, not shown as garbled c
   await page.goto("/projects");
   await page.getByLabel("Name").fill("Numbers file");
   await page.getByRole("button", { name: "Create project" }).click();
-  await page.getByRole("link", { name: "Import CSV" }).click();
+  await page.getByRole("link", { name: "Import stories" }).click();
   const numbers = Buffer.concat([Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x14, 0, 0, 0]), Buffer.from("Index/Document.iwa"), Buffer.from([0, 1, 2])]);
   await page.getByLabel("CSV file").setInputFiles({ name: "Jira.CSV", mimeType: "text/csv", buffer: numbers });
   await expect(page.getByText("it's a Numbers spreadsheet. In Numbers, choose File → Export To → CSV…", { exact: false })).toBeVisible();

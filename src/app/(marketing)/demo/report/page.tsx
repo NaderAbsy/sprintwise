@@ -4,6 +4,9 @@ import { DEMO_PROJECT_NAME } from "@/demo/backlog";
 import { demoLog, demoSprint } from "@/demo/sprint";
 import { DEFAULT_SETTINGS } from "@/lib/readiness/rules";
 
+// The sample sprint is dated from today (src/demo/sprint.ts), so rebuild the page daily.
+export const revalidate = 86400;
+
 export const metadata: Metadata = { title: "Sample sprint report" };
 
 export default function DemoReportPage() {

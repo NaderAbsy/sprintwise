@@ -67,7 +67,8 @@ test("the sprint report shows the worked example on one page", async ({ page }) 
   const readiness = page.getByRole("region", { name: "Readiness at the baseline" });
   await expect(readiness.getByText("Changed scope (2)")).toBeVisible();
   await expect(readiness.getByText("Unchanged (3)")).toBeVisible();
-  await expect(readiness.getByText(/about the same/)).toBeVisible();
+  // Two changed stories are too few to say whether readiness made a difference.
+  await expect(readiness.getByText(/^Too few stories to compare yet: 2 changed scope and 3 didn't\./)).toBeVisible();
 
   await expectAccessible(page);
   expect(await printedPages(page)).toBe(1);
