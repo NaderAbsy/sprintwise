@@ -1,5 +1,6 @@
+import { formatDay } from "@/lib/sprint/dates";
 import { describe, expect, it } from "vitest";
-import { demoSprint } from "@/demo/sprint";
+import { demoSprint, demoSprintDates } from "@/demo/sprint";
 import { DEFAULT_SETTINGS } from "@/lib/readiness/rules";
 import { computeMetrics, formatPercent } from "@/lib/sprint/metrics";
 import { changeLog, compareReadiness, readinessFinding } from "@/lib/sprint/report";
@@ -26,6 +27,21 @@ describe("demo sprint", () => {
   });
 
   it("logs changes on two later dates", () => {
-    expect(new Set(changeLog(demoSprint.snapshots).map((r) => r.date))).toEqual(new Set(["13 Oct 2026", "8 Oct 2026"]));
+    const later = demoSprint.snapshots.slice(1).map((s) => formatDay(s.asOfDate));
+    expect(new Set(changeLog(demoSprint.snapshots).map((r) => r.date))).toEqual(new Set(later));
+  });
+});
+
+describe("demoSprintDates", () => {
+  it("is the last finished Monday-to-Friday fortnight before today", () => {
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+    for (const [today, start, end] of [
+      ["2026-10-12", "2026-09-28", "2026-10-09"], // a Monday
+      ["2026-10-16", "2026-09-28", "2026-10-09"], // a Friday: this one hasn't finished yet
+      ["2026-10-17", "2026-10-05", "2026-10-16"], // a Saturday
+    ]) {
+      const dates = demoSprintDates(new Date(`${today}T12:00:00Z`));
+      expect([iso(dates.start), iso(dates.end)]).toEqual([start, end]);
+    }
   });
 });

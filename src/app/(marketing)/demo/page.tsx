@@ -15,6 +15,9 @@ import { formatDay } from "@/lib/sprint/dates";
 import { computeMetrics } from "@/lib/sprint/metrics";
 import { compareReadiness, readinessFinding } from "@/lib/sprint/report";
 
+// The sample sprint is dated from today (src/demo/sprint.ts), so rebuild the page daily.
+export const revalidate = 86400;
+
 export const metadata: Metadata = { title: "Demo" };
 
 export default function DemoPage() {

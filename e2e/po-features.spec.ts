@@ -125,7 +125,7 @@ test("export the backlog as CSV, only for its owner", async ({ page }) => {
   expect(response.status()).toBe(200);
   expect(response.headers()["content-disposition"]).toContain('filename="Export-backlog.csv"');
   const csv = await response.text();
-  expect(csv.split("\r\n")[0]).toBe("﻿key,title,description,acceptance_criteria,story_points,status,readiness_score,band,failed_checks");
+  expect(csv.split("\r\n")[0]).toBe("﻿key,title,description,acceptance_criteria,story_points,status,type,epic,readiness_score,band,failed_checks");
   expect(csv).toContain("TIDY-105,Admin dashboard");
 
   const anonymous = await playwrightRequest.newContext({ baseURL: BASE_URL });

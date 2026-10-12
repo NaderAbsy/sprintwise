@@ -9,6 +9,22 @@ import type { Story } from "@/lib/stories/types";
  * changed mid-sprint were the ones that scored low before planning.
  */
 
+const DAY = 86_400_000;
+
+/**
+ * The sample sprint is always the most recent finished two weeks: Monday to the last Friday before today
+ * (UTC), so the demo never looks out of date or shows a snapshot from the future. Pages that use it are
+ * rebuilt daily.
+ */
+export function demoSprintDates(now = new Date()) {
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const sinceFriday = (new Date(today).getUTCDay() + 2) % 7 || 7;
+  const end = today - sinceFriday * DAY;
+  const start = end - 11 * DAY;
+  return { start: new Date(start), end: new Date(end), day: (n: number) => new Date(start + n * DAY) };
+}
+const dates = demoSprintDates();
+
 const fromBacklog = (key: string, overrides: Partial<Story> = {}): Story => {
   const story = demoBacklog.find((s) => s.key === key);
   if (!story) throw new Error(`Demo story ${key} is missing from the backlog`);
@@ -29,12 +45,12 @@ export const demoSprint = {
   name: "Sprint 12 (sample data)",
   goal: "Customers can book, cancel and rate a cleaner without calling support",
   goalOutcome: "partly",
-  startDate: new Date("2026-10-05T00:00:00Z"),
-  endDate: new Date("2026-10-16T00:00:00Z"),
+  startDate: dates.start,
+  endDate: dates.end,
   snapshots: [
     {
       // Day one: the committed baseline, 32 points.
-      asOfDate: new Date("2026-10-05T00:00:00Z"),
+      asOfDate: dates.day(0),
       stories: [
         fromBacklog("TIDY-101", { status: "To Do" }),
         fromBacklog("TIDY-102", { status: "To Do" }),
@@ -48,7 +64,7 @@ export const demoSprint = {
     },
     {
       // Day four: the vague search story is dropped and an urgent bug comes in.
-      asOfDate: new Date("2026-10-08T00:00:00Z"),
+      asOfDate: dates.day(3),
       stories: [
         fromBacklog("TIDY-101", { status: "Done" }),
         fromBacklog("TIDY-102", { status: "In Progress" }),
@@ -61,8 +77,8 @@ export const demoSprint = {
       ],
     },
     {
-      // Day seven: the two stories planned without clear criteria grow.
-      asOfDate: new Date("2026-10-13T00:00:00Z"),
+      // Day nine: the two stories planned without clear criteria grow.
+      asOfDate: dates.day(8),
       stories: [
         fromBacklog("TIDY-101", { status: "Done" }),
         fromBacklog("TIDY-102", { status: "Done" }),

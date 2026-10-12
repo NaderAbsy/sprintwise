@@ -1,7 +1,7 @@
 import { TEMPLATE_COLUMNS } from "@/lib/csv/template";
 import type { Story } from "@/lib/stories/types";
 
-export type ExportRow = Story & { score: number | null; band: string | null; failedChecks: string[] };
+export type ExportRow = Story & { epic?: string; score: number | null; band: string | null; failedChecks: string[] };
 
 /**
  * Spreadsheet apps run cells that start with =, +, -, @ or a tab as formulas,
@@ -20,9 +20,12 @@ function quote(cell: string): string {
   return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
-/** The backlog as CSV: the import template's columns first (so it re-imports), then the score. */
+/**
+ * The backlog as CSV: the import template's columns first, then type and epic (names the importer
+ * reads, so a re-import keeps bugs as bugs), then the score.
+ */
 export function backlogCsv(rows: ExportRow[]): string {
-  const header = [...TEMPLATE_COLUMNS, "readiness_score", "band", "failed_checks"];
+  const header = [...TEMPLATE_COLUMNS, "type", "epic", "readiness_score", "band", "failed_checks"];
   const lines = rows.map((r) =>
     [
       r.key,
@@ -31,6 +34,8 @@ export function backlogCsv(rows: ExportRow[]): string {
       r.acceptanceCriteria,
       r.storyPoints === null ? "" : String(r.storyPoints),
       r.status,
+      r.issueType ?? "",
+      r.epic ?? "",
       r.score === null ? "" : String(r.score),
       r.band ?? "",
       r.failedChecks.join("; "),

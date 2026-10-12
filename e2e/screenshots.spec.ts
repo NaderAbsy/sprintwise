@@ -35,7 +35,7 @@ test("@screenshots signed-in pages", async ({ page }) => {
   await page.goto("/projects");
   await page.getByLabel("Name").fill("Payments team (sample data)");
   await page.getByRole("button", { name: "Create project" }).click();
-  await page.getByRole("main").getByRole("link", { name: "Import CSV" }).click();
+  await page.getByRole("main").getByRole("link", { name: "Import stories" }).click();
   await page.getByLabel("CSV file").setInputFiles({
     name: "backlog.csv",
     mimeType: "text/csv",

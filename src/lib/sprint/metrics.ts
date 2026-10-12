@@ -94,6 +94,16 @@ export function computeMetrics(
   };
 }
 
+/**
+ * "Re-estimates: +3 pts" for the Net change tile, or "" when re-estimates cancel out. Without it, a sprint
+ * whose scope grew only through re-estimates shows 0 added, 0 removed and a net change that seems to come from nowhere.
+ */
+export function reestimateNote(m: Pick<SprintMetrics, "latestTotal" | "baselineTotal" | "scopeAdded" | "scopeRemoved">): string {
+  const net = Math.round((m.latestTotal - m.baselineTotal - m.scopeAdded + m.scopeRemoved) * 10) / 10;
+  if (net === 0) return "";
+  return `Re-estimates: ${net > 0 ? "+" : "−"}${formatPoints(Math.abs(net))}`;
+}
+
 /** "+2 with no estimate" for the Scope added tile, or "" when every added story has points. */
 export function unestimatedNote(count: number): string {
   return count === 0 ? "" : `plus ${count} ${count === 1 ? "story" : "stories"} with no estimate`;

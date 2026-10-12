@@ -37,8 +37,8 @@ describe("compareReadiness", () => {
 
 describe("readinessFinding", () => {
   const groups = (changed: number | null, unchanged: number | null) => ({
-    changed: { count: changed === null ? 0 : 2, averageScore: changed },
-    unchanged: { count: unchanged === null ? 0 : 2, averageScore: unchanged },
+    changed: { count: changed === null ? 0 : 3, averageScore: changed },
+    unchanged: { count: unchanged === null ? 0 : 3, averageScore: unchanged },
     changedKeys: [],
   });
 
@@ -53,6 +53,13 @@ describe("readinessFinding", () => {
 
   it("calls small gaps about the same", () => {
     expect(readinessFinding(groups(78, 80))).toMatch(/about the same/);
+  });
+
+  it("won't compare when one story would decide it", () => {
+    const few = { changed: { count: 1, averageScore: 100 }, unchanged: { count: 3, averageScore: 70 }, changedKeys: [] };
+    expect(readinessFinding(few)).toBe(
+      "Too few stories to compare yet: 1 changed scope and 3 didn't. It takes at least 3 of each to say whether readiness made a difference.",
+    );
   });
 
   it("covers a sprint where everything changed", () => {

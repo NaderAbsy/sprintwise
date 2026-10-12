@@ -5,7 +5,7 @@ import { PrintButton } from "@/components/print-button";
 import type { RuleSettings } from "@/lib/readiness/rules";
 import { burnupSeries } from "@/lib/sprint/burnup";
 import { formatDay } from "@/lib/sprint/dates";
-import { computeMetrics, formatPercent, formatPoints, unestimatedNote, type SprintMetrics } from "@/lib/sprint/metrics";
+import { computeMetrics, formatPercent, formatPoints, reestimateNote, unestimatedNote, type SprintMetrics } from "@/lib/sprint/metrics";
 import { compareReadiness, isScopeChange, readinessFinding, type LogRow } from "@/lib/sprint/report";
 import { GOAL_OUTCOMES, reasonFinding, summarizeReasons } from "@/lib/sprint/reasons";
 import type { Story } from "@/lib/stories/types";
@@ -74,9 +74,9 @@ export function SprintReport({
     renames > 0 && `${renames} ${renames === 1 ? "rename" : "renames"}`,
   ].filter(Boolean);
   const tiles = [
-    { label: "Scope added", value: formatPoints(metrics.scopeAdded), note: unestimatedNote(metrics.addedUnestimated) },
+    { label: "Scope added", value: formatPoints(metrics.scopeAdded), note: unestimatedNote(metrics.addedUnestimated), warn: true },
     { label: "Scope removed", value: formatPoints(metrics.scopeRemoved) },
-    { label: "Net change", value: formatPercent(metrics.netChange, { signed: true }) },
+    { label: "Net change", value: formatPercent(metrics.netChange, { signed: true }), note: reestimateNote(metrics) },
     { label: "Churn", value: formatPercent(metrics.churn) },
     { label: "Completion", value: formatPercent(metrics.completion) },
   ];
@@ -135,7 +135,7 @@ export function SprintReport({
             <div key={t.label} className="card px-3 py-2">
               <dt className="text-xs text-muted">{t.label}</dt>
               <dd className="text-xl font-semibold tabular-nums">{t.value}</dd>
-              {"note" in t && t.note && <dd className="text-xs text-needs-work">{t.note}</dd>}
+              {"note" in t && t.note && <dd className={`text-xs ${"warn" in t ? "text-needs-work" : "text-muted"}`}>{t.note}</dd>}
             </div>
           ))}
         </dl>

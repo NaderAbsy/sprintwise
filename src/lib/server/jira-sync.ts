@@ -9,6 +9,7 @@ import { saveStories } from "@/lib/server/save-stories";
 import { doneStatusesOf } from "@/lib/server/sprint";
 import { recordSprintChanges } from "@/lib/server/tracking";
 import { isDone } from "@/lib/sprint/metrics";
+import { isEpic } from "@/lib/stories/types";
 
 export const jiraFailure = (error: unknown) =>
   error instanceof JiraError ? error.message : "Couldn't reach Jira. Check your connection and try again.";
@@ -16,8 +17,8 @@ export const jiraFailure = (error: unknown) =>
 /**
  * Runs the project's saved search again with `userId`'s Jira connection: updates
  * stories that came from Jira and adds new ones. Stories edited here and not yet
- * sent to Jira are left alone, and new issues that are already finished aren't
- * added. Then any sprint that follows the backlog records the day's changes.
+ * sent to Jira are left alone, and new issues that are already finished, or
+ * are epics, aren't added. Then any sprint that follows the backlog records the day's changes.
  * Used by Sync from Jira and by the nightly sync (`automatic`). Callers check
  * ownership first.
  */
@@ -60,6 +61,8 @@ export async function syncProjectFromJira(project: Project, userId: string, { au
       return [];
     }
     if (!current && isDone(row.story.status, doneStatuses)) return [];
+    // New epics stay out, as at import; an epic ticked in at import keeps syncing.
+    if (!current && isEpic(row.story.issueType)) return [];
     if (!current && !isNew(row.story.key)) {
       leftOut++;
       return [];

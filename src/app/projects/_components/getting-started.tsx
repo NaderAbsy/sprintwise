@@ -13,7 +13,7 @@ export function GettingStarted({ base, progress }: { base: string; progress: Pro
     {
       title: "Add your stories",
       // The empty backlog right below has the buttons, so this step has no link of its own.
-      text: "Use the buttons below: score one by pasting it, import a CSV, or load sample stories to try things out.",
+      text: "Use the buttons below: score one by pasting it, import a CSV or from Jira, or load sample stories to try things out.",
       done: progress.stories > 0,
     },
     {

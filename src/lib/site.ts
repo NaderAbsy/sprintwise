@@ -16,6 +16,24 @@ export type Release = { version: string; date: string; title: string; summary: s
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.18",
+    date: "2026-10-12",
+    title: "Fixes from a full test run",
+    summary: "Ten fixes found by using Sprintwise start to finish, the way a new Product Owner would.",
+    items: [
+      "Long project names no longer push the page sideways on a phone.",
+      "Epics in a Jira export or search are left unticked, as finished work is, and new epics aren't added by Sync.",
+      "The report only compares the readiness of changed and unchanged stories once there are at least 3 of each.",
+      "Net change says how much came from re-estimates, so a sprint that grew only that way adds up.",
+      "Import stories (not \"Import CSV\") on the backlog, and an empty project mentions Jira.",
+      "The key field explains STORY-1 and when to use the Jira key.",
+      "Exported CSVs keep each story's type and epic, so re-importing keeps bugs as bugs.",
+      "The demo sprint is always the last fortnight, so it never looks out of date.",
+      "On a phone, statuses fit their box and the burn-up's labels are readable.",
+      "The first project's name box has a visible label.",
+    ],
+  },
+  {
     version: "v2.17",
     date: "2026-10-10",
     title: "Nightly Jira sync",
