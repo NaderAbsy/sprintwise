@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { diffSnapshots } from "@/lib/sprint/diff";
-import { computeMetrics, formatPercent, formatPoints, isDone, reestimateNote, statusChoices } from "@/lib/sprint/metrics";
+import { computeMetrics, formatPercent, formatPoints, isDone, reestimateNote, statusChoices, sumPoints } from "@/lib/sprint/metrics";
 import { story } from "@/test/story";
 import { baseline, latest } from "@/test/worked-example";
 
@@ -170,5 +170,17 @@ describe("reestimateNote", () => {
     expect(reestimateNote({ baselineTotal: 10, latestTotal: 13, scopeAdded: 0, scopeRemoved: 0 })).toBe("Re-estimates: +3 pts");
     expect(reestimateNote({ baselineTotal: 10, latestTotal: 12, scopeAdded: 5, scopeRemoved: 2 })).toBe("Re-estimates: −1 pt");
     expect(reestimateNote({ baselineTotal: 10, latestTotal: 15, scopeAdded: 5, scopeRemoved: 0 })).toBe("");
+  });
+});
+
+describe("point sums", () => {
+  it("leave no floating-point leftovers", () => {
+    expect(sumPoints([0.1, 0.2])).toBe(0.3);
+    expect(formatPoints(0.1 + 0.2)).toBe("0.3 pts");
+    const m = computeMetrics([story({ key: "A", storyPoints: 0.1 }), story({ key: "B", storyPoints: 0.2 })], [
+      story({ key: "A", storyPoints: 0.1, status: "Done" }),
+      story({ key: "B", storyPoints: 0.2 }),
+    ]);
+    expect(m.baselineTotal).toBe(0.3);
   });
 });

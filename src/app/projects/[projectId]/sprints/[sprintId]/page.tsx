@@ -11,15 +11,16 @@ import { ConfirmButton } from "@/components/confirm-button";
 import { RemoveSection } from "@/components/remove-section";
 import { SectionHeader } from "@/components/section-header";
 import { SprintMetricsPanel } from "@/components/sprint-metrics";
-import { formatDay, toDay } from "@/lib/sprint/dates";
+import { formatDay, sprintStatus, toDay } from "@/lib/sprint/dates";
 import { db } from "@/lib/server/db";
 import { requireSprint } from "@/lib/server/dal";
 import { settingsOf, toStory } from "@/lib/server/readiness";
 import { doneStatusesOf, loadProjectTrends, loadSprint } from "@/lib/server/sprint";
 import { burnupSeries } from "@/lib/sprint/burnup";
-import { statusChoices } from "@/lib/sprint/metrics";
+import { statusChoices, sumPoints } from "@/lib/sprint/metrics";
 import { daysBetween, utcToday } from "@/lib/sprint/tracking";
 import { averageVelocity } from "@/lib/sprint/trends";
+import type { Band } from "@/lib/readiness/rules";
 import { normalizeKey } from "@/lib/stories/types";
 
 export const metadata: Metadata = { title: "Sprint" };
@@ -28,16 +29,31 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
   const { projectId, sprintId } = await params;
   const { project, sprint } = await requireSprint(projectId, sprintId);
 
-  const { snapshots, baselineRow: baseline, latestRow: latest, metrics, log } = await loadSprint(sprint, doneStatusesOf(project));
-  const total = (items: { storyPoints: number | null }[]) => items.reduce((sum, i) => sum + (i.storyPoints ?? 0), 0);
+  const [{ snapshots, baselineRow: baseline, latestRow: latest, metrics, log }, rows] = await Promise.all([
+    loadSprint(sprint, doneStatusesOf(project)),
+    // The picker shows each story's saved band, so descriptions needn't go to the browser.
+    db.story.findMany({
+      where: { projectId: project.id },
+      orderBy: [{ rank: "asc" }, { key: "asc" }],
+      select: {
+        id: true,
+        key: true,
+        title: true,
+        acceptanceCriteria: true,
+        storyPoints: true,
+        status: true,
+        issueType: true,
+        readiness: { select: { band: true } },
+      },
+    }),
+  ]);
+  const total = (items: { storyPoints: number | null }[]) => sumPoints(items.map((i) => i.storyPoints ?? 0));
 
   const dayRange = `${formatDay(sprint.startDate)} to ${formatDay(sprint.endDate)}`;
-  const backlog = (await db.story.findMany({ where: { projectId: project.id }, orderBy: [{ rank: "asc" }, { key: "asc" }] })).map((row) => ({
-    id: row.id,
-    ...toStory(row),
-  }));
+  const backlog = rows.map(({ id, readiness, ...row }) => ({ id, ...toStory({ ...row, description: "" }), band: readiness?.band as Band | undefined }));
   const settings = settingsOf(project);
   const today = utcToday();
+  const progress = sprintStatus(sprint.startDate, sprint.endDate, today);
   // A day's leeway at each end, because "today" here is the UTC day and the user may be ahead or behind it.
   const running = daysBetween(today, sprint.startDate) <= 1 && daysBetween(sprint.endDate, today) <= 1;
   // The sprint's stories now: the latest snapshot's keys, matched to the backlog for editing.
@@ -70,7 +86,7 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
       <SectionHeader
         back={{ href: `/projects/${project.id}/sprints`, label: "Sprints" }}
         title={sprint.name}
-        description={dayRange}
+        description={progress.running ? `${dayRange} · ${progress.label}` : dayRange}
         actions={
           baseline && (
             <>
@@ -223,7 +239,7 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
               mode="snapshot"
               {...uploadProps}
               minDay={toDay(latest!.asOfDate)}
-              previous={latest!.items.map(toStory)}
+              previous={latest!.items.map((item) => ({ ...toStory(item), description: "" }))}
             />
           </section>
 

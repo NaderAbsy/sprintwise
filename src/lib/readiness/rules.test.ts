@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { demoBacklog } from "@/demo/backlog";
 import {
   bandFor,
+  capNote,
   criteriaNeeded,
   DEFAULT_VAGUE_WORDS,
   findVagueWords,
@@ -321,5 +322,18 @@ describe("issue types", () => {
       expect(scoreStory({ ...bug, issueType }).typeNote).toBeUndefined();
     }
     expect(isUserStoryType("Sub-task")).toBe(false);
+  });
+});
+
+describe("capNote", () => {
+  it("names why an 80+ score isn't Ready, for lists", () => {
+    expect(capNote(85, "Needs work", ["C7", "C8"])).toBe("Too big");
+    expect(capNote(80, "Needs work", ["C6"])).toBe("Not estimated");
+    expect(capNote(90, "Needs work", ["custom"])).toBe("Team check");
+    expect(capNote(100, "Needs work", [])).toBe("Needs a re-read");
+  });
+  it("says nothing when the band matches the score", () => {
+    expect(capNote(85, "Ready", [])).toBeNull();
+    expect(capNote(65, "Needs work", ["C7"])).toBeNull();
   });
 });

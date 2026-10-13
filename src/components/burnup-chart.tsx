@@ -53,7 +53,7 @@ export function BurnupChart({
         .join(" ");
     return (
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Burn-up chart. ${summary}`} className="w-full">
-        {[0, Math.round(max / 2), max].map((t) => (
+        {[...new Set([0, Math.round(max / 2), max])].map((t) => (
           <g key={t}>
             <line x1={PAD.left} x2={W - PAD.right} y1={y(t)} y2={y(t)} className="stroke-border" strokeDasharray="3 3" />
             <text x={PAD.left - 6} y={y(t) + 4} textAnchor="end" className="fill-subtle text-[10px]">

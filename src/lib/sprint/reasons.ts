@@ -1,4 +1,5 @@
 import type { ChangeType } from "@/lib/sprint/diff";
+import { sumPoints } from "@/lib/sprint/metrics";
 
 /** Why scope changed mid-sprint. The PO tags each scope change; the report sums them. */
 export const REASONS = [
@@ -62,12 +63,12 @@ export function summarizeReasons(changes: { type: ChangeType; pointsDelta: numbe
     entry.count += 1;
     totals.set(id, entry);
   }
-  const totalPoints = [...totals.values()].reduce((sum, t) => sum + t.points, 0);
+  const totalPoints = sumPoints([...totals.values()].map((t) => t.points));
   const rows = [...totals]
     .map(([id, t]) => ({
       id,
       label: reasonLabel(id),
-      points: t.points,
+      points: sumPoints([t.points]),
       count: t.count,
       share: totalPoints === 0 ? 0 : t.points / totalPoints,
     }))

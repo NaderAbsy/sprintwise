@@ -1,6 +1,8 @@
 import "server-only";
 import { auth } from "@/lib/server/auth";
 import { db } from "@/lib/server/db";
+import { EPIC_MAX_LENGTH } from "@/lib/csv/template";
+import { STORY_LIMITS } from "@/lib/stories/form";
 import { withCriteriaInDescription } from "@/lib/stories/types";
 
 /**
@@ -288,6 +290,14 @@ const cell = (value: string) => (/[",\r\n]/.test(value) ? `"${value.replace(/"/g
  * Jira issues as a CSV with Jira's own column names, so they go through exactly
  * the same preview, checks and import as a file would.
  */
+/** Ends text cut to fit Sprintwise's limits. A story holding it isn't sent back, so Jira keeps its full text. */
+export const JIRA_CUT = "… [cut short here; the full text is in Jira]";
+
+/** Jira allows longer text than Sprintwise keeps: cut it rather than leave the issue out of imports and syncs. */
+function fit(text: string, limit: number): string {
+  return text.length <= limit ? text : text.slice(0, limit - JIRA_CUT.length) + JIRA_CUT;
+}
+
 export function issuesAsCsv(issues: JiraIssue[]): string {
   const labelColumns = Math.max(1, ...issues.map((i) => i.labels.length));
   const header = [
@@ -304,13 +314,13 @@ export function issuesAsCsv(issues: JiraIssue[]): string {
   const rows = issues.map((i) =>
     [
       i.key,
-      i.summary,
-      i.issueType,
-      i.description,
-      i.acceptanceCriteria,
-      i.storyPoints === null ? "" : String(i.storyPoints),
-      i.status,
-      i.parent,
+      fit(i.summary, STORY_LIMITS.title),
+      fit(i.issueType, STORY_LIMITS.issueType),
+      fit(i.description, STORY_LIMITS.description),
+      fit(i.acceptanceCriteria, STORY_LIMITS.acceptanceCriteria),
+      i.storyPoints === null || i.storyPoints > STORY_LIMITS.points ? "" : String(i.storyPoints),
+      fit(i.status, STORY_LIMITS.status),
+      fit(i.parent, EPIC_MAX_LENGTH),
       ...Array.from({ length: labelColumns }, (_, n) => i.labels[n] ?? ""),
     ]
       .map(cell)

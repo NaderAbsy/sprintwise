@@ -14,7 +14,8 @@ import { requireProject } from "@/lib/server/dal";
 import { refreshStaleScores, settingsOf, toStory } from "@/lib/server/readiness";
 import { doneStatusesOf } from "@/lib/server/sprint";
 import { isDone } from "@/lib/sprint/metrics";
-import { criteriaOf } from "@/lib/stories/types";
+import { utcToday } from "@/lib/sprint/tracking";
+import { criteriaOf, normalizeKey } from "@/lib/stories/types";
 
 export const metadata: Metadata = { title: "Refinement" };
 
@@ -38,19 +39,35 @@ export default async function RefinePage({ params, searchParams }: PageProps<"/p
     orderBy: [{ rank: "asc" }, { key: "asc" }],
   });
   const open = rows.filter((r) => !isDone(r.status, doneStatuses));
+  // Refinement prepares what's next: "Not ready yet" leaves out stories the current sprint is already working on.
+  const today = utcToday();
+  const current = await db.sprint.findMany({
+    where: { projectId: project.id, startDate: { lte: today }, endDate: { gte: today } },
+    select: {
+      snapshots: { orderBy: [{ asOfDate: "desc" }, { uploadedAt: "desc" }], take: 1, select: { items: { select: { key: true } } } },
+    },
+  });
+  const inSprint = new Set(current.flatMap((s) => s.snapshots[0]?.items.map((i) => normalizeKey(i.key)) ?? []));
+  const upcoming = all ? open : open.filter((r) => !inSprint.has(normalizeKey(r.key)) || r.id === storyParam);
+  const skipped = all ? 0 : open.filter((r) => !upcoming.includes(r) && r.readiness?.band !== "Ready").length;
   // "Not ready yet" is decided by the stored band, but the story on screen stays in the list after it becomes Ready.
-  const list = all ? open : open.filter((r) => r.readiness?.band !== "Ready" || r.id === storyParam);
+  const list = all ? upcoming : upcoming.filter((r) => r.readiness?.band !== "Ready" || r.id === storyParam);
   const href = (id: string) => `${base}/refine?story=${id}${all ? "&scope=all" : ""}`;
   const scopeHref = (scope: "all" | "unready") => `${base}/refine${scope === "all" ? "?scope=all" : ""}`;
 
   const scopeNav = (
-    <nav aria-label="Which stories" className="flex flex-wrap gap-2 text-sm">
+    <nav aria-label="Which stories" className="flex flex-wrap items-center gap-2 text-sm">
       <Link href={scopeHref("unready")} aria-current={!all ? "page" : undefined} className={!all ? "btn-secondary btn-sm" : "btn-ghost btn-sm"}>
         Not ready yet
       </Link>
       <Link href={scopeHref("all")} aria-current={all ? "page" : undefined} className={all ? "btn-secondary btn-sm" : "btn-ghost btn-sm"}>
         All unfinished
       </Link>
+      {skipped > 0 && (
+        <span className="text-xs text-muted">
+          {skipped} in the current sprint left out
+        </span>
+      )}
     </nav>
   );
 

@@ -75,13 +75,19 @@ export async function deleteProject(projectId: string) {
 // Stories (stories R-1 and R-2)
 // ---------------------------------------------------------------------------
 
+/**
+ * The next STORY-n key. Keys in sprints count too, so a deleted story's key
+ * isn't handed to a new one, which sprints would take for the old story.
+ */
 async function nextStoryKey(projectId: string): Promise<string> {
-  const keys = await db.story.findMany({ where: { projectId, key: { startsWith: "STORY-" } }, select: { key: true } });
-  const highest = keys.reduce((max, { key }) => Math.max(max, Number(key.slice(6)) || 0), 0);
+  const where = { key: { startsWith: "STORY-" } };
+  const [inBacklog, inSprints] = await Promise.all([
+    db.story.findMany({ where: { projectId, ...where }, select: { key: true } }),
+    db.snapshotItem.findMany({ where: { ...where, snapshot: { sprint: { projectId } } }, select: { key: true }, distinct: ["key"] }),
+  ]);
+  const highest = [...inBacklog, ...inSprints].reduce((max, { key }) => Math.max(max, Number(key.slice(6)) || 0), 0);
   return `STORY-${highest + 1}`;
 }
-
-/** The rank after the last story, so new stories join the bottom of the backlog. */
 
 /** Paste one story: score it, save it, and open its result. */
 export async function addStory(projectId: string, _prev: FormState, formData: FormData): Promise<FormState> {
@@ -99,16 +105,25 @@ export async function addStory(projectId: string, _prev: FormState, formData: Fo
 
   // A new story with no status starts as To Do, as the field's hint says.
   const story: Story = { key, ...fields, status: fields.status || "To Do" };
-  const created = await db.story.create({
-    data: {
-      projectId: project.id,
-      rank: await bottomRank(project.id),
-      ...story,
-      // Written here, so it isn't in Jira yet.
-      editedAt: new Date(),
-      readiness: { create: readinessData(story, settingsOf(project)) },
-    },
-  });
+  let created;
+  try {
+    created = await db.story.create({
+      data: {
+        projectId: project.id,
+        rank: await bottomRank(project.id),
+        ...story,
+        // Written here, so it isn't in Jira yet.
+        editedAt: new Date(),
+        readiness: { create: readinessData(story, settingsOf(project)) },
+      },
+    });
+  } catch (error) {
+    // The same key saved a moment ago, from another tab.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return { fieldErrors: { key: `${key} was just added to this project. Use another key, or leave it blank.` } };
+    }
+    throw error;
+  }
   await recordUsage("check_run");
   revalidatePath(`/projects/${project.id}`);
   redirect(`/projects/${project.id}/stories/${created.id}`);
@@ -150,6 +165,13 @@ export async function updateStory(projectId: string, storyId: string, _prev: For
   redirect(`/projects/${project.id}/stories/${existing.id}?saved=1`);
 }
 
+/** When the preview searched Jira, as the browser sent it back; now if it's missing or implausible. */
+function searchTime(value: FormDataEntryValue | null): Date {
+  const now = new Date();
+  const at = new Date(String(value ?? ""));
+  return Number.isNaN(at.getTime()) || at > now || now.getTime() - at.getTime() > 86_400_000 ? now : at;
+}
+
 /**
  * CSV import. The page previews the file with the same parser; this re-parses
  * on the server, then adds new keys and updates existing ones.
@@ -172,14 +194,16 @@ export async function importStories(projectId: string, _prev: FormState, formDat
 
   // The next file from the same Jira gets the same columns. (An import straight from Jira has no columns to remember.)
   const fromJira = formData.get("source") === "jira";
-  await saveStories(
-    project,
-    stories,
-    fromJira
-      ? // Sync adds issues created after this moment; ones left unticked now stay out.
-        [db.project.update({ where: { id: project.id }, data: { jiraSyncedAt: new Date(), jiraAutoSynced: false, jiraSyncError: null } })]
-      : [db.project.update({ where: { id: project.id }, data: { importColumns: rememberedColumns(mapping) } })],
-  );
+  await saveStories(project, stories, {
+    extra: (tx) =>
+      fromJira
+        ? // Sync adds issues created after the preview's search; ones left unticked now stay out.
+          tx.project.update({
+            where: { id: project.id },
+            data: { jiraSyncedAt: searchTime(formData.get("searchedAt")), jiraAutoSynced: false, jiraSyncError: null },
+          })
+        : tx.project.update({ where: { id: project.id }, data: { importColumns: rememberedColumns(mapping) } }),
+  });
   await recordSprintChanges(project.id);
   await recordUsage("import");
   revalidatePath(`/projects/${project.id}`, "layout");

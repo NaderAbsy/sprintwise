@@ -28,6 +28,8 @@ test("S-1: a sprint needs a name and an end date after its start", async ({ page
   await page.getByRole("button", { name: "Create project" }).click();
   await page.getByRole("navigation", { name: "Project sections" }).getByRole("link", { name: "Sprints" }).click();
   await page.getByRole("link", { name: "New sprint" }).click();
+  // The name comes pre-filled ("Sprint 1"); clear it.
+  await page.getByLabel("Name").fill("");
   await page.getByLabel("Start date").fill("2026-10-05");
   await page.getByLabel("End date").fill("2026-10-05");
   await page.getByRole("button", { name: "Create sprint" }).click();

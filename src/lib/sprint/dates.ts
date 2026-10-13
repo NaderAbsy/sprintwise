@@ -63,3 +63,26 @@ export function localToday(now = new Date()): string {
   const offset = now.getTimezoneOffset() * 60_000;
   return new Date(now.getTime() - offset).toISOString().slice(0, 10);
 }
+
+const DAY_MS = 86_400_000;
+
+/**
+ * Where today falls in a sprint, both ends counted: "Starts in 2 days",
+ * "Day 3 of 14 · 12 days left", "Last day", or finished. All UTC-midnight days.
+ */
+export function sprintStatus(start: Date, end: Date, today: Date): { running: boolean; label: string } {
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  if (today < start) return { running: true, label: `Starts in ${plural(Math.round((start.getTime() - today.getTime()) / DAY_MS), "day")}` };
+  if (today > end) return { running: false, label: "Finished" };
+  const length = Math.round((end.getTime() - start.getTime()) / DAY_MS) + 1;
+  const day = Math.round((today.getTime() - start.getTime()) / DAY_MS) + 1;
+  const left = length - day;
+  return { running: true, label: left === 0 ? "Last day" : `Day ${day} of ${length} · ${plural(left, "day")} left` };
+}
+
+/** The name after the last sprint's: "Sprint 5" → "Sprint 6", none → "Sprint 1"; "" when the name has no number at the end. */
+export function nextSprintName(previous: string | undefined): string {
+  if (previous === undefined) return "Sprint 1";
+  const match = /^(.*?)(\d+)\s*$/.exec(previous);
+  return match ? `${match[1]}${Number(match[2]) + 1}` : "";
+}

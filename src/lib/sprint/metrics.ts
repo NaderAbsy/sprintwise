@@ -45,7 +45,12 @@ export type SprintMetrics = {
 };
 
 const points = (story: Story) => story.storyPoints ?? 0;
-const sum = (values: number[]) => values.reduce((total, v) => total + v, 0);
+
+/** Adds points without floating-point leftovers, so 0.1 + 0.2 is 0.3, not 0.30000000000000004. */
+export function sumPoints(values: number[]): number {
+  return Math.round(values.reduce((total, v) => total + v, 0) * 1e6) / 1e6;
+}
+const sum = sumPoints;
 
 /** Compares the locked baseline with the latest snapshot. Unrounded: round only for display. */
 export function computeMetrics(
@@ -84,8 +89,8 @@ export function computeMetrics(
     latestTotal,
     scopeAdded,
     scopeRemoved,
-    reestimateTotal,
-    donePoints,
+    reestimateTotal: sum([reestimateTotal]),
+    donePoints: sum([donePoints]),
     netChange: ratio(latestTotal - baselineTotal),
     churn: ratio(scopeAdded + scopeRemoved + reestimateTotal),
     completion: ratio(donePoints),
@@ -119,5 +124,6 @@ export function formatPercent(value: number | null, { signed = false } = {}): st
 
 /** 1 → "1 pt", 3 → "3 pts". */
 export function formatPoints(value: number | string): string {
-  return `${value} ${Number(value) === 1 ? "pt" : "pts"}`;
+  const n = typeof value === "number" ? sumPoints([value]) : value;
+  return `${n} ${Number(value) === 1 ? "pt" : "pts"}`;
 }

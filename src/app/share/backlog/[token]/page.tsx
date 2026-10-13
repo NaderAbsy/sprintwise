@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { BandBadge } from "@/components/band-badge";
 import { JiraInline, JiraText } from "@/components/jira-text";
 import { Logo } from "@/components/logo";
+import { SharedFooter } from "@/components/shared-footer";
 import { ScoreRing } from "@/components/score-ring";
 import { SecondLookList } from "@/components/second-look";
 import { bandFor, scoreStory } from "@/lib/readiness/rules";
@@ -151,6 +152,7 @@ export default async function SharedBacklogPage({ params, searchParams }: PagePr
           </ul>
         )}
       </main>
+      <SharedFooter wide />
     </div>
   );
 }

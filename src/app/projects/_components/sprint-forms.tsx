@@ -10,13 +10,13 @@ import { MAX_BYTES } from "@/lib/csv/template";
 import { emptyFormState } from "@/lib/form-state";
 import { localToday } from "@/lib/sprint/dates";
 import { diffSnapshots } from "@/lib/sprint/diff";
-import { formatPoints } from "@/lib/sprint/metrics";
+import { formatPoints, sumPoints } from "@/lib/sprint/metrics";
 import type { Story } from "@/lib/stories/types";
 import { BandBadge } from "@/components/band-badge";
-import { scoreStory, type RuleSettings } from "@/lib/readiness/rules";
+import { scoreStory, type Band, type RuleSettings } from "@/lib/readiness/rules";
 import { keepValuesOnSubmit } from "@/lib/keep-values-on-submit";
 
-const totalPoints = (stories: Story[]) => stories.reduce((sum, s) => sum + (s.storyPoints ?? 0), 0);
+const totalPoints = (stories: Story[]) => sumPoints(stories.map((s) => s.storyPoints ?? 0));
 
 /** YYYY-MM-DD plus `days`, in UTC so it never shifts with the time zone. */
 function addDays(day: string, days: number): string {
@@ -25,11 +25,20 @@ function addDays(day: string, days: number): string {
   return date.toISOString().slice(0, 10);
 }
 
-export function CreateSprintForm({ projectId }: { projectId: string }) {
+export function CreateSprintForm({
+  projectId,
+  suggestion,
+}: {
+  projectId: string;
+  /** From the last sprint: the next name, the day after it ends (YYYY-MM-DD), and its length in days. */
+  suggestion: { name: string; after?: string; days?: number };
+}) {
   const [state, action, pending] = useActionState(createSprint.bind(null, projectId), emptyFormState);
   const errors = state.fieldErrors ?? {};
-  // A two-week sprint starting today: the most common shape, easy to change.
+  // Straight after the last sprint (or today, if that's later), as long as the last one; else two weeks from today.
   const today = localToday();
+  const start = suggestion.after && suggestion.after > today ? suggestion.after : today;
+  const days = suggestion.days && suggestion.days > 1 ? suggestion.days : 14;
   return (
     <form action={action} onSubmit={keepValuesOnSubmit(action)} className="card max-w-lg space-y-4 p-5" noValidate>
       <div>
@@ -41,6 +50,7 @@ export function CreateSprintForm({ projectId }: { projectId: string }) {
           name="name"
           className="field mt-1"
           placeholder="e.g. Sprint 14"
+          defaultValue={suggestion.name}
           aria-invalid={errors.name ? true : undefined}
           aria-describedby="sprint-name-error"
         />
@@ -55,7 +65,7 @@ export function CreateSprintForm({ projectId }: { projectId: string }) {
             id="startDate"
             name="startDate"
             type="date"
-            defaultValue={today}
+            defaultValue={start}
             suppressHydrationWarning
             className="field mt-1"
             aria-invalid={errors.startDate ? true : undefined}
@@ -71,7 +81,7 @@ export function CreateSprintForm({ projectId }: { projectId: string }) {
             id="endDate"
             name="endDate"
             type="date"
-            defaultValue={addDays(today, 13)}
+            defaultValue={addDays(start, days - 1)}
             suppressHydrationWarning
             className="field mt-1"
             aria-invalid={errors.endDate ? true : undefined}
@@ -103,7 +113,8 @@ export function CreateSprintForm({ projectId }: { projectId: string }) {
   );
 }
 
-export type BacklogStory = Story & { id: string };
+/** A backlog story for picking; `band` is its saved readiness, and the description is left out. */
+export type BacklogStory = Story & { id: string; band?: Band };
 
 type UploadProps = {
   projectId: string;
@@ -192,7 +203,7 @@ export function SnapshotUploadForm(props: UploadProps) {
     source === "backlog" ? backlog.filter((s) => picked.has(s.id)) : result?.ok ? result.stories : [];
   const hasStories = stories.length > 0 && (source === "backlog" || result?.ok === true);
   const changes = hasStories && props.mode === "snapshot" ? diffSnapshots(props.previous, stories) : [];
-  const bandOf = (story: Story) => scoreStory(story, settings).band;
+  const bandOf = (story: Story & { band?: Band }) => story.band ?? scoreStory(story, settings).band;
   const notReady = props.mode === "baseline" ? stories.filter((st) => bandOf(st) !== "Ready") : [];
   const capacity = props.mode === "baseline" ? props.capacity : null;
   const selectedPoints = totalPoints(stories);

@@ -90,7 +90,8 @@ export default async function Home() {
   const metrics = computeMetrics(baseline, latest);
   const finding = readinessFinding(compareReadiness(baseline, latest, DEFAULT_SETTINGS));
   const transcript = Object.values(videoLines).map((line) => line.caption);
-  const latestRelease = RELEASES[0];
+  // The newest release that adds something, so the badge never just announces fixes.
+  const latestRelease = RELEASES.find((r) => r.feature) ?? RELEASES[0];
   const draftScore = scoreStory(AI_DRAFT);
   const draftLooks = secondLook(AI_DRAFT);
 
@@ -238,7 +239,7 @@ export default async function Home() {
               className="group inline-flex items-center gap-2 rounded-full border border-border bg-surface/80 py-1 pr-3 pl-1 text-xs font-medium text-muted backdrop-blur transition-colors hover:border-accent hover:text-foreground"
             >
               <span className="rounded-full bg-accent px-2 py-0.5 text-accent-foreground">{latestRelease.version}</span>
-              New: {latestRelease.title.toLowerCase()}
+              New: {latestRelease.title.charAt(0).toLowerCase() + latestRelease.title.slice(1)}
               <ArrowRight aria-hidden="true" className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <h1 className="mt-6 text-4xl font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl">

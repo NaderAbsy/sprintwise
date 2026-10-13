@@ -31,6 +31,8 @@ export type BacklogRow = {
   storyPoints: number | null;
   score: number | null;
   band: Band | null;
+  /** Why a score of 80+ isn't Ready, such as "Too big"; null otherwise. */
+  capNote: string | null;
 };
 
 /**
@@ -282,7 +284,10 @@ export function BacklogTable({
                     </span>
                   )}
                 </td>
-                <td className="hidden sm:table-cell">{row.band && <BandBadge band={row.band} />}</td>
+                <td className="hidden sm:table-cell">
+                  {row.band && <BandBadge band={row.band} />}
+                  {row.capNote && <span className="mt-1 block text-xs text-subtle">{row.capNote}</span>}
+                </td>
                 <td className="pr-2! sm:pr-4!">
                   <QuickField
                     projectId={projectId}

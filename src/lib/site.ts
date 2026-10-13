@@ -11,10 +11,40 @@ export const MARKETING_LINKS = [
   { href: "/about", label: "About" },
 ];
 
-export type Release = { version: string; date: string; title: string; summary: string; items: string[] };
+export type Release = {
+  version: string;
+  date: string;
+  title: string;
+  summary: string;
+  items: string[];
+  /** Adds something a visitor would want to hear about; the home page's "New:" badge shows the latest of these, not fix releases. */
+  feature?: boolean;
+};
 
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
+  {
+    version: "v2.19",
+    date: "2026-10-13",
+    title: "A second full test run",
+    summary: "Fixes and touches from using Sprintwise start to finish again, plus speed-ups for teams with many sprints.",
+    items: [
+      "Jira issues with very long descriptions are cut to fit instead of being skipped, so Sync keeps their status up to date. They aren't sent back, so Jira keeps the full text.",
+      "Story points accept a decimal comma: 1,5 is 1.5.",
+      "Point totals never show long decimals such as 0.30000000000000004.",
+      "A new story never reuses the key of a deleted one that's still in a sprint.",
+      "An edit saved while Jira syncs, or while stories are being sent, is never overwritten or lost.",
+      "Issues created in Jira between Preview and Import are picked up by the next sync.",
+      "Two snapshots saved at the same moment, from two tabs, can't double the change log.",
+      "Sub-tasks are left unticked at import, like epics, and new ones aren't added by Sync.",
+      "The backlog says why a story scoring 80 or more isn't Ready, such as \"Too big\".",
+      "Running sprints show which day they're on and how many are left; a new sprint suggests its name and dates.",
+      "Refinement leaves out stories the current sprint is already working on.",
+      "A running sprint's report reads \"so far\" rather than as a final result.",
+      "Shared reports and backlogs say what made them, for viewers who'd like the same.",
+      "The Sprints page and sprint page load less, and two database indexes keep edits quick as history grows.",
+    ],
+  },
   {
     version: "v2.18",
     date: "2026-10-12",
@@ -37,6 +67,7 @@ export const RELEASES: Release[] = [
     version: "v2.17",
     date: "2026-10-10",
     title: "Nightly Jira sync",
+    feature: true,
     summary: "While a sprint is running, Sprintwise syncs from Jira every night, so the burn-up fills in by itself.",
     items: [
       "Projects connected to Jira with a sprint built from the backlog sync between 22:00 and 23:00 UTC, using your own Jira connection.",
@@ -108,6 +139,7 @@ export const RELEASES: Release[] = [
     version: "v2.11",
     date: "2026-10-09",
     title: "Honest about unplanned work",
+    feature: true,
     summary: "Bugs added mid-sprint are tagged by themselves and counted even without points, and planning explains the room velocity already leaves.",
     items: [
       "Work of type Bug, Defect, Incident or Hotfix added mid-sprint is tagged \"Bug or incident\" by itself. A reason you choose is never replaced.",
@@ -219,6 +251,7 @@ export const RELEASES: Release[] = [
     version: "v2.2",
     date: "2026-10-07",
     title: "Connect Jira",
+    feature: true,
     summary: "Import straight from a Jira search, sync with one click, and send your edits back. No CSV needed.",
     items: [
       "Connect your Atlassian account once from a project's Import page; tokens are stored encrypted.",
@@ -232,6 +265,7 @@ export const RELEASES: Release[] = [
     version: "v2.1",
     date: "2026-10-07",
     title: "Refinement mode",
+    feature: true,
     summary: "A meeting screen for refinement: one story at a time, what's missing, and the team's estimate in one click.",
     items: [
       "Refinement walks the unfinished stories that aren't Ready yet (or all unfinished ones), in priority order.",
@@ -245,6 +279,7 @@ export const RELEASES: Release[] = [
     version: "v2.0",
     date: "2026-10-07",
     title: "Share the backlog",
+    feature: true,
     summary: "A first way to share with the team: a read-only backlog link for refinement, and a home page for the AI era.",
     items: [
       "Share a read-only link to the backlog: the team sees every unfinished story, its score and what to fix, without an account.",
@@ -257,6 +292,7 @@ export const RELEASES: Release[] = [
     version: "v1.14",
     date: "2026-10-07",
     title: "Worth a second look",
+    feature: true,
     summary: "AI writes the ticket; Sprintwise spots the signs nobody read it through.",
     items: [
       "A \"Worth a second look\" list on each story and live while editing: text left over from an AI chat, unfilled placeholders, criteria that would fit any story, filler words, and results promised with a made-up-looking figure.",

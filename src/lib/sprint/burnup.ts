@@ -1,9 +1,9 @@
-import { DONE_STATUSES, isDone } from "@/lib/sprint/metrics";
+import { DONE_STATUSES, isDone, sumPoints } from "@/lib/sprint/metrics";
 import type { Story } from "@/lib/stories/types";
 
 export type BurnupPoint = { date: Date; scope: number; done: number };
 
-const points = (stories: Story[]) => stories.reduce((sum, s) => sum + (s.storyPoints ?? 0), 0);
+const points = (stories: Story[]) => sumPoints(stories.map((s) => s.storyPoints ?? 0));
 
 /**
  * A burn-up: on each snapshot day, the sprint's total points (scope) and the
