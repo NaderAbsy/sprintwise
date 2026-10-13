@@ -3,6 +3,7 @@ import { auth } from "@/lib/server/auth";
 import { db } from "@/lib/server/db";
 import { EPIC_MAX_LENGTH } from "@/lib/csv/template";
 import { STORY_LIMITS } from "@/lib/stories/form";
+import { cutText } from "@/lib/text";
 import { withCriteriaInDescription } from "@/lib/stories/types";
 
 /**
@@ -143,16 +144,32 @@ async function accessToken(userId: string): Promise<string> {
   }
 }
 
+/** Jira asked to slow down (429): whatever is in progress should stop, not keep asking. */
+export class JiraBusyError extends JiraError {}
+
 async function call<T>(token: string, url: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(url, {
-    ...init,
-    headers: { Authorization: `Bearer ${token}`, Accept: "application/json", "Content-Type": "application/json", ...init.headers },
-    cache: "no-store",
-    signal: AbortSignal.timeout(20_000),
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...init,
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json", "Content-Type": "application/json", ...init.headers },
+      cache: "no-store",
+      signal: AbortSignal.timeout(20_000),
+    });
+  } catch (error) {
+    // Said as Jira's problem, not the user's connection: this request ran on Sprintwise's server.
+    if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
+      throw new JiraError("Jira took too long to answer. Try again in a minute.");
+    }
+    throw new JiraError("Sprintwise couldn't reach Jira just now. Try again in a minute.");
+  }
   if (response.status === 401) throw new JiraError("Jira didn't accept the connection. Connect Jira again.");
   if (response.status === 403) throw new JiraError("Your Jira account isn't allowed to do that on this site.");
-  if (response.status === 429) throw new JiraError("Jira is busy. Try again in a minute.");
+  if (response.status === 429) {
+    const seconds = Number(response.headers.get("retry-after"));
+    const wait = Number.isFinite(seconds) && seconds > 0 ? `in ${seconds < 90 ? `${Math.ceil(seconds)} seconds` : `${Math.ceil(seconds / 60)} minutes`}` : "in a minute";
+    throw new JiraBusyError(`Jira is busy and asked Sprintwise to wait. Try again ${wait}.`);
+  }
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { errorMessages?: string[]; errors?: Record<string, string> } | null;
     const detail = [...(body?.errorMessages ?? []), ...Object.values(body?.errors ?? {})].join(" ").slice(0, 300);
@@ -239,6 +256,15 @@ export async function searchJira(userId: string, cloudId: string, jql: string): 
 // Writing back
 // ---------------------------------------------------------------------------
 
+/** The token and field ids a run of writes shares, so sending 50 stories doesn't fetch them 50 times. */
+export type JiraWriter = { token: string; ids: FieldIds };
+
+export async function jiraWriter(userId: string, cloudId: string): Promise<JiraWriter> {
+  if (jiraFake) return { token: "fake-token", ids: { storyPoints: [], acceptanceCriteria: null } };
+  const token = await accessToken(userId);
+  return { token, ids: await fieldIds(token, cloudId) };
+}
+
 /**
  * Writes a story's edited fields to its Jira issue. Points and criteria go only
  * where the site has those fields; if the issue type's screen doesn't allow
@@ -250,6 +276,7 @@ export async function updateJiraIssue(
   cloudId: string,
   key: string,
   update: JiraUpdate,
+  writer?: JiraWriter,
 ): Promise<{ skipped: string[]; criteriaInDescription: boolean }> {
   if (jiraFake) {
     const issue = fakeIssues.get(key);
@@ -257,9 +284,8 @@ export async function updateJiraIssue(
     fakeIssues.set(key, { ...issue, ...update });
     return { skipped: [], criteriaInDescription: false };
   }
-  if (!isJiraKey(key)) throw new JiraError(`${key.slice(0, 60)} isn't a Jira issue key, so it can't be sent.`);
-  const token = await accessToken(userId);
-  const ids = await fieldIds(token, cloudId);
+  if (!isJiraKey(key)) throw new JiraError(`${cutText(key, 60)} isn't a Jira issue key, so it can't be sent.`);
+  const { token, ids } = writer ?? (await jiraWriter(userId, cloudId));
   const url = `${siteApi(cloudId)}/issue/${encodeURIComponent(key)}?notifyUsers=false`;
   // With no criteria field on this site, criteria written here go into the description, where the team keeps them.
   const criteriaInDescription = !ids.acceptanceCriteria && update.acceptanceCriteria.trim() !== "";
@@ -286,18 +312,18 @@ export async function updateJiraIssue(
 
 const cell = (value: string) => (/[",\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value);
 
-/**
- * Jira issues as a CSV with Jira's own column names, so they go through exactly
- * the same preview, checks and import as a file would.
- */
 /** Ends text cut to fit Sprintwise's limits. A story holding it isn't sent back, so Jira keeps its full text. */
 export const JIRA_CUT = "… [cut short here; the full text is in Jira]";
 
 /** Jira allows longer text than Sprintwise keeps: cut it rather than leave the issue out of imports and syncs. */
 function fit(text: string, limit: number): string {
-  return text.length <= limit ? text : text.slice(0, limit - JIRA_CUT.length) + JIRA_CUT;
+  return text.length <= limit ? text : cutText(text, limit - JIRA_CUT.length) + JIRA_CUT;
 }
 
+/**
+ * Jira issues as a CSV with Jira's own column names, so they go through exactly
+ * the same preview, checks and import as a file would.
+ */
 export function issuesAsCsv(issues: JiraIssue[]): string {
   const labelColumns = Math.max(1, ...issues.map((i) => i.labels.length));
   const header = [

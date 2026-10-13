@@ -32,9 +32,10 @@ const SAFE_URL = /^https?:\/\/[^\s]+$/i;
 export function parseInline(text: string): Inline[] {
   const out: Inline[] = [];
   // Every repeated part has an upper bound, so text full of unmatched "{{" or "[|" can't make each
-  // opener rescan the rest of a long line (that made the shared backlog slow on hostile text).
+  // opener rescan the rest of a long line (that made the shared backlog slow on hostile text). Code
+  // can't contain "{", so a run of "{{{{…" fails at once instead of scanning 500 characters per brace.
   const pattern =
-    /\{\{(.{1,500}?)\}\}|\{color(?::[^}]{0,50})?\}|\[([^[\]|\n]{0,300})\|([^[\]|\s]{1,2000})\]|\[(https?:\/\/[^[\]\s]{1,2000})\]|(^|[\s(\[>"'])\*(?=\S)([^*\n]{0,500}?\S)\*(?=$|[\s).,:;!?\]'"<-])|(^|[\s(\[>"'])_(?=\S)([^_\n]{0,500}?\S)_(?=$|[\s).,:;!?\]'"<-])/g;
+    /\{\{([^{\n]{1,500}?)\}\}|\{color(?::[^}]{0,50})?\}|\[([^[\]|\n]{0,300})\|([^[\]|\s]{1,2000})\]|\[(https?:\/\/[^[\]\s]{1,2000})\]|(^|[\s(\[>"'])\*(?=\S)([^*\n]{0,500}?\S)\*(?=$|[\s).,:;!?\]'"<-])|(^|[\s(\[>"'])_(?=\S)([^_\n]{0,500}?\S)_(?=$|[\s).,:;!?\]'"<-])/g;
   let last = 0;
   const pushText = (v: string) => {
     if (!v) return;

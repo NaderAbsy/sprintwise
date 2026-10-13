@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { EmptyState } from "@/components/empty-state";
 import { SectionHeader } from "@/components/section-header";
-import { formatDay, sprintStatus } from "@/lib/sprint/dates";
-import { utcToday } from "@/lib/sprint/tracking";
+import { formatDay, toDay } from "@/lib/sprint/dates";
+import { SprintDay } from "@/components/sprint-day";
 import type { Story } from "@/lib/stories/types";
 import { computeMetrics, formatPercent } from "@/lib/sprint/metrics";
 import { db } from "@/lib/server/db";
@@ -36,7 +36,7 @@ export default async function SprintsPage({ params }: PageProps<"/projects/[proj
     list.push({ ...item, title: "", description: "", acceptanceCriteria: "" });
     storiesOf.set(snapshotId, list);
   }
-  const today = utcToday();
+
   const newSprint = (
     <Link href={`${base}/new`} className="btn-primary">
       <Plus aria-hidden="true" className="h-4 w-4" />
@@ -64,7 +64,6 @@ export default async function SprintsPage({ params }: PageProps<"/projects/[proj
               baseline && latest
                 ? computeMetrics(storiesOf.get(baseline.id) ?? [], storiesOf.get(latest.id) ?? [], doneStatusesOf(project))
                 : null;
-            const status = sprintStatus(sprint.startDate, sprint.endDate, today);
             return (
               <li key={sprint.id}>
                 <Link
@@ -74,9 +73,7 @@ export default async function SprintsPage({ params }: PageProps<"/projects/[proj
                   <div className="min-w-0">
                     <p className="flex flex-wrap items-center gap-2 font-semibold group-hover:text-accent">
                       {sprint.name}
-                      {status.running && (
-                        <span className="rounded-full border border-border px-2 py-0.5 text-xs font-medium text-muted">{status.label}</span>
-                      )}
+                      <SprintDay start={toDay(sprint.startDate)} end={toDay(sprint.endDate)} badge />
                     </p>
                     <p className="mt-0.5 text-sm text-muted">
                       {formatDay(sprint.startDate)} to {formatDay(sprint.endDate)} ·{" "}

@@ -1,4 +1,5 @@
 "use client";
+import { guarded } from "@/lib/safe-action";
 import { useActionState, useId, useMemo, useState } from "react";
 import { importStories } from "@/app/projects/actions";
 import { BandBadge } from "@/components/band-badge";
@@ -51,10 +52,12 @@ export function ImportForm({
   jira?: JiraSourceProps;
 }) {
   const id = useId();
-  const [state, action, pending] = useActionState(importStories.bind(null, projectId), emptyFormState);
+  const [state, action, pending] = useActionState(guarded(importStories.bind(null, projectId)), emptyFormState);
   const [text, setText] = useState<string | null>(null);
   // Where the rows came from: a file, or a Jira search (whose note says how many and from where).
-  const [origin, setOrigin] = useState<{ source: "file" | "jira"; note?: string; searchedAt?: string }>({ source: "file" });
+  const [origin, setOrigin] = useState<{ source: "file" | "jira"; note?: string; searchedAt?: string; cloudId?: string; jql?: string }>({
+    source: "file",
+  });
   const [fileError, setFileError] = useState<string | null>(null);
   const [mapping, setMapping] = useState<ColumnMapping>(savedColumns);
   const [ticked, setTicked] = useState<Set<number>>(new Set());
@@ -184,9 +187,9 @@ export function ImportForm({
         <JiraSource
           projectId={projectId}
           jira={jira}
-          onLoaded={(csv, note, searchedAt) => {
+          onLoaded={(csv, note, from) => {
             reset();
-            setOrigin({ source: "jira", note, searchedAt });
+            setOrigin({ source: "jira", note, ...from });
             setText(csv);
           }}
         />
@@ -200,6 +203,8 @@ export function ImportForm({
         <input type="hidden" name="mapping" value={JSON.stringify(mapping)} />
         <input type="hidden" name="source" value={origin.source} />
         <input type="hidden" name="searchedAt" value={origin.searchedAt ?? ""} />
+        <input type="hidden" name="jiraCloudId" value={origin.cloudId ?? ""} />
+        <input type="hidden" name="jiraJql" value={origin.jql ?? ""} />
         <p className="mt-2 text-xs text-muted">
           The file is read on your computer. Only the stories you tick are sent to Sprintwise.
         </p>

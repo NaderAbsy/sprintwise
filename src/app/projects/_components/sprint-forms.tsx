@@ -1,4 +1,5 @@
 "use client";
+import { guarded } from "@/lib/safe-action";
 import { useActionState, useRef, useState } from "react";
 import { createSprint, lockBaseline, uploadSnapshot } from "@/app/projects/sprint-actions";
 import { ChangeTable } from "@/components/change-table";
@@ -33,7 +34,7 @@ export function CreateSprintForm({
   /** From the last sprint: the next name, the day after it ends (YYYY-MM-DD), and its length in days. */
   suggestion: { name: string; after?: string; days?: number };
 }) {
-  const [state, action, pending] = useActionState(createSprint.bind(null, projectId), emptyFormState);
+  const [state, action, pending] = useActionState(guarded(createSprint.bind(null, projectId)), emptyFormState);
   const errors = state.fieldErrors ?? {};
   // Straight after the last sprint (or today, if that's later), as long as the last one; else two weeks from today.
   const today = localToday();
@@ -144,7 +145,7 @@ type Source = "backlog" | "csv";
 export function SnapshotUploadForm(props: UploadProps) {
   const { projectId, sprintId, rangeLabel, endDay, minDay, backlog, settings } = props;
   const serverAction = props.mode === "baseline" ? lockBaseline : uploadSnapshot;
-  const [state, action, pending] = useActionState(serverAction.bind(null, projectId, sprintId), emptyFormState);
+  const [state, action, pending] = useActionState(guarded(serverAction.bind(null, projectId, sprintId)), emptyFormState);
   const [source, setSource] = useState<Source>(backlog.length > 0 ? "backlog" : "csv");
   const [csv, setCsv] = useState("");
   const [result, setResult] = useState<CsvResult | null>(null);

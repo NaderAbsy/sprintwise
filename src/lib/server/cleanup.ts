@@ -15,6 +15,8 @@ export async function deleteExpiredAuthData(now = new Date()) {
     db.session.deleteMany({ where: { expiresAt: { lt: now } } }),
     db.verification.deleteMany({ where: { expiresAt: { lt: now } } }),
     db.rateLimit.deleteMany({ where: { lastRequest: { lt: BigInt(now.getTime() - RATE_LIMIT_KEEP_MS) } } }),
+    // Per-account action counts (see action-limits.ts) only cover the last few minutes.
+    db.actionLimit.deleteMany({ where: { windowStart: { lt: new Date(now.getTime() - RATE_LIMIT_KEEP_MS) } } }),
   ]);
   return { sessions: sessions.count, verifications: verifications.count, rateLimits: rateLimits.count };
 }

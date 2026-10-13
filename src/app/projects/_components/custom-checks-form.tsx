@@ -1,4 +1,5 @@
 "use client";
+import { guarded } from "@/lib/safe-action";
 import { Plus, Trash2 } from "lucide-react";
 import { useActionState, useState } from "react";
 import { updateCustomChecks } from "@/app/projects/actions";
@@ -17,7 +18,7 @@ const EXAMPLES: CustomCheck[] = [
 
 /** The team's own Definition of Ready additions. Each one is pass/fail; a failure keeps a story from being Ready. */
 export function CustomChecksForm({ projectId, checks }: { projectId: string; checks: CustomCheck[] }) {
-  const [state, action, pending] = useActionState(updateCustomChecks.bind(null, projectId), emptyFormState);
+  const [state, action, pending] = useActionState(guarded(updateCustomChecks.bind(null, projectId)), emptyFormState);
   const [rows, setRows] = useState<Row[]>(() => checks.map((c, i) => ({ ...c, uid: i })));
   const [nextUid, setNextUid] = useState(checks.length);
   const errors = state.fieldErrors ?? {};

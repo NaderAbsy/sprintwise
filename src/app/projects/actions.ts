@@ -12,7 +12,11 @@ import { assertId, isId, requireFreshUser, requireProject, requireUser } from "@
 import { projectDefaults, readinessData, settingsOf, toStory } from "@/lib/server/readiness";
 import { doneStatusesOf } from "@/lib/server/sprint";
 import { bottomRank, saveStories } from "@/lib/server/save-stories";
+import { jiraSites } from "@/lib/server/jira";
+import { jiraFailure, otherSite } from "@/lib/server/jira-sync";
 import { recordSprintChanges } from "@/lib/server/tracking";
+import { LimitError, withinLimit } from "@/lib/server/within-limit";
+import { overLimit } from "@/lib/server/action-limits";
 import { recordUsage } from "@/lib/server/usage";
 import { readStoryForm, STORY_LIMITS } from "@/lib/stories/form";
 import { planMove } from "@/lib/stories/rank";
@@ -24,11 +28,7 @@ import { demoBacklog } from "@/demo/backlog";
 import type { RuleSettings } from "@/lib/readiness/rules";
 import { DEFAULT_RULE_SETTINGS, parseCustomChecks, parseDoneStatuses, parseRuleSettings } from "@/lib/readiness/settings";
 
-const projectName = z
-  .string()
-  .trim()
-  .min(1, "Give the project a name.")
-  .max(80, "Keep the name under 80 characters.");
+const projectName = z.string().trim().min(1, "Give the project a name.").max(80, "Keep the name under 80 characters.");
 
 // ---------------------------------------------------------------------------
 // Projects (story F-4)
@@ -39,14 +39,21 @@ export async function createProject(_prev: FormState, formData: FormData): Promi
   const name = projectName.safeParse(formData.get("name"));
   if (!name.success) return { fieldErrors: { name: name.error.issues[0].message } };
 
-  const count = await db.project.count({ where: { userId: user.id } });
-  if (count >= MAX_PROJECTS) {
-    return { error: `You can have up to ${MAX_PROJECTS} projects. Delete one to make room.` };
+  let project;
+  try {
+    project = await withinLimit(
+      { user: user.id },
+      {
+        count: (tx) => tx.project.count({ where: { userId: user.id } }),
+        max: MAX_PROJECTS,
+        message: `You can have up to ${MAX_PROJECTS} projects. Delete one to make room.`,
+      },
+      (tx) => tx.project.create({ data: { userId: user.id, name: name.data, ...projectDefaults } }),
+    );
+  } catch (error) {
+    if (error instanceof LimitError) return { error: error.message };
+    throw error;
   }
-
-  const project = await db.project.create({
-    data: { userId: user.id, name: name.data, ...projectDefaults },
-  });
   // The sidebar lists projects, so refresh the shared layout too.
   revalidatePath("/projects", "layout");
   redirect(`/projects/${project.id}`);
@@ -83,9 +90,17 @@ async function nextStoryKey(projectId: string): Promise<string> {
   const where = { key: { startsWith: "STORY-" } };
   const [inBacklog, inSprints] = await Promise.all([
     db.story.findMany({ where: { projectId, ...where }, select: { key: true } }),
-    db.snapshotItem.findMany({ where: { ...where, snapshot: { sprint: { projectId } } }, select: { key: true }, distinct: ["key"] }),
+    db.snapshotItem.findMany({
+      where: { ...where, snapshot: { sprint: { projectId } } },
+      select: { key: true },
+      distinct: ["key"],
+    }),
   ]);
-  const highest = [...inBacklog, ...inSprints].reduce((max, { key }) => Math.max(max, Number(key.slice(6)) || 0), 0);
+  // Only plain numbers count: one odd key such as STORY-9999999999999999 can't be added to, and would block every new key.
+  const highest = [...inBacklog, ...inSprints].reduce(
+    (max, { key }) => (/^STORY-\d{1,9}$/.test(key) ? Math.max(max, Number(key.slice(6))) : max),
+    0,
+  );
   return `STORY-${highest + 1}`;
 }
 
@@ -93,9 +108,8 @@ async function nextStoryKey(projectId: string): Promise<string> {
 export async function addStory(projectId: string, _prev: FormState, formData: FormData): Promise<FormState> {
   const project = await requireProject(projectId);
   const { story: fields, rawKey, fieldErrors } = readStoryForm(formData);
-  if ((await db.story.count({ where: { projectId: project.id } })) >= MAX_STORIES_PER_PROJECT) {
-    return { error: `A project can hold up to ${MAX_STORIES_PER_PROJECT} stories. Delete some to make room.` };
-  }
+  const full = `A project can hold up to ${MAX_STORIES_PER_PROJECT} stories. Delete some to make room.`;
+  if ((await db.story.count({ where: { projectId: project.id } })) >= MAX_STORIES_PER_PROJECT) return { error: full };
 
   const key = rawKey === "" ? await nextStoryKey(project.id) : normalizeKey(rawKey);
   if (!fieldErrors.key && (await db.story.findUnique({ where: { projectId_key: { projectId: project.id, key } } }))) {
@@ -107,17 +121,23 @@ export async function addStory(projectId: string, _prev: FormState, formData: Fo
   const story: Story = { key, ...fields, status: fields.status || "To Do" };
   let created;
   try {
-    created = await db.story.create({
-      data: {
-        projectId: project.id,
-        rank: await bottomRank(project.id),
-        ...story,
-        // Written here, so it isn't in Jira yet.
-        editedAt: new Date(),
-        readiness: { create: readinessData(story, settingsOf(project)) },
-      },
-    });
+    created = await withinLimit(
+      { project: project.id },
+      { count: (tx) => tx.story.count({ where: { projectId: project.id } }), max: MAX_STORIES_PER_PROJECT, message: full },
+      async (tx) =>
+        tx.story.create({
+          data: {
+            projectId: project.id,
+            rank: await bottomRank(project.id, tx),
+            ...story,
+            // Written here, so it isn't in Jira yet.
+            editedAt: new Date(),
+            readiness: { create: readinessData(story, settingsOf(project)) },
+          },
+        }),
+    );
   } catch (error) {
+    if (error instanceof LimitError) return { error: error.message };
     // The same key saved a moment ago, from another tab.
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       return { fieldErrors: { key: `${key} was just added to this project. Use another key, or leave it blank.` } };
@@ -180,6 +200,9 @@ export async function importStories(projectId: string, _prev: FormState, formDat
   const project = await requireProject(projectId);
   const payload = readImportPayload(formData.get("stories"), formData.get("mapping"));
   if (!payload.ok) return { error: payload.error };
+  const limited = await overLimit("import", project.userId);
+  if (limited) return { error: limited };
+
   const { stories, mapping } = payload;
 
   const existingKeys = new Set(
@@ -194,16 +217,39 @@ export async function importStories(projectId: string, _prev: FormState, formDat
 
   // The next file from the same Jira gets the same columns. (An import straight from Jira has no columns to remember.)
   const fromJira = formData.get("source") === "jira";
-  await saveStories(project, stories, {
-    extra: (tx) =>
-      fromJira
-        ? // Sync adds issues created after the preview's search; ones left unticked now stay out.
-          tx.project.update({
-            where: { id: project.id },
-            data: { jiraSyncedAt: searchTime(formData.get("searchedAt")), jiraAutoSynced: false, jiraSyncError: null },
-          })
-        : tx.project.update({ where: { id: project.id }, data: { importColumns: rememberedColumns(mapping) } }),
-  });
+  // From Jira, the site and search become the project's now, for Sync and Send, after checking the site is the user's.
+  let jira: { jiraCloudId: string; jiraSiteName: string; jiraSiteUrl: string; jiraJql: string } | null = null;
+  if (fromJira) {
+    const cloudId = String(formData.get("jiraCloudId") ?? "");
+    const jql = String(formData.get("jiraJql") ?? "").trim();
+    if (jql === "" || jql.length > 2000) return { error: "Preview the issues from Jira again, then import." };
+    const other = otherSite(project, cloudId);
+    if (other) return { error: other };
+    let site;
+    try {
+      site = (await jiraSites((await requireUser()).id)).find((s) => s.id === cloudId);
+    } catch (error) {
+      return { error: jiraFailure(error) };
+    }
+    if (!site) return { error: "That Jira site isn't connected to your account any more. Preview the issues again." };
+    jira = { jiraCloudId: site.id, jiraSiteName: site.name, jiraSiteUrl: site.url, jiraJql: jql };
+  }
+  try {
+    await saveStories(project, stories, {
+      maxStories: MAX_STORIES_PER_PROJECT,
+      extra: (tx) =>
+        fromJira
+          ? // Sync adds issues created after the preview's search; ones left unticked now stay out.
+            tx.project.update({
+              where: { id: project.id },
+              data: { ...jira, jiraSyncedAt: searchTime(formData.get("searchedAt")), jiraAutoSynced: false, jiraSyncError: null },
+            })
+          : tx.project.update({ where: { id: project.id }, data: { importColumns: rememberedColumns(mapping) } }),
+    });
+  } catch (error) {
+    if (error instanceof LimitError) return { error: error.message };
+    throw error;
+  }
   await recordSprintChanges(project.id);
   await recordUsage("import");
   revalidatePath(`/projects/${project.id}`, "layout");
@@ -250,7 +296,11 @@ async function rescoreProject(projectId: string, settings: RuleSettings, data: P
     db.project.update({ where: { id: projectId }, data }),
     ...stories.map((row) => {
       const readiness = readinessData(toStory(row), settings);
-      return db.readinessResult.upsert({ where: { storyId: row.id }, create: { storyId: row.id, ...readiness }, update: readiness });
+      return db.readinessResult.upsert({
+        where: { storyId: row.id },
+        create: { storyId: row.id, ...readiness },
+        update: readiness,
+      });
     }),
   ]);
   return stories;
@@ -264,6 +314,8 @@ export async function updateRuleSettings(projectId: string, _prev: FormState, fo
       ? { ok: true as const, settings: DEFAULT_RULE_SETTINGS }
       : parseRuleSettings(String(formData.get("maxPoints") ?? ""), String(formData.get("vagueWords") ?? ""));
   if (!parsed.ok) return { fieldErrors: parsed.errors };
+  const limited = await overLimit("rescore", project.userId);
+  if (limited) return { error: limited };
 
   // The team's own checks are saved separately and kept as they are.
   const settings = { ...parsed.settings, customChecks: settingsOf(project).customChecks };
@@ -283,6 +335,8 @@ export async function updateCustomChecks(projectId: string, _prev: FormState, fo
   const list = (name: string) => formData.getAll(name).map((v) => String(v));
   const parsed = parseCustomChecks(list("checkName"), list("checkField"), list("checkPhrase"));
   if (!parsed.ok) return { fieldErrors: parsed.errors };
+  const limited = await overLimit("rescore", project.userId);
+  if (limited) return { error: limited };
 
   const settings = { ...settingsOf(project), customChecks: parsed.checks };
   const stories = await rescoreProject(project.id, settings, { customChecks: parsed.checks as unknown as Prisma.InputJsonValue });
@@ -313,7 +367,12 @@ export async function setNightlySync(projectId: string, on: unknown) {
  * Changes one story's status or points from a list, without opening it.
  * Points re-score the story; either can be recorded in a sprint that follows the backlog.
  */
-export async function quickUpdateStory(projectId: string, storyId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+export async function quickUpdateStory(
+  projectId: string,
+  storyId: string,
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
   const project = await requireProject(projectId);
   assertId(storyId);
   const row = await db.story.findFirst({ where: { id: storyId, projectId: project.id } });
@@ -328,7 +387,8 @@ export async function quickUpdateStory(projectId: string, storyId: string, _prev
   } else if (field === "storyPoints") {
     const points = parsePoints(value);
     if (!points.valid) return { error: "Points must be a number of 0 or more." };
-    if (points.points !== null && points.points > STORY_LIMITS.points) return { error: `Points can't be more than ${STORY_LIMITS.points}.` };
+    if (points.points !== null && points.points > STORY_LIMITS.points)
+      return { error: `Points can't be more than ${STORY_LIMITS.points}.` };
     data = { storyPoints: points.points };
   } else {
     return { error: "Choose status or points." };
@@ -341,7 +401,9 @@ export async function quickUpdateStory(projectId: string, storyId: string, _prev
       ...data,
       ...("storyPoints" in data && data.storyPoints !== row.storyPoints && { editedAt: new Date() }),
       ...("storyPoints" in data && {
-        readiness: { upsert: { create: readinessData(story, settingsOf(project)), update: readinessData(story, settingsOf(project)) } },
+        readiness: {
+          upsert: { create: readinessData(story, settingsOf(project)), update: readinessData(story, settingsOf(project)) },
+        },
       }),
     },
   });
@@ -367,7 +429,9 @@ export async function moveStory(projectId: string, storyId: string, index: numbe
   if (plan.kind === "rank") {
     await db.story.updateMany({ where: { id: storyId, projectId: project.id }, data: { rank: plan.rank } });
   } else if (plan.kind === "renumber") {
-    await db.$transaction(plan.ids.map((id, i) => db.story.updateMany({ where: { id, projectId: project.id }, data: { rank: i + 1 } })));
+    await db.$transaction(
+      plan.ids.map((id, i) => db.story.updateMany({ where: { id, projectId: project.id }, data: { rank: i + 1 } })),
+    );
   }
   revalidatePath(`/projects/${project.id}`, "layout");
 }
@@ -399,14 +463,18 @@ export async function disableBacklogShare(projectId: string) {
   revalidatePath(`/projects/${project.id}`);
 }
 
-const selectedIds = (ids: string[]) => [...new Set((Array.isArray(ids) ? ids : []).filter(isId))].slice(0, MAX_STORIES_PER_PROJECT);
+const selectedIds = (ids: string[]) =>
+  [...new Set((Array.isArray(ids) ? ids : []).filter(isId))].slice(0, MAX_STORIES_PER_PROJECT);
 
 /** Sets one status on several stories at once, e.g. moving a batch to "Ready for refinement". */
 export async function bulkSetStatus(projectId: string, ids: string[], status: string): Promise<FormState> {
   const project = await requireProject(projectId);
   const value = String(status ?? "").trim();
   if (value.length > STORY_LIMITS.status) return { error: `Keep the status under ${STORY_LIMITS.status} characters.` };
-  const { count } = await db.story.updateMany({ where: { projectId: project.id, id: { in: selectedIds(ids) } }, data: { status: value } });
+  const { count } = await db.story.updateMany({
+    where: { projectId: project.id, id: { in: selectedIds(ids) } },
+    data: { status: value },
+  });
   await recordSprintChanges(project.id);
   revalidatePath(`/projects/${project.id}`, "layout");
   return { message: `Set ${count} ${count === 1 ? "story" : "stories"} to ${value || "no status"}.` };

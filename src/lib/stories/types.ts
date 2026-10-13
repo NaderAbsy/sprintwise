@@ -14,7 +14,9 @@ export type Story = {
 
 /** Matching key: trimmed and upper-cased, so " proj-12 " and "PROJ-12" are the same story. */
 export function normalizeKey(key: string): string {
-  return key.trim().toUpperCase();
+  // Invisible characters (zero-width spaces, direction marks) come along when a key is copied from some tools;
+  // kept, "ABC-1" and "ABC-1" with one would look the same but be two stories.
+  return key.normalize("NFC").replace(/\p{Cf}/gu, "").trim().toUpperCase();
 }
 
 /**

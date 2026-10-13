@@ -24,6 +24,25 @@ export type Release = {
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.20",
+    date: "2026-10-13",
+    title: "Safer when things go wrong",
+    summary: "A third test run, this time as a hostile user, with things failing, with a year's worth of data, and through a first-time visitor's eyes.",
+    items: [
+      "A save that fails (offline, signed out, or during an update) keeps what you typed and says what happened, instead of showing an error page.",
+      "Previewing a Jira search no longer changes which Jira site the project sends to; only importing does, and a project stays with one site.",
+      "Exported CSVs can't hide a spreadsheet formula behind a list bullet.",
+      "A long link or word wraps instead of pushing the page sideways on a phone.",
+      "Invisible characters copied along with a key are dropped, and an odd key like STORY-9999999999999999 can't block new ones.",
+      "A sprint's day count uses your own date, so it's right in New Zealand's morning too.",
+      "The limits on projects, stories and sprints hold even for requests sent at the same moment, with a cap on stored snapshots and on heavy actions in a few minutes.",
+      "A Reconnect Jira button appears when the connection has expired; Send to Jira stops when Jira is busy or slow and says what's left to send.",
+      "Emoji are never cut in half, deep Jira bullets can't push text off screen, and a link that names one site but opens another shows where it really goes.",
+      "Each public page has its own title and description for search results and link previews, with a sitemap and a home-screen icon.",
+      "The FAQ says plainly that the rules read English.",
+    ],
+  },
+  {
     version: "v2.19",
     date: "2026-10-13",
     title: "A second full test run",

@@ -4,8 +4,11 @@ import { jiraAccount, jiraConfigured } from "@/lib/server/jira";
 import { syncProjectFromJira } from "@/lib/server/jira-sync";
 import { utcToday } from "@/lib/sprint/tracking";
 
-/** Stop starting new projects after this long; the function has five minutes, and one sync takes seconds. */
-const BUDGET_MS = 4 * 60 * 1000;
+/**
+ * Stop starting new projects after this long. The function has five minutes; one sync usually takes
+ * seconds, but a slow Jira can take two or three, so this leaves room for the last one to finish.
+ */
+const BUDGET_MS = 2 * 60 * 1000;
 
 export type NightlyResult = { synced: string[]; failed: number; leftForTomorrow: number };
 
@@ -39,7 +42,11 @@ export async function syncJiraProjectsNightly(now = Date.now()): Promise<Nightly
     }
     const error = !(await jiraAccount(project.userId))
       ? "Jira isn't connected to your account. Connect it from the Import page."
-      : (await syncProjectFromJira(project, project.userId, { automatic: true }).catch(() => ({ error: "Something went wrong." }))).error;
+      : (
+          await syncProjectFromJira(project, project.userId, { automatic: true }).catch(() => ({
+            error: "The sync stopped with an error on Sprintwise's side. Try Sync from Jira on the backlog.",
+          }))
+        ).error;
     if (error) {
       result.failed++;
       await db.project.update({ where: { id: project.id }, data: { jiraSyncError: error } });

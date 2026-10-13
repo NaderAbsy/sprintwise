@@ -1,8 +1,10 @@
 "use client";
-import { Cable, Loader2, Search } from "lucide-react";
+import { attempt } from "@/lib/safe-action";
+import { Loader2, Search } from "lucide-react";
 import { useId, useState, useTransition } from "react";
 import { previewFromJira } from "@/app/projects/jira-actions";
-import { authClient } from "@/lib/auth-client";
+import { ConnectJiraButton } from "@/app/projects/_components/connect-jira";
+import { needsReconnect } from "@/lib/jira-messages";
 
 export type JiraSourceProps = {
   /** Whether this account has connected Jira. */
@@ -28,14 +30,14 @@ export function JiraSource({
 }: {
   projectId: string;
   jira: JiraSourceProps;
-  onLoaded: (csv: string, note: string, searchedAt: string) => void;
+  /** The issues as CSV, a note for the preview, and where and when they came from, which the import saves. */
+  onLoaded: (csv: string, note: string, from: { searchedAt: string; cloudId: string; jql: string }) => void;
 }) {
   const id = useId();
   const [cloudId, setCloudId] = useState(jira.cloudId && jira.sites.some((s) => s.id === jira.cloudId) ? jira.cloudId : (jira.sites[0]?.id ?? ""));
   const [jql, setJql] = useState(jira.jql ?? jira.suggestedJql);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const [connecting, setConnecting] = useState(false);
 
   if (!jira.connected) {
     return (
@@ -47,28 +49,7 @@ export function JiraSource({
             edits back.
           </p>
         </div>
-        <button
-          type="button"
-          className="btn-secondary"
-          disabled={connecting}
-          onClick={async () => {
-            setConnecting(true);
-            setError(null);
-            const result = await authClient.linkSocial({ provider: "atlassian", callbackURL: window.location.pathname });
-            if (result?.error) {
-              setConnecting(false);
-              setError(result.error.message ?? "Couldn't start the Jira connection.");
-            }
-          }}
-        >
-          <Cable aria-hidden="true" className="h-4 w-4" />
-          {connecting ? "Opening Atlassian…" : "Connect Jira"}
-        </button>
-        {error && (
-          <p role="alert" className="w-full text-sm text-not-ready">
-            {error}
-          </p>
-        )}
+        <ConnectJiraButton />
       </div>
     );
   }
@@ -82,9 +63,12 @@ export function JiraSource({
         <p className="mt-1 text-sm text-muted">The issues open in the preview below, where you can filter and tick them.</p>
       </div>
       {jira.sitesError ? (
-        <p role="alert" className="text-sm text-not-ready">
-          {jira.sitesError}
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <p role="alert" className="text-sm text-not-ready">
+            {jira.sitesError}
+          </p>
+          {needsReconnect(jira.sitesError) && <ConnectJiraButton label="Reconnect Jira" className="btn-secondary btn-sm" />}
+        </div>
       ) : jira.sites.length === 0 ? (
         <p className="text-sm text-muted">Your Atlassian account has no Jira site Sprintwise can read.</p>
       ) : (
@@ -127,13 +111,13 @@ export function JiraSource({
             onClick={() => {
               setError(null);
               startTransition(async () => {
-                const result = await previewFromJira(projectId, cloudId, jql);
+                const result = await attempt(() => previewFromJira(projectId, cloudId, jql));
                 if ("error" in result) setError(result.error);
                 else
                   onLoaded(
                     result.csv,
                     `${result.count} ${result.count === 1 ? "issue" : "issues"} from Jira${result.truncated ? " (the first 1,000; narrow the search for the rest)" : ""}.`,
-                    result.searchedAt,
+                    { searchedAt: result.searchedAt, cloudId: result.cloudId, jql: result.jql },
                   );
               });
             }}
@@ -142,9 +126,12 @@ export function JiraSource({
             {pending ? "Reading Jira…" : "Preview issues"}
           </button>
           {error && (
-            <p role="alert" className="text-sm text-not-ready">
-              {error}
-            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <p role="alert" className="text-sm text-not-ready">
+                {error}
+              </p>
+              {needsReconnect(error) && <ConnectJiraButton label="Reconnect Jira" className="btn-secondary btn-sm" />}
+            </div>
           )}
         </>
       )}

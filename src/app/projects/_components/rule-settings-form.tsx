@@ -1,4 +1,5 @@
 "use client";
+import { guarded } from "@/lib/safe-action";
 import { useActionState } from "react";
 import { updateRuleSettings } from "@/app/projects/actions";
 import { FieldError, FormAlert } from "@/components/form-feedback";
@@ -17,7 +18,7 @@ export function RuleSettingsForm({
   vagueWords: string[];
   isDefault: boolean;
 }) {
-  const [state, action, pending] = useActionState(updateRuleSettings.bind(null, projectId), emptyFormState);
+  const [state, action, pending] = useActionState(guarded(updateRuleSettings.bind(null, projectId)), emptyFormState);
   const errors = state.fieldErrors ?? {};
   return (
     // key: after a reset the inputs re-mount with the saved values.

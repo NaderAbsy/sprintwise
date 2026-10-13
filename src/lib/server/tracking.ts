@@ -1,5 +1,6 @@
 import "server-only";
-import { MAX_SNAPSHOTS_PER_SPRINT } from "@/lib/limits";
+import { MAX_SNAPSHOT_ITEMS_PER_ACCOUNT, MAX_SNAPSHOTS_PER_SPRINT } from "@/lib/limits";
+import { storedSnapshotItems } from "@/lib/server/within-limit";
 import { db } from "@/lib/server/db";
 import { toStory } from "@/lib/server/readiness";
 import { defaultReasons } from "@/lib/sprint/reasons";
@@ -28,6 +29,7 @@ async function recordSprint(projectId: string, sprintId: string, today: Date) {
       where: { id: sprintId },
       select: {
         endDate: true,
+        project: { select: { userId: true } },
         _count: { select: { snapshots: true } },
         snapshots: {
           orderBy: [{ asOfDate: "desc" }, { uploadedAt: "desc" }],
@@ -69,8 +71,9 @@ async function recordSprint(projectId: string, sprintId: string, today: Date) {
       case "none":
         return;
       case "create": {
-        // At the cap, edits stop being recorded rather than overwrite history.
+        // At the caps, edits stop being recorded rather than overwrite history.
         if (sprint._count.snapshots >= MAX_SNAPSHOTS_PER_SPRINT) return;
+        if ((await storedSnapshotItems(sprint.project.userId, tx)) + plan.items.length > MAX_SNAPSHOT_ITEMS_PER_ACCOUNT) return;
         const snapshot = await tx.snapshot.create({
           data: { sprintId, asOfDate: plan.asOfDate, locked: true, auto: true, items: { create: plan.items } },
         });

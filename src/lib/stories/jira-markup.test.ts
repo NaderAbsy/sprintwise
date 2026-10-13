@@ -68,6 +68,13 @@ describe("looksLikeJira", () => {
 });
 
 describe("hostile markup", () => {
+  it("reads 5,000 characters of nothing but braces quickly, since a shared backlog may hold 1,000 of them", () => {
+    const start = performance.now();
+    for (let i = 0; i < 20; i++) parseInline("{".repeat(5000));
+    expect(performance.now() - start).toBeLessThan(40);
+    expect(parseInline("Run {{npm test}} first")).toMatchObject([{ t: "text" }, { t: "code", v: "npm test" }, { t: "text" }]);
+  });
+
   it("reads 5,000 characters of unmatched openers quickly", () => {
     for (const text of ["{{a ".repeat(1250), "[|".repeat(2500), "*a ".repeat(1666), "[a ".repeat(1666)]) {
       const start = performance.now();

@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { aiConfigured } from "@/lib/server/ai";
 import { FEEDBACK_URL, GITHUB_URL } from "@/lib/site";
+import { pageMeta } from "@/lib/page-meta";
 
-export const metadata: Metadata = { title: "Privacy" };
+export const metadata: Metadata = pageMeta("/privacy", "Privacy", "What Sprintwise stores, what it never does with your stories and Jira data, the cookies it uses, and how to delete everything.");
 
 export default function PrivacyPage() {
   return (

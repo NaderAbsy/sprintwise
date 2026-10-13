@@ -1,6 +1,7 @@
 import { Lightbulb } from "lucide-react";
 import { formatPercent, formatPoints } from "@/lib/sprint/metrics";
 import type { SprintTrendRow, TrendSummary } from "@/lib/sprint/trends";
+import { cutText } from "@/lib/text";
 
 const pct = (v: number | null) => (v === null ? "—" : `${Math.round(v * 100)}%`);
 
@@ -114,7 +115,7 @@ function ChartCard({ title, legend, children }: { title: string; legend: [string
 
 const H = 180;
 const PAD = { top: 10, right: 8, bottom: 28, left: 34 };
-const short = (name: string) => (name.length > 10 ? `${name.slice(0, 9)}…` : name);
+const short = (name: string) => (name.length > 10 ? `${cutText(name, 9)}…` : name);
 
 /** Grouped bars: what the team committed to and what it finished, per sprint. */
 function BarChart({ rows }: { rows: SprintTrendRow[] }) {

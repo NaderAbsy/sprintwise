@@ -5,6 +5,7 @@ import { db } from "@/lib/server/db";
 import { settingsOf, toStory } from "@/lib/server/readiness";
 import { doneStatusesOf } from "@/lib/server/sprint";
 import { isDone } from "@/lib/sprint/metrics";
+import { cutText } from "@/lib/text";
 
 export const alt = "A shared Sprintwise backlog";
 export const size = OG_SIZE;
@@ -23,7 +24,7 @@ export default async function Image({ params }: { params: Promise<{ token: strin
   const count = (band: string) => String(bands.filter((b) => b === band).length);
   return ogCard({
     eyebrow: "Backlog for refinement",
-    title: project.name.slice(0, 60),
+    title: cutText(project.name, 60),
     subtitle: `${count("Ready")} of ${bands.length} unfinished ${bands.length === 1 ? "story" : "stories"} ready for planning`,
     stats: [
       { label: "Ready", value: count("Ready") },

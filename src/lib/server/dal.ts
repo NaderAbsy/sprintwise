@@ -23,9 +23,18 @@ export function assertId(value: unknown): asserts value is string {
  */
 export const getSession = cache(async () => auth.api.getSession({ headers: await headers() }));
 
+/**
+ * No session: pages go to the landing page. A form being saved fails instead, so its
+ * page stays put and shows "Couldn't save" with what was typed still in the form.
+ */
+async function signedOut(): Promise<never> {
+  if ((await headers()).has("next-action")) throw new Error("Signed out.");
+  redirect("/");
+}
+
 export const requireUser = cache(async () => {
   const session = await getSession();
-  if (!session) redirect("/");
+  if (!session) return signedOut();
   return { id: session.user.id, name: session.user.name, email: session.user.email };
 });
 
@@ -36,7 +45,7 @@ export const requireUser = cache(async () => {
  */
 export const requireFreshUser = cache(async () => {
   const session = await auth.api.getSession({ headers: await headers(), query: { disableCookieCache: true } });
-  if (!session) redirect("/");
+  if (!session) return signedOut();
   return { id: session.user.id, name: session.user.name, email: session.user.email };
 });
 

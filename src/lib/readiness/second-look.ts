@@ -1,5 +1,6 @@
 import { hasPlaceholders } from "@/lib/stories/helpers";
 import { criteriaOf, type Story } from "@/lib/stories/types";
+import { cutText } from "@/lib/text";
 
 /**
  * Signs that a story was pasted from an AI chat without a careful read. They
@@ -86,7 +87,7 @@ const FILLER = [
 const CLAIM = /\b(?:increase|reduce|improve|boost|cut|grow|raise|lower|decrease)\w*\b[^.\n]{0,40}?\bby\s+\d+(?:\.\d+)?\s?%/i;
 
 const word = (w: string) => new RegExp(`(?<![\\p{L}\\p{N}_-])${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\p{L}\\p{N}_-])`, "iu");
-const quote = (s: string) => `“${s.trim().replace(/\s+/g, " ").slice(0, 60)}”`;
+const quote = (s: string) => `“${cutText(s.trim().replace(/\s+/g, " "), 60)}”`;
 
 export function secondLook(story: Pick<Story, "title" | "description" | "acceptanceCriteria">): SecondLook[] {
   const all = `${story.title}\n${story.description}\n${story.acceptanceCriteria}`;

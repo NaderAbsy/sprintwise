@@ -3,8 +3,9 @@ import { PageHero } from "@/components/marketing/page-hero";
 import { Reveal } from "@/components/marketing/reveal";
 import { formatDay } from "@/lib/sprint/dates";
 import { GITHUB_URL, RELEASES } from "@/lib/site";
+import { pageMeta } from "@/lib/page-meta";
 
-export const metadata: Metadata = { title: "Changelog" };
+export const metadata: Metadata = pageMeta("/changelog", "Changelog", "Every Sprintwise release: what changed and why, newest first.");
 
 export default function ChangelogPage() {
   return (

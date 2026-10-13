@@ -18,6 +18,14 @@ import { computeMetrics, formatPercent } from "@/lib/sprint/metrics";
 import { compareReadiness, readinessFinding } from "@/lib/sprint/report";
 import { getSession } from "@/lib/server/dal";
 import { GITHUB_URL, RELEASES } from "@/lib/site";
+import { pageMeta } from "@/lib/page-meta";
+
+export const metadata = pageMeta(
+  "/",
+  "Sprintwise: know your stories are ready before the sprint starts",
+  "Free for Product Owners: nine fixed rules score every story before planning, then Sprintwise measures how much the sprint changed. No AI reads your tickets.",
+  { absolute: true },
+);
 
 // The sample sprint is dated from today (src/demo/sprint.ts), so rebuild the page daily.
 export const revalidate = 86400;
@@ -60,6 +68,10 @@ const FAQ = [
   {
     q: "Can I change the rules?",
     a: "The nine rules are the same in every project. Each project sets its own maximum story size and vague-word list, and can add its own Definition of Ready checks (a story that fails one can't be Ready). Saving re-scores every story in the project.",
+  },
+  {
+    q: "Does it work for stories in other languages?",
+    a: "The stories are stored and shown in any language, but the rules read English: the \u201cAs a \u2026 I want \u2026 so that \u2026\u201d check and the vague-word list look for English words, so a story written in another language loses those points. Each project can replace the vague words with its own.",
   },
   {
     q: "Is it free and open source?",

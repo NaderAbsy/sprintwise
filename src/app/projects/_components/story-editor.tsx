@@ -1,4 +1,5 @@
 "use client";
+import { guarded } from "@/lib/safe-action";
 import { Check, ListPlus, Wand2 } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useRef, useState } from "react";
@@ -64,7 +65,7 @@ export function StoryEditor({
   returnToRefine?: "refine" | "refine-all";
 }) {
   const serverAction = story ? updateStory.bind(null, projectId, story.id) : addStory.bind(null, projectId);
-  const [state, action, pending] = useActionState(serverAction, emptyFormState);
+  const [state, action, pending] = useActionState(guarded(serverAction), emptyFormState);
   const form = useRef<HTMLFormElement>(null);
   const [placeholders, setPlaceholders] = useState(false);
   const [looks, setLooks] = useState<SecondLook[]>(() =>

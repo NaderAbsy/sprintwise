@@ -1,4 +1,5 @@
 "use client";
+import { attempt } from "@/lib/safe-action";
 import { GripVertical } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
@@ -89,10 +90,18 @@ export function BacklogTable({
     const next = [...rows];
     const [row] = next.splice(from, 1);
     next.splice(target, 0, row);
+    const before = rows;
     setRows(next);
     setAnnouncement(`${row.key} moved to position ${target + 1} of ${rows.length}.`);
     setMoved(true);
-    startMove(() => moveStory(projectId, id, target, withFinished));
+    startMove(async () => {
+      const result = await attempt(() => moveStory(projectId, id, target, withFinished));
+      // Not saved: put the row back, so the screen never shows an order that isn't stored.
+      if (result && typeof result === "object" && "error" in result) {
+        setRows(before);
+        setAnnouncement(`Couldn't save the new position of ${row.key}. Check your connection, then try again.`);
+      }
+    });
   };
 
   const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
@@ -121,7 +130,7 @@ export function BacklogTable({
             onSubmit={(event) => {
               event.preventDefault();
               startTransition(async () => {
-                const result = await bulkSetStatus(projectId, ids, bulkStatus);
+                const result = await attempt(() => bulkSetStatus(projectId, ids, bulkStatus));
                 setBulkMessage(result.error ? { text: result.error, error: true } : { text: result.message ?? "" });
               });
             }}

@@ -1,4 +1,5 @@
 "use client";
+import { attempt } from "@/lib/safe-action";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { quickUpdateStory } from "@/app/projects/actions";
@@ -29,7 +30,7 @@ export function EstimateButtons({ projectId, storyId, points }: { projectId: str
       const data = new FormData();
       data.set("field", "storyPoints");
       data.set("value", String(value));
-      const result = await quickUpdateStory(projectId, storyId, emptyFormState, data);
+      const result = await attempt(() => quickUpdateStory(projectId, storyId, emptyFormState, data));
       if (result.error) setError(result.error);
       else setSaved(true);
     });

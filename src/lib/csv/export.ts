@@ -6,12 +6,14 @@ export type ExportRow = Story & { epic?: string; score: number | null; band: str
 /**
  * Spreadsheet apps run cells that start with =, +, -, @ or a tab as formulas,
  * even after leading spaces. Those get a leading apostrophe, which the importer
- * removes again. A list bullet followed by a word ("- Full refunds") isn't a
- * formula and stays as it is, so acceptance criteria read the same in Jira.
+ * removes again. A list bullet followed by words ("- Full refunds") stays as it
+ * is, so acceptance criteria read the same in Jira, but only when nothing in the
+ * cell could make it a formula ("- WEBSERVICE(…)" still gets the apostrophe).
  */
 export function neutralize(cell: string): string {
   const start = cell.trimStart();
-  const formula = /^[\t\r]/.test(cell) || /^[=+@]/.test(start) || (start.startsWith("-") && !/^-\s+[\p{L}"']/u.test(start));
+  const bullet = /^-[ \t]+[\p{L}"']/u.test(start) && !/[()&!|=]/.test(start);
+  const formula = /^[\t\r]/.test(cell) || /^[=+@]/.test(start) || (start.startsWith("-") && !bullet);
   return formula ? `'${cell}` : cell;
 }
 

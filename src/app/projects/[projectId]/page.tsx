@@ -76,6 +76,8 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
   const ready = count("Ready");
   const typeOf = (s: (typeof stories)[number]) => s.issueType || "Story";
   const editedCount = stories.filter((s) => s.editedAt).length;
+  // Only a number is shown, so a link can't make the banner say something else.
+  const importedCount = typeof imported === "string" && /^\d{1,4}$/.test(imported) ? Number(imported) : null;
   // Sync and Send need a connected account and a project that has imported from Jira once.
   const jiraLinked = jiraConfigured && Boolean(project.jiraCloudId) && Boolean(await jiraAccount((await requireUser()).id));
   // Signs of a pasted AI draft: not scored, but worth listing.
@@ -182,9 +184,9 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
 
       <GettingStarted base={base} progress={progress} />
 
-      {imported && (
+      {importedCount !== null && (
         <p role="status" className="mb-4 rounded-lg bg-ready-bg px-4 py-2.5 text-sm text-ready">
-          Imported and scored {imported} {imported === "1" ? "story" : "stories"}.
+          Imported and scored {importedCount} {importedCount === 1 ? "story" : "stories"}.
         </p>
       )}
 

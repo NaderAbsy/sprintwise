@@ -6,10 +6,20 @@ import { MAX_STORIES_PER_PROJECT } from "@/lib/limits";
 import { db } from "@/lib/server/db";
 import { issuesAsCsv, JIRA_MAX_ISSUES, JiraError, searchJira } from "@/lib/server/jira";
 import { saveStories } from "@/lib/server/save-stories";
+import { LimitError } from "@/lib/server/within-limit";
 import { doneStatusesOf } from "@/lib/server/sprint";
 import { recordSprintChanges } from "@/lib/server/tracking";
 import { isDone } from "@/lib/sprint/metrics";
 import { isEpic, isSubtask } from "@/lib/stories/types";
+
+/**
+ * A project reads from and writes to one Jira site. Importing from another would make
+ * Send to Jira write to the new site, possibly over a different team's issue with the same key.
+ */
+export function otherSite(project: Pick<Project, "jiraCloudId" | "jiraSiteName">, cloudId: string): string | null {
+  if (!project.jiraCloudId || project.jiraCloudId === cloudId) return null;
+  return `This project already imports from ${project.jiraSiteName ?? "another Jira site"}, and Send to Jira writes there. To bring in issues from this site, create a new project for it.`;
+}
 
 export const jiraFailure = (error: unknown) =>
   error instanceof JiraError ? error.message : "Couldn't reach Jira. Check your connection and try again.";
@@ -23,7 +33,8 @@ export const jiraFailure = (error: unknown) =>
  * ownership first.
  */
 export async function syncProjectFromJira(project: Project, userId: string, { automatic = false } = {}): Promise<FormState> {
-  if (!project.jiraCloudId || !project.jiraJql) return { error: "Import from Jira once first, so Sprintwise knows which search to run." };
+  if (!project.jiraCloudId || !project.jiraJql)
+    return { error: "Import from Jira once first, so Sprintwise knows which search to run." };
 
   let csv: string;
   let created: Map<string, string | null>;
@@ -73,23 +84,39 @@ export async function syncProjectFromJira(project: Project, userId: string, { au
   });
   const added = stories.filter((s) => !existing.has(s.key)).length;
   if (existing.size + added > MAX_STORIES_PER_PROJECT) {
-    return { error: `Syncing would take the project past ${MAX_STORIES_PER_PROJECT} stories. Narrow the Jira search on the Import page.` };
+    return {
+      error: `Syncing would take the project past ${MAX_STORIES_PER_PROJECT} stories. Narrow the Jira search on the Import page.`,
+    };
   }
 
-  const saved = await saveStories(project, stories, {
-    keepEdited: true,
-    extra: (tx) =>
-      tx.project.update({
-        where: { id: project.id },
-        data: { jiraSyncedAt: searchedAt, jiraAutoSynced: automatic, jiraSyncError: null },
-      }),
-  });
+  let saved: Set<string>;
+  try {
+    saved = await saveStories(project, stories, {
+      keepEdited: true,
+      maxStories: MAX_STORIES_PER_PROJECT,
+      extra: (tx) =>
+        tx.project.update({
+          where: { id: project.id },
+          data: { jiraSyncedAt: searchedAt, jiraAutoSynced: automatic, jiraSyncError: null },
+        }),
+    });
+  } catch (error) {
+    if (error instanceof LimitError) return { error: error.message };
+    // Nothing was saved: the transaction rolled back.
+    return { error: "Jira's issues were read, but saving them failed, so nothing changed. Try again in a minute." };
+  }
   // A story edited here while Jira was being read is kept too.
   kept += stories.length - saved.size;
   await recordSprintChanges(project.id);
   const parts = [`Synced from Jira: ${saved.size - added} updated, ${added} added.`];
-  if (kept > 0) parts.push(`${kept} edited here ${kept === 1 ? "was" : "were"} left as ${kept === 1 ? "it is" : "they are"}; send ${kept === 1 ? "it" : "them"} to Jira first.`);
+  if (kept > 0)
+    parts.push(
+      `${kept} edited here ${kept === 1 ? "was" : "were"} left as ${kept === 1 ? "it is" : "they are"}; send ${kept === 1 ? "it" : "them"} to Jira first.`,
+    );
   if (problems > 0) parts.push(`${problems} couldn't be read (for example, no title).`);
-  if (leftOut > 0) parts.push(`${leftOut} left out at import ${leftOut === 1 ? "wasn't" : "weren't"} added; import ${leftOut === 1 ? "it" : "them"} from the Import page if you want ${leftOut === 1 ? "it" : "them"}.`);
+  if (leftOut > 0)
+    parts.push(
+      `${leftOut} left out at import ${leftOut === 1 ? "wasn't" : "weren't"} added; import ${leftOut === 1 ? "it" : "them"} from the Import page if you want ${leftOut === 1 ? "it" : "them"}.`,
+    );
   return { message: parts.join(" ") };
 }

@@ -4,8 +4,9 @@ import Link from "next/link";
 import { PageHero } from "@/components/marketing/page-hero";
 import { Reveal } from "@/components/marketing/reveal";
 import { RULES } from "@/lib/readiness/rules";
+import { pageMeta } from "@/lib/page-meta";
 
-export const metadata: Metadata = { title: "Product" };
+export const metadata: Metadata = pageMeta("/product", "Product", "How Sprintwise scores story readiness with nine fixed rules, tracks scope change against a locked baseline, and reports each sprint on one page.");
 
 /** How each rule is checked, in the words the app uses when a rule fails. */
 const HOW: Record<string, string> = {

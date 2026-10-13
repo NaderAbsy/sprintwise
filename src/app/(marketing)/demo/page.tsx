@@ -14,11 +14,12 @@ import { DEFAULT_SETTINGS, readySummary, scoreStory } from "@/lib/readiness/rule
 import { formatDay } from "@/lib/sprint/dates";
 import { computeMetrics } from "@/lib/sprint/metrics";
 import { compareReadiness, readinessFinding } from "@/lib/sprint/report";
+import { pageMeta } from "@/lib/page-meta";
 
 // The sample sprint is dated from today (src/demo/sprint.ts), so rebuild the page daily.
 export const revalidate = 86400;
 
-export const metadata: Metadata = { title: "Demo" };
+export const metadata: Metadata = pageMeta("/demo", "Demo", "Try Sprintwise with an invented backlog and sprint: scores, scope change and a one-page report. No account, nothing saved.");
 
 export default function DemoPage() {
   const scored = demoBacklog

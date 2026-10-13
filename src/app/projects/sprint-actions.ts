@@ -8,6 +8,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { parseStoriesCsv } from "@/lib/csv/parse";
 import { MAX_ROWS } from "@/lib/csv/template";
 import { MAX_SNAPSHOTS_PER_SPRINT, MAX_SPRINTS_PER_PROJECT } from "@/lib/limits";
+import { LimitError, snapshotRoom, withinLimit } from "@/lib/server/within-limit";
 import type { FormState } from "@/lib/form-state";
 import { validateSnapshotDate, validateSprintDates } from "@/lib/sprint/dates";
 import { diffSnapshots } from "@/lib/sprint/diff";
@@ -61,13 +62,24 @@ export async function createSprint(projectId: string, _prev: FormState, formData
     };
   }
 
-  if ((await db.sprint.count({ where: { projectId: project.id } })) >= MAX_SPRINTS_PER_PROJECT) {
-    return { error: `A project can hold up to ${MAX_SPRINTS_PER_PROJECT} sprints. Delete an old one to make room.` };
+  let sprint;
+  try {
+    sprint = await withinLimit(
+      { project: project.id },
+      {
+        count: (tx) => tx.sprint.count({ where: { projectId: project.id } }),
+        max: MAX_SPRINTS_PER_PROJECT,
+        message: `A project can hold up to ${MAX_SPRINTS_PER_PROJECT} sprints. Delete an old one to make room.`,
+      },
+      (tx) =>
+        tx.sprint.create({
+          data: { projectId: project.id, name: name.data, goal: goal.data, startDate: dates.startDate, endDate: dates.endDate },
+        }),
+    );
+  } catch (error) {
+    if (error instanceof LimitError) return { error: error.message };
+    throw error;
   }
-
-  const sprint = await db.sprint.create({
-    data: { projectId: project.id, name: name.data, goal: goal.data, startDate: dates.startDate, endDate: dates.endDate },
-  });
   revalidatePath(`/projects/${project.id}/sprints`);
   redirect(sprintPath(project.id, sprint.id));
 }
@@ -84,6 +96,8 @@ export async function lockBaseline(
   if (!date.ok) return { fieldErrors: date.errors };
   const csv = await readSnapshotStories(project.id, formData);
   if (!("stories" in csv)) return csv;
+  const full = await snapshotRoom(project.userId, csv.stories.length);
+  if (full) return { error: full };
 
   const tracksBacklog = formData.get("source") === "backlog";
   try {
@@ -137,6 +151,8 @@ export async function uploadSnapshot(
   if (!date.ok) return { fieldErrors: date.errors };
   const csv = await readSnapshotStories(project.id, formData);
   if (!("stories" in csv)) return csv;
+  const full = await snapshotRoom(project.userId, csv.stories.length);
+  if (full) return { error: full };
 
   const changes = defaultReasons(diffSnapshots(previous.items.map(toStory), csv.stories), csv.stories);
   const saved = await db.$transaction(async (tx) => {

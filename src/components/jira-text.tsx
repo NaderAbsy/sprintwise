@@ -1,5 +1,18 @@
 import { looksLikeJira, parseInline, parseJira, type Block, type Inline } from "@/lib/stories/jira-markup";
 
+/** The host of an http(s) address, or null when the text isn't one. */
+function hostOf(text: string): string | null {
+  if (!/^https?:\/\//i.test(text.trim())) return null;
+  try {
+    return new URL(text.trim()).host.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+/** Deeper Jira bullets indent no further than this, so a run of asterisks can't push text off screen. */
+const MAX_INDENT = 6;
+
 function Spans({ nodes }: { nodes: Inline[] }) {
   return nodes.map((node, i) => {
     switch (node.t) {
@@ -23,12 +36,17 @@ function Spans({ nodes }: { nodes: Inline[] }) {
             {node.v}
           </code>
         );
-      case "link":
+      case "link": {
+        // A label that looks like an address but names another site shows where the link really goes.
+        const shown = hostOf(node.text);
+        const real = hostOf(node.href);
         return (
           <a key={i} href={node.href} target="_blank" rel="noopener noreferrer nofollow" className="text-accent underline underline-offset-2">
             {node.text}
+            {shown && real && shown !== real && <span className="text-muted no-underline"> ({real})</span>}
           </a>
         );
+      }
     }
   });
 }
@@ -57,7 +75,7 @@ function BlockView({ block }: { block: Block }) {
       return (
         <List className={`${block.ordered ? "list-decimal" : "list-disc"} space-y-1 pl-5`}>
           {block.items.map((item, i) => (
-            <li key={i} style={item.depth > 1 ? { marginLeft: `${(item.depth - 1) * 1.25}rem` } : undefined}>
+            <li key={i} style={item.depth > 1 ? { marginLeft: `${(Math.min(item.depth, MAX_INDENT) - 1) * 1.25}rem` } : undefined}>
               <Spans nodes={item.c} />
             </li>
           ))}
@@ -103,7 +121,7 @@ function BlockView({ block }: { block: Block }) {
  * export); otherwise exactly as typed, line breaks kept.
  */
 export function JiraText({ text, className = "" }: { text: string; className?: string }) {
-  if (!looksLikeJira(text)) return <p className={`whitespace-pre-wrap ${className}`}>{text}</p>;
+  if (!looksLikeJira(text)) return <p className={`whitespace-pre-wrap break-words ${className}`}>{text}</p>;
   return (
     <div className={`space-y-3 break-words ${className}`}>
       {parseJira(text).map((block, i) => (
