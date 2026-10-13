@@ -1,4 +1,5 @@
 import { DEFAULT_MAX_POINTS, DEFAULT_VAGUE_WORDS, type CustomCheck, type RuleSettings } from "@/lib/readiness/rules";
+import { cutText } from "@/lib/text";
 
 export const SETTINGS_LIMITS = {
   minPoints: 1,
@@ -44,7 +45,7 @@ export function parseCustomChecks(names: string[], fields: string[], phrases: st
     const field = fields[i] as CustomCheck["field"];
     if (name === "" && phrase === "") return;
     if (name === "") errors[`check-${i}`] = "Give this check a name.";
-    else if (phrase === "") errors[`check-${i}`] = `Say what "${name.slice(0, 30)}" must contain.`;
+    else if (phrase === "") errors[`check-${i}`] = `Say what "${cutText(name, 30)}" must contain.`;
     else if (name.length > SETTINGS_LIMITS.checkName || phrase.length > SETTINGS_LIMITS.phrase) {
       errors[`check-${i}`] = `Keep the name and phrase under ${SETTINGS_LIMITS.phrase} characters each.`;
     } else if (!FIELDS.includes(field)) errors[`check-${i}`] = "Choose where to look.";
@@ -77,7 +78,7 @@ export function parseRuleSettings(maxPointsText: string, vagueWordsText: string)
     ),
   ];
   const tooLong = vagueWords.find((w) => w.length > SETTINGS_LIMITS.wordLength);
-  if (tooLong) errors.vagueWords = `"${tooLong.slice(0, 20)}…" is too long; keep each word under ${SETTINGS_LIMITS.wordLength} characters.`;
+  if (tooLong) errors.vagueWords = `"${cutText(tooLong, 20)}…" is too long; keep each word under ${SETTINGS_LIMITS.wordLength} characters.`;
   else if (vagueWords.length > SETTINGS_LIMITS.words) errors.vagueWords = `Keep the list to ${SETTINGS_LIMITS.words} words or fewer.`;
 
   return Object.keys(errors).length > 0 ? { ok: false, errors } : { ok: true, settings: { maxPoints, vagueWords } };

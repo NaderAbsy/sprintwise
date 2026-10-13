@@ -295,3 +295,13 @@ model JobRun {
 
   @@map("job_runs")
 }
+
+/// How often one account has done a heavy action (a Jira call, an import, a re-score) in the current window. No content, just counts.
+model ActionLimit {
+  /// "<action>:<userId>"
+  key         String   @id
+  count       Int
+  windowStart DateTime
+
+  @@map("action_limits")
+}

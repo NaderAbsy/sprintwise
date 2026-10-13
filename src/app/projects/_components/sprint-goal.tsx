@@ -1,4 +1,6 @@
 "use client";
+import { attempt } from "@/lib/safe-action";
+import { guarded } from "@/lib/safe-action";
 import { Check } from "lucide-react";
 import { useActionState, useState, useTransition } from "react";
 import { setChangeReason, updateSprintGoal } from "@/app/projects/sprint-actions";
@@ -24,6 +26,7 @@ export function ReasonSelect({
   const [value, setValue] = useState(reason ?? "");
   const [pending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
+  const [failed, setFailed] = useState(false);
   return (
     <span className="inline-flex items-center gap-1.5">
       <select
@@ -32,11 +35,16 @@ export function ReasonSelect({
         disabled={pending}
         onChange={(e) => {
           const next = e.target.value;
+          const before = value;
           setValue(next);
           setSaved(false);
+          setFailed(false);
           startTransition(async () => {
-            await setChangeReason(projectId, sprintId, changeId, next);
-            setSaved(true);
+            const result = await attempt(() => setChangeReason(projectId, sprintId, changeId, next));
+            if (result && typeof result === "object" && "error" in result) {
+              setValue(before);
+              setFailed(true);
+            } else setSaved(true);
           });
         }}
         className={`field h-8 w-36 py-0 text-xs sm:w-44 ${value ? "" : "text-muted"}`}
@@ -50,6 +58,7 @@ export function ReasonSelect({
       </select>
       <span aria-live="polite" className="w-4">
         {saved && <Check aria-label="Saved" className="h-4 w-4 text-ready" />}
+        {failed && <span className="text-xs whitespace-nowrap text-not-ready">Not saved</span>}
       </span>
     </span>
   );
@@ -67,7 +76,7 @@ export function SprintGoalForm({
   goal: string;
   outcome: string | null;
 }) {
-  const [state, action, pending] = useActionState(updateSprintGoal.bind(null, projectId, sprintId), emptyFormState);
+  const [state, action, pending] = useActionState(guarded(updateSprintGoal.bind(null, projectId, sprintId)), emptyFormState);
   const [editing, setEditing] = useState(goal === "");
   const errors = state.fieldErrors ?? {};
 

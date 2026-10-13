@@ -1,15 +1,22 @@
 "use client";
+import { attempt } from "@/lib/safe-action";
 import { RefreshCw, Send } from "lucide-react";
 import { useState, useTransition } from "react";
 import { sendToJira, syncFromJira } from "@/app/projects/jira-actions";
 import type { FormState } from "@/lib/form-state";
+import { ConnectJiraButton } from "@/app/projects/_components/connect-jira";
+import { needsReconnect } from "@/lib/jira-messages";
 
 function Result({ state }: { state: FormState | null }) {
   if (!state?.message && !state?.error) return null;
+  const text = state.error ?? state.message;
   return (
-    <p role="status" className={`w-full text-sm ${state.error ? "text-not-ready" : "text-ready"}`}>
-      {state.error ?? state.message}
-    </p>
+    <div className="flex w-full flex-wrap items-center gap-3">
+      <p role="status" className={`text-sm ${state.error ? "text-not-ready" : "text-ready"}`}>
+        {text}
+      </p>
+      {needsReconnect(text) && <ConnectJiraButton label="Reconnect Jira" className="btn-secondary btn-sm" />}
+    </div>
   );
 }
 
@@ -33,7 +40,7 @@ export function SendToJiraButton({
         type="button"
         className={className}
         disabled={pending}
-        onClick={() => startTransition(async () => setState(await sendToJira(projectId, storyIds)))}
+        onClick={() => startTransition(async () => setState(await attempt(() => sendToJira(projectId, storyIds))))}
       >
         <Send aria-hidden="true" className="h-3.5 w-3.5" />
         {pending ? "Sending…" : label}
@@ -71,7 +78,7 @@ export function JiraBar({
     // Outside the transition, so "Syncing…" shows at once rather than when the work is done.
     setBusy(kind);
     startTransition(async () => {
-      setState(kind === "sync" ? await syncFromJira(projectId) : await sendToJira(projectId, editedIds));
+      setState(await attempt(() => (kind === "sync" ? syncFromJira(projectId) : sendToJira(projectId, editedIds))));
       setBusy(null);
     });
   };
@@ -93,9 +100,12 @@ export function JiraBar({
         {syncedAt ? `, last synced ${syncedAt}${automatic ? " automatically" : ""}` : ""}.
       </span>
       {nightlyError && !state?.message && (
-        <p role="status" className="w-full text-needs-work">
-          Last night&apos;s sync didn&apos;t run: {nightlyError}
-        </p>
+        <div className="flex w-full flex-wrap items-center gap-3">
+          <p role="status" className="text-needs-work">
+            Last night&apos;s sync didn&apos;t run: {nightlyError}
+          </p>
+          {needsReconnect(nightlyError) && <ConnectJiraButton label="Reconnect Jira" className="btn-secondary btn-sm" />}
+        </div>
       )}
       <Result state={state} />
     </div>

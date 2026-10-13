@@ -8,6 +8,9 @@ const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 export const db =
   globalForPrisma.prisma ??
-  new PrismaClient({ adapter: new PrismaPg({ connectionString: withVerifiedSsl(process.env.DATABASE_URL) }) });
+  new PrismaClient({
+    // A database that can't be reached fails within 15 seconds (Neon waking up takes one or two) rather than hanging.
+    adapter: new PrismaPg({ connectionString: withVerifiedSsl(process.env.DATABASE_URL), connectionTimeoutMillis: 15_000 }),
+  });
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;

@@ -1,4 +1,5 @@
 "use client";
+import { guarded } from "@/lib/safe-action";
 import { useActionState } from "react";
 import { updateDoneStatuses } from "@/app/projects/actions";
 import { FieldError, FormAlert } from "@/components/form-feedback";
@@ -7,7 +8,7 @@ import { keepValuesOnSubmit } from "@/lib/keep-values-on-submit";
 
 /** Which statuses count as finished for completion and velocity, e.g. "Released" or "Accepted". */
 export function DoneStatusesForm({ projectId, statuses }: { projectId: string; statuses: string[] }) {
-  const [state, action, pending] = useActionState(updateDoneStatuses.bind(null, projectId), emptyFormState);
+  const [state, action, pending] = useActionState(guarded(updateDoneStatuses.bind(null, projectId)), emptyFormState);
   const error = state.fieldErrors?.doneStatuses;
   return (
     <form key={statuses.join("|")} action={action} onSubmit={keepValuesOnSubmit(action)} className="space-y-4" noValidate>

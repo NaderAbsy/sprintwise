@@ -3,8 +3,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHero } from "@/components/marketing/page-hero";
 import { Reveal } from "@/components/marketing/reveal";
+import { pageMeta } from "@/lib/page-meta";
 
-export const metadata: Metadata = { title: "Guide" };
+export const metadata: Metadata = pageMeta("/guide", "Guide", "How to use Sprintwise: import from a CSV or Jira, fix weak stories, lock a sprint baseline, and read the numbers.");
 
 const TERMS: [string, string][] = [
   ["Sprint", "A short block of time, usually two weeks, in which the team picks some work and tries to finish it."],

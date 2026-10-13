@@ -14,6 +14,7 @@ vi.mock("@/lib/server/db", () => ({
     session: table("session"),
     verification: table("verification"),
     rateLimit: table("rateLimit"),
+    actionLimit: table("actionLimit"),
     $transaction: async (ops: unknown[]) => ops,
   },
 }));
@@ -28,6 +29,7 @@ describe("deleteExpiredAuthData", () => {
       { table: "session", where: { expiresAt: { lt: now } } },
       { table: "verification", where: { expiresAt: { lt: now } } },
       { table: "rateLimit", where: { lastRequest: { lt: BigInt(now.getTime() - 24 * 60 * 60 * 1000) } } },
+      { table: "actionLimit", where: { windowStart: { lt: new Date(now.getTime() - 24 * 60 * 60 * 1000) } } },
     ]);
   });
 });

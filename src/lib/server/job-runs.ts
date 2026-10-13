@@ -14,6 +14,8 @@ export async function runJob<T>(name: JobName, job: () => Promise<T>, summarize:
     db.jobRun
       .upsert({ where: { name }, create: { name, ranAt: new Date(), ok, summary }, update: { ranAt: new Date(), ok, summary } })
       .catch(() => undefined);
+  // Recorded first: if the platform stops the function mid-run, Insights shows that it didn't finish.
+  await record(false, "Started, but didn't finish: it was probably stopped at the time limit.");
   try {
     const result = await job();
     const { ok, summary } = summarize(result);

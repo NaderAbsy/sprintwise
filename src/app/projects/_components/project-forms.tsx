@@ -1,4 +1,5 @@
 "use client";
+import { guarded } from "@/lib/safe-action";
 import { useActionState } from "react";
 import { createProject, deleteProject, renameProject } from "@/app/projects/actions";
 import { ConfirmButton } from "@/components/confirm-button";
@@ -8,7 +9,7 @@ import { keepValuesOnSubmit } from "@/lib/keep-values-on-submit";
 
 /** `framed={false}` drops the card and heading, for the empty projects page that already explains it. */
 export function CreateProjectForm({ framed = true }: { framed?: boolean }) {
-  const [state, action, pending] = useActionState(createProject, emptyFormState);
+  const [state, action, pending] = useActionState(guarded(createProject), emptyFormState);
   return (
     <form action={action} onSubmit={keepValuesOnSubmit(action)} className={framed ? "card max-w-xl space-y-4 p-5" : "w-full max-w-md space-y-3 text-left"} noValidate>
       {framed && (
@@ -43,7 +44,7 @@ export function CreateProjectForm({ framed = true }: { framed?: boolean }) {
 }
 
 export function RenameProjectForm({ projectId, name }: { projectId: string; name: string }) {
-  const [state, action, pending] = useActionState(renameProject.bind(null, projectId), emptyFormState);
+  const [state, action, pending] = useActionState(guarded(renameProject.bind(null, projectId)), emptyFormState);
   return (
     <form action={action} onSubmit={keepValuesOnSubmit(action)} className="space-y-3" noValidate>
       <label htmlFor="rename" className="label">

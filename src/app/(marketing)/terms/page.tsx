@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FEEDBACK_URL, GITHUB_URL } from "@/lib/site";
+import { pageMeta } from "@/lib/page-meta";
 
-export const metadata: Metadata = { title: "Terms of use" };
+export const metadata: Metadata = pageMeta("/terms", "Terms of use", "The terms for using Sprintwise: free, provided as is, your content stays yours, and Jira changes happen only when you click Send.");
 
 const link = "text-accent underline underline-offset-2";
 

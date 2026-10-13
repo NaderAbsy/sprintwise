@@ -1,4 +1,5 @@
 "use client";
+import { guarded } from "@/lib/safe-action";
 import { Check, LoaderCircle } from "lucide-react";
 import { useActionState, useRef } from "react";
 import { quickUpdateStory } from "@/app/projects/actions";
@@ -26,7 +27,10 @@ export function QuickField({
   /** The statuses to choose from; the story's own is added when it isn't one of them. */
   options?: string[];
 }) {
-  const [state, action, pending] = useActionState(quickUpdateStory.bind(null, projectId, storyId), emptyFormState);
+  const [state, action, pending] = useActionState(
+    guarded(quickUpdateStory.bind(null, projectId, storyId), { error: "Couldn't save. Check your connection, then try again." }),
+    emptyFormState,
+  );
   const form = useRef<HTMLFormElement>(null);
   const label = field === "status" ? `Status of ${storyKey}` : `Points for ${storyKey}`;
   const errorId = `${field}-${storyId}-error`;

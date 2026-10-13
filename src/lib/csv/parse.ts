@@ -14,6 +14,7 @@ import {
 } from "@/lib/csv/template";
 import { STORY_LIMITS } from "@/lib/stories/form";
 import { normalizeKey, parsePoints, type Story } from "@/lib/stories/types";
+import { cutText } from "@/lib/text";
 
 export type CsvIssue = {
   /** 1-based data row (the header is row 0); absent for file-level problems. */
@@ -55,7 +56,7 @@ const HEADER_HELP =
 function foundColumns(headers: string[]): string {
   const named = headers.filter(Boolean);
   if (named.length === 0) return `The first row has no column names. ${HEADER_HELP}`;
-  const shown = named.slice(0, 12).map((h) => `"${h.length > 40 ? `${h.slice(0, 40)}…` : h}"`);
+  const shown = named.slice(0, 12).map((h) => `"${h.length > 40 ? `${cutText(h, 40)}…` : h}"`);
   const more = named.length > shown.length ? ` and ${named.length - shown.length} more` : "";
   return `The file's columns are ${shown.join(", ")}${more}. ${HEADER_HELP}`;
 }

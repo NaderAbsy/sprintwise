@@ -2,6 +2,26 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-13 — v2.20: a third round, from new angles
+
+Rounds one and two walked the happy path on a local build. This round changed who, when and what goes wrong: a hostile second account and hostile text, things failing mid-task, a year's worth of data and other time zones, and a first-time visitor (search results, link previews). Two read-only code reviews ran alongside; their findings were checked before acting. What held up: another account gets "not found" everywhere; shared links leak no email, Jira site or search; double clicks don't duplicate; Arabic and emoji store and export correctly; with about 670 stories and 20 sprints every page was ready in under 0.6 s locally and a full re-score took under 1 s; a cold live database answered in 1.4 s, then about 0.3 s.
+
+Changes (the user asked for all of them):
+
+1. **Failed saves:** every form's action is wrapped (`guarded`, `src/lib/safe-action.ts`), so a request that fails returns "Couldn't save… what you typed is still here" into the form instead of React handing the error to Next's bare global error page, which lost the typing. Buttons that call actions directly use `attempt`; a failed reorder puts the row back, a failed reason tag says "Not saved". Signed-out saves: `proxy.ts` answers server-action posts without a cookie with 401, and `requireUser` throws (not redirects) inside an action, so the page stays put. Branded `error.tsx` for projects and account, and a `global-error.tsx`, catch anything left.
+2. **Jira site:** `previewFromJira` saves nothing; `importStories` saves the site and search after checking the site against the user's sites again. A project already linked to one site refuses another (`otherSite`), because Send updates issues by key and could overwrite another team's issue.
+3. **Formula bypass:** "- word" stays unescaped only when the cell has none of `( ) & ! | =`.
+4. **Long words:** `overflow-wrap: anywhere` on text elements; plain story text also `break-words`.
+5. **Keys:** `normalizeKey` NFC-normalizes and strips format characters (`\p{Cf}`: zero-width, bidi marks). `nextStoryKey` counts only `STORY-` plus up to nine digits.
+6. **Day count:** `SprintDay` is a client component using the viewer's date; the server's UTC day said "Starts in 1 day" on day one east of UTC.
+7. **Limits under concurrency:** `withinLimit` locks the owner row (`FOR UPDATE`) and re-counts inside the transaction for projects, stories and sprints; `saveStories` does the same with `maxStories`.
+8. **Abuse limits:** at most 100,000 story copies across an account's snapshots (a busy team stores about 20,000 a year); per-account windows (`action_limits` table, one atomic upsert) of 40 Jira requests, 30 imports and 30 rule changes per 10 minutes. The `{{code}}` pattern no longer scans 500 characters per brace, which made a hostile shared backlog cost seconds of CPU per view.
+9. **Jira failures:** a Reconnect Jira button next to "Connect Jira again" messages; timeouts and network errors say Jira was slow, not the user's connection; 429 stops a Send (with Retry-After); Send fetches the token and field ids once and stops after 40 s with "Not sent yet: …"; a database error while saving a Sync says nothing changed. The nightly budget is 2 minutes (a slow Jira can take 3 for one project), and a job records "Started, but didn't finish" before running, so a run stopped at the platform limit shows on Insights. Database connections time out after 15 s.
+10. **Display:** `cutText` cuts at grapheme boundaries (no "�" from split emoji); Jira bullet indents stop at depth 6; a link whose label is an address on another host shows the real host.
+11. **First impressions:** `pageMeta` gives each public page its own title, description, canonical address and preview (the image must be named again, since a page's openGraph replaces the inherited one); the home title carries the tagline. `robots.txt` keeps signed-in pages and share links out; `sitemap.xml` lists the public pages; an `apple-icon`. The FAQ says the rules read English.
+
+Not done: Vercel Skew Protection (a deploy while a form is open) is a paid-plan setting; fix 1 covers it with a message.
+
 ## 2026-10-13 — v2.19: a second full user cycle, and a code review
 
 A second run as a new PO on a local build (sign up, import a Jira-style CSV with duplicate Sprint and Labels columns, a BOM, CRLF, sub-tasks, a 0.5 and a 200-point story; fix a story; plan, lock, re-estimate, add mid-sprint; report, share signed out on a phone, trends, settings, refinement, account), a live speed check, and a read-only code review whose findings were each checked before acting. The public site was already fast (home about 330 KB, LCP under 1 s, no layout shift). The user asked for all of it:

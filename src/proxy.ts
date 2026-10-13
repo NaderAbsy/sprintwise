@@ -7,6 +7,8 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 export function proxy(request: NextRequest) {
   if (!getSessionCookie(request)) {
+    // A form saved after signing out gets an error it can show, rather than a redirect that loses the typing.
+    if (request.headers.has("next-action")) return new NextResponse("Signed out.", { status: 401 });
     return NextResponse.redirect(new URL("/", request.url));
   }
   return NextResponse.next();

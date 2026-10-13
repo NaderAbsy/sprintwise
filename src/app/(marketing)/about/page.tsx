@@ -5,8 +5,9 @@ import { CountUp } from "@/components/marketing/count-up";
 import { PageHero } from "@/components/marketing/page-hero";
 import { Reveal } from "@/components/marketing/reveal";
 import { GITHUB_URL, RELEASES } from "@/lib/site";
+import { pageMeta } from "@/lib/page-meta";
 
-export const metadata: Metadata = { title: "About" };
+export const metadata: Metadata = pageMeta("/about", "About", "Why Sprintwise exists, who it is for, and how it is run: free, open source, fixed rules, no AI reading your tickets.");
 
 const PRINCIPLES = [
   {

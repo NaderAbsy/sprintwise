@@ -4,6 +4,7 @@ import { db } from "@/lib/server/db";
 import { doneStatusesOf, loadSprint } from "@/lib/server/sprint";
 import { formatDay } from "@/lib/sprint/dates";
 import { computeMetrics, formatPercent } from "@/lib/sprint/metrics";
+import { cutText } from "@/lib/text";
 
 export const alt = "A shared Sprintwise sprint report";
 export const size = OG_SIZE;
@@ -24,8 +25,8 @@ export default async function Image({ params }: { params: Promise<{ token: strin
   const m = computeMetrics(baseline, latest, doneStatuses);
   return ogCard({
     eyebrow: "Sprint report",
-    title: sprint.name.slice(0, 60),
-    subtitle: `${sprint.project.name.slice(0, 50)} · ${formatDay(sprint.startDate)} to ${formatDay(sprint.endDate)}`,
+    title: cutText(sprint.name, 60),
+    subtitle: `${cutText(sprint.project.name, 50)} · ${formatDay(sprint.startDate)} to ${formatDay(sprint.endDate)}`,
     stats: [
       { label: "Scope change", value: formatPercent(m.netChange, { signed: true }) },
       { label: "Churn", value: formatPercent(m.churn) },

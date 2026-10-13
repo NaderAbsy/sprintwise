@@ -133,6 +133,22 @@ body {
   font-feature-settings: "cv11", "ss01";
 }
 
+/* A long link or unbroken word in a story wraps instead of pushing the page sideways on a phone. */
+h1,
+h2,
+h3,
+p,
+li,
+dd,
+dt,
+blockquote,
+figcaption,
+summary,
+label,
+a {
+  overflow-wrap: anywhere;
+}
+
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;

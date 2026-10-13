@@ -3,6 +3,7 @@ import { Prisma, type Project } from "@/generated/prisma/client";
 import type { ImportStory } from "@/lib/csv/import";
 import { db } from "@/lib/server/db";
 import { readinessData, settingsOf } from "@/lib/server/readiness";
+import { LimitError, lockOwner } from "@/lib/server/within-limit";
 
 type Tx = Prisma.TransactionClient;
 
@@ -18,16 +19,19 @@ export async function bottomRank(projectId: string, client: Tx | typeof db = db)
  * outside (a file or Jira) replaces what was edited here, so `editedAt` clears,
  * unless `keepEdited`: then a story edited here, even one edited a moment ago
  * while Jira was being read, is left alone. `extra` runs in the same transaction.
+ * With `maxStories`, throws LimitError rather than take the project past it, counted
+ * under a lock so imports sent at the same moment can't each find room.
  * Returns the keys that were saved.
  */
 export async function saveStories(
   project: Project,
   stories: ImportStory[],
-  { extra, keepEdited = false }: { extra?: (tx: Tx) => Promise<unknown>; keepEdited?: boolean } = {},
+  { extra, keepEdited = false, maxStories }: { extra?: (tx: Tx) => Promise<unknown>; keepEdited?: boolean; maxStories?: number } = {},
 ): Promise<Set<string>> {
   const settings = settingsOf(project);
   return db.$transaction(
     async (tx) => {
+      await lockOwner(tx, { project: project.id });
       // Locking the project's stories makes an edit saved meanwhile wait for this, or be seen by it.
       const rows = await tx.$queryRaw<{ id: string; key: string; edited: boolean }[]>`
         SELECT id, key, "editedAt" IS NOT NULL AS edited FROM stories WHERE "projectId" = ${project.id} FOR UPDATE`;
@@ -38,6 +42,9 @@ export async function saveStories(
         return row && !(keepEdited && row.edited);
       });
 
+      if (maxStories !== undefined && existing.size + fresh.length > maxStories) {
+        throw new LimitError(`This would take the project past ${maxStories} stories. Delete some stories or narrow what you bring in.`);
+      }
       if (fresh.length > 0) {
         // New stories in two statements, not one each: big imports stay quick.
         const firstRank = await bottomRank(project.id, tx);

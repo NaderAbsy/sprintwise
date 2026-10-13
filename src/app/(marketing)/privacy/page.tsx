@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { aiConfigured } from "@/lib/server/ai";
 import { FEEDBACK_URL, GITHUB_URL } from "@/lib/site";
+import { pageMeta } from "@/lib/page-meta";
 
-export const metadata: Metadata = { title: "Privacy" };
+export const metadata: Metadata = pageMeta("/privacy", "Privacy", "What Sprintwise stores, what it never does with your stories and Jira data, the cookies it uses, and how to delete everything.");
 
 export default function PrivacyPage() {
   return (
@@ -28,6 +29,10 @@ export default function PrivacyPage() {
           <li>
             A count of sign-in attempts per IP address, signed in or not, to slow down repeated tries. Counts older than a
             day are deleted daily, as are ended sessions.
+          </li>
+          <li>
+            How many Jira requests, imports and rule changes your account made in the last few minutes, to stop a runaway
+            script. Just the counts, deleted after a day.
           </li>
           {aiConfigured && <li>A count of how many AI suggestions you asked for each day, to enforce the daily limit.</li>}
           <li>
