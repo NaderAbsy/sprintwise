@@ -13,7 +13,7 @@ import {
   type ImportField,
 } from "@/lib/csv/template";
 import { STORY_LIMITS } from "@/lib/stories/form";
-import { normalizeKey, parsePoints, type Story } from "@/lib/stories/types";
+import { isSubtask, normalizeKey, parsePoints, type Story } from "@/lib/stories/types";
 import { cutText } from "@/lib/text";
 
 export type CsvIssue = {
@@ -202,7 +202,8 @@ export function readCsvTable(
       status: cell("status"),
       ...(cell("issue_type") && { issueType: cell("issue_type") }),
     };
-    const epic = cell("epic");
+    // A sub-task's parent is a story, not an epic: listing it as one would fill the Epic filter with stories.
+    const epic = isSubtask(story.issueType) ? "" : cell("epic");
     errors.push(...storyProblems(story, epic));
 
     if (story.key !== "") {

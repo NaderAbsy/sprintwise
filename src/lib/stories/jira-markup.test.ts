@@ -83,3 +83,26 @@ describe("hostile markup", () => {
     }
   });
 });
+
+describe("markup from a real Jira Cloud site", () => {
+  it("keeps braces inside inline code", () => {
+    expect(parseInline("the endpoint {{POST /v2/cards/{id}/charge}}")).toEqual([
+      { t: "text", v: "the endpoint " },
+      { t: "code", v: "POST /v2/cards/{id}/charge" },
+    ]);
+  });
+
+  it("shows panels as boxes, with what's inside read as markup", () => {
+    const blocks = parseJira("Intro\n\n{panel:bgColor=#deebff}\nDesign is in *Figma*.\n{panel}\n\n{info:title=Heads up}Ask Sam{info}");
+    expect(blocks[1]).toMatchObject({ t: "box", kind: "panel", blocks: [{ t: "p" }] });
+    expect(blocks[2]).toMatchObject({ t: "box", kind: "info", title: "Heads up", blocks: [{ t: "p" }] });
+    expect(looksLikeJira("{panel:bgColor=#deebff}\nx\n{panel}")).toBe(true);
+  });
+
+  it("reads a checklist: bullets, with ticked items struck through", () => {
+    const text = "Needed before refunds go live.\n\n* Log every refund attempt\n* -Keep logs for seven years-";
+    expect(looksLikeJira(text)).toBe(true);
+    expect(parseJira(text)[1]).toMatchObject({ t: "list", items: [{ depth: 1 }, { depth: 1, c: [{ t: "s" }] }] });
+    expect(parseInline("2-3 days, well-known - fine")).toEqual([{ t: "text", v: "2-3 days, well-known - fine" }]);
+  });
+});

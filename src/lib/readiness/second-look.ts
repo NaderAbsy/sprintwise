@@ -20,9 +20,20 @@ const LEFTOVERS: RegExp[] = [
   /\bhere(?:'s|’s| is| are) (?:a|an|the|your|some) [^.\n]{0,40}?(?:user stor(?:y|ies)|stor(?:y|ies)|tickets?|acceptance criteria)\b/i,
   /\bas an ai\b[^.\n]{0,30}|\blanguage model\b/i,
   /\bi hope (?:this|that) helps\b|\blet me know if\b[^.\n]{0,40}|\bfeel free to\b[^.\n]{0,30}/i,
-  // Markdown that Jira shows as symbols: **bold** and ### headings.
-  /\*\*[^*\n]{1,60}\*\*|^\s{0,3}#{1,6}\s+\S[^\n]{0,40}/m,
+  // Markdown that Jira shows as symbols: **bold**. (### headings are checked in markdownHeading.)
+  /\*\*[^*\n]{1,60}\*\*/,
 ];
+
+/**
+ * A Markdown "### Heading" line from a chat. Jira writes numbered lists as "# item" lines
+ * too, so a line counts only when it stands alone: the lines around it don't start with "#".
+ */
+function markdownHeading(text: string): RegExpExecArray | null {
+  const lines = text.split("\n").filter((l) => l.trim() !== "");
+  const hashed = (l: string | undefined) => l !== undefined && /^\s{0,3}#{1,6}\s+\S/.test(l);
+  const i = lines.findIndex((l, n) => hashed(l) && !hashed(lines[n - 1]) && !hashed(lines[n + 1]));
+  return i < 0 ? null : /^\s{0,3}#{1,6}\s+\S[^\n]{0,40}/.exec(lines[i]);
+}
 
 const PLACEHOLDERS = /\[(?:insert|add|your|placeholder|tbd|todo)\b[^\]\n]{0,40}\]|<[a-z]+(?: [a-z]+){1,4}>|\bTBD\b|\bTODO\b|\blorem ipsum\b/;
 
@@ -94,8 +105,8 @@ export function secondLook(story: Pick<Story, "title" | "description" | "accepta
   const story_ = `${story.title}\n${story.description}`;
   const out: SecondLook[] = [];
 
-  for (const pattern of LEFTOVERS) {
-    const m = pattern.exec(all);
+  for (const find of [...LEFTOVERS.map((pattern) => (text: string) => pattern.exec(text)), markdownHeading]) {
+    const m = find(all);
     if (m) {
       out.push({
         kind: "leftover",

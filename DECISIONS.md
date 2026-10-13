@@ -2,6 +2,21 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-13 — v2.21: tested against a real Jira site
+
+The pretend Jira can't show what Jira Cloud really sends, so the user signed in to their personal Atlassian account (site sprintwise-test, a team-managed project with Feature/Task/Epic/Subtask types and an Idea status) and I added 12 issues labelled `sprintwise-qa`: a table and info panel, nested bullets and inline/blocked code, a description over 10,000 characters with criteria at the end, Arabic text, a checklist, criteria under a bold label as a numbered list, criteria in an expand, a 0.5-point story, an epic with two children, a sub-task and a Done issue. Then a new live project "Real Jira QA": preview, import, edit and Send to Jira, change status and points in Jira and add an issue, Sync. Connection, import (8 issues in about 4 s), unticking, Send (criteria into the description, as the site has no field) and Sync (status, points, new issue) all worked. Fixed:
+
+1. **Numbered lists as AI leftovers:** Jira writes ordered lists as "# item", which the Markdown-heading leftover check matched, capping those stories at Needs work. A "#" line now counts only when it stands alone (`markdownHeading`).
+2. **Braces in inline code:** v2.20 barred "{" inside {{…}} to stop a brace flood being slow; now only another "{{" is barred, which is as quick and keeps {{GET /cards/{id}}}.
+3. **Code as a criterion:** a criteria section ends at a {code}, {noformat}, panel, table or rule.
+4. **Panels:** {panel}, {info}, {note}, {tip}, {warning}, {quote} and {expand} become a box block parsed recursively; the same tag closes it, so nesting is shallow.
+5. **Checklists:** Jira's wiki for a ticked task item is "-text-" (strikethrough), now shown struck; text with "* " bullets counts as Jira markup.
+6. **Long descriptions:** before cutting a description over 5,000 characters, an "Acceptance criteria" section is moved to the empty criteria column.
+7. **Sub-task parents:** the parent of a sub-task is a story, so it isn't used as the epic (Jira search and CSV export alike).
+8. **Statuses in Jira projects:** Send doesn't write statuses and Sync restores Jira's, so the Jira bar and the sprint page say statuses come from Jira.
+
+Also: the edit page's tab shows the story key.
+
 ## 2026-10-13 — v2.20: a third round, from new angles
 
 Rounds one and two walked the happy path on a local build. This round changed who, when and what goes wrong: a hostile second account and hostile text, things failing mid-task, a year's worth of data and other time zones, and a first-time visitor (search results, link previews). Two read-only code reviews ran alongside; their findings were checked before acting. What held up: another account gets "not found" everywhere; shared links leak no email, Jira site or search; double clicks don't duplicate; Arabic and emoji store and export correctly; with about 670 stories and 20 sprints every page was ready in under 0.6 s locally and a full re-score took under 1 s; a cold live database answered in 1.4 s, then about 0.3 s.

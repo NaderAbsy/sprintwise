@@ -165,9 +165,11 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
                   In this sprint
                 </h2>
                 <p className="mt-0.5 max-w-2xl text-sm text-muted">
-                  {running
-                    ? "Change a status or estimate here or in the backlog, and it's recorded in today's snapshot. No need to save one."
-                    : "Changes were recorded automatically while the sprint ran."}
+                  {!running
+                    ? "Changes were recorded automatically while the sprint ran."
+                    : project.jiraJql
+                      ? "Statuses come from Jira, synced each night or with Sync from Jira on the backlog; each change is recorded in that day's snapshot. No need to save one."
+                      : "Change a status or estimate here or in the backlog, and it's recorded in today's snapshot. No need to save one."}
                 </p>
               </div>
               <div className="card overflow-x-auto">

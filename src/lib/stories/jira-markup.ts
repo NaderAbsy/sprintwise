@@ -10,6 +10,7 @@ export type Inline =
   | { t: "b"; c: Inline[] }
   | { t: "i"; c: Inline[] }
   | { t: "code"; v: string }
+  | { t: "s"; c: Inline[] }
   | { t: "link"; text: string; href: string };
 
 export type Block =
@@ -19,11 +20,16 @@ export type Block =
   | { t: "pre"; v: string }
   | { t: "quote"; c: Inline[] }
   | { t: "hr" }
-  | { t: "table"; rows: { head: boolean; cells: Inline[][] }[] };
+  | { t: "table"; rows: { head: boolean; cells: Inline[][] }[] }
+  /** {panel}, {info}, {note}, {tip}, {warning}, {quote} or {expand}: a box around more blocks. */
+  | { t: "box"; kind: string; title?: string; blocks: Block[] };
 
 /** Whether the text uses Jira markup at all; plain text is shown as typed. */
 export function looksLikeJira(text: string): boolean {
-  return /^h[1-6]\.\s|\{noformat|\{code|\{\{|^\|\||^bq\.\s|\{color/m.test(text) || /(^|\s)\*\S[^*\n]*\*(\s|$|[.,:;])/m.test(text);
+  return (
+    /^h[1-6]\.\s|\{noformat|\{code|\{\{|^\|\||^bq\.\s|\{color|\{(?:panel|info|note|tip|warning|quote|expand)\b|^\s*[*#]+\s+\S/m.test(text) ||
+    /(^|\s)\*\S[^*\n]*\*(\s|$|[.,:;])/m.test(text)
+  );
 }
 
 const SAFE_URL = /^https?:\/\/[^\s]+$/i;
@@ -33,9 +39,9 @@ export function parseInline(text: string): Inline[] {
   const out: Inline[] = [];
   // Every repeated part has an upper bound, so text full of unmatched "{{" or "[|" can't make each
   // opener rescan the rest of a long line (that made the shared backlog slow on hostile text). Code
-  // can't contain "{", so a run of "{{{{…" fails at once instead of scanning 500 characters per brace.
+  // may hold single braces ({{GET /cards/{id}}}) but not another "{{", so a run of "{{{{…" fails at once.
   const pattern =
-    /\{\{([^{\n]{1,500}?)\}\}|\{color(?::[^}]{0,50})?\}|\[([^[\]|\n]{0,300})\|([^[\]|\s]{1,2000})\]|\[(https?:\/\/[^[\]\s]{1,2000})\]|(^|[\s(\[>"'])\*(?=\S)([^*\n]{0,500}?\S)\*(?=$|[\s).,:;!?\]'"<-])|(^|[\s(\[>"'])_(?=\S)([^_\n]{0,500}?\S)_(?=$|[\s).,:;!?\]'"<-])/g;
+    /\{\{((?:(?!\{\{)[^\n]){1,500}?)\}\}|\{color(?::[^}]{0,50})?\}|\[([^[\]|\n]{0,300})\|([^[\]|\s]{1,2000})\]|\[(https?:\/\/[^[\]\s]{1,2000})\]|(^|[\s(\[>"'])\*(?=\S)([^*\n]{0,500}?\S)\*(?=$|[\s).,:;!?\]'"<-])|(^|[\s(\[>"'])_(?=\S)([^_\n]{0,500}?\S)_(?=$|[\s).,:;!?\]'"<-])|(^|[\s(\[>"'])-(?=\S)([^-\n]{0,500}?\S)-(?=$|[\s).,:;!?\]'"<])/g;
   let last = 0;
   const pushText = (v: string) => {
     if (!v) return;
@@ -60,6 +66,10 @@ export function parseInline(text: string): Inline[] {
     } else if (m[8] !== undefined) {
       pushText(m[7]);
       out.push({ t: "i", c: parseInline(m[8]) });
+    } else if (m[10] !== undefined) {
+      // -struck through-: how Jira writes a ticked checklist item, among others.
+      pushText(m[9]);
+      out.push({ t: "s", c: parseInline(m[10]) });
     }
     last = start + m[0].length;
   }
@@ -80,6 +90,30 @@ export function parseJira(text: string): Block[] {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const trimmed = line.trim();
+
+    // {panel}, {info} and the like: the blocks up to the closing tag, read the same way, in a box.
+    // The same tag closes it, so a box can't hold another of its kind and nesting stays shallow.
+    const box = /^\{(panel|info|note|tip|warning|quote|expand)(?::([^}]*))?\}/i.exec(trimmed);
+    if (box) {
+      flush();
+      const kind = box[1].toLowerCase();
+      const close = new RegExp(`\\{${kind}\\}`, "i");
+      let rest = trimmed.slice(box[0].length);
+      const body: string[] = [];
+      let found = close.exec(rest);
+      while (!found && i + 1 < lines.length) {
+        body.push(rest);
+        rest = lines[++i];
+        found = close.exec(rest);
+      }
+      body.push(found ? rest.slice(0, found.index) : rest);
+      const params = box[2] ?? "";
+      const title = kind === "expand" ? params.trim() : /(?:^|\|)\s*title=([^|]*)/i.exec(params)?.[1]?.trim();
+      blocks.push({ t: "box", kind, ...(title ? { title } : {}), blocks: parseJira(body.join("\n")) });
+      const after = found ? rest.slice(found.index + found[0].length).trim() : "";
+      if (after) para.push(parseInline(after));
+      continue;
+    }
 
     // {noformat} or {code}: everything up to the closing tag, on this line or later ones.
     const open = /^\{(noformat|code)(?::[^}]*)?\}/.exec(trimmed);

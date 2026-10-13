@@ -4,7 +4,7 @@ import { db } from "@/lib/server/db";
 import { EPIC_MAX_LENGTH } from "@/lib/csv/template";
 import { STORY_LIMITS } from "@/lib/stories/form";
 import { cutText } from "@/lib/text";
-import { withCriteriaInDescription } from "@/lib/stories/types";
+import { criteriaFromDescription, withCriteriaInDescription } from "@/lib/stories/types";
 
 /**
  * Jira Cloud through Atlassian's OAuth 2.0 (3LO). Tokens are stored by Better
@@ -337,20 +337,23 @@ export function issuesAsCsv(issues: JiraIssue[]): string {
     "Parent summary",
     ...Array.from({ length: labelColumns }, () => "Labels"),
   ];
-  const rows = issues.map((i) =>
-    [
+  const rows = issues.map((i) => {
+    // A description too long to keep may have its criteria at the end, past the cut: those move to the
+    // criteria column first, so the story isn't scored as having none.
+    const moved = i.description.length > STORY_LIMITS.description && !i.acceptanceCriteria.trim() ? criteriaFromDescription(i.description) : "";
+    return [
       i.key,
       fit(i.summary, STORY_LIMITS.title),
       fit(i.issueType, STORY_LIMITS.issueType),
       fit(i.description, STORY_LIMITS.description),
-      fit(i.acceptanceCriteria, STORY_LIMITS.acceptanceCriteria),
+      fit(moved || i.acceptanceCriteria, STORY_LIMITS.acceptanceCriteria),
       i.storyPoints === null || i.storyPoints > STORY_LIMITS.points ? "" : String(i.storyPoints),
       fit(i.status, STORY_LIMITS.status),
       fit(i.parent, EPIC_MAX_LENGTH),
       ...Array.from({ length: labelColumns }, (_, n) => i.labels[n] ?? ""),
     ]
       .map(cell)
-      .join(","),
-  );
+      .join(",");
+  });
   return [header.join(","), ...rows].join("\n");
 }

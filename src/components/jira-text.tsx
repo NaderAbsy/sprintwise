@@ -30,6 +30,12 @@ function Spans({ nodes }: { nodes: Inline[] }) {
             <Spans nodes={node.c} />
           </em>
         );
+      case "s":
+        return (
+          <s key={i} className="text-muted">
+            <Spans nodes={node.c} />
+          </s>
+        );
       case "code":
         return (
           <code key={i} className="rounded bg-surface-2 px-1 py-0.5 font-mono text-[0.85em]">
@@ -92,6 +98,15 @@ function BlockView({ block }: { block: Block }) {
       );
     case "hr":
       return <hr className="border-border" />;
+    case "box":
+      return (
+        <div className={`space-y-2 rounded-lg border p-3 ${block.kind === "warning" || block.kind === "note" ? "border-needs-work/40 bg-needs-work-bg/40" : "border-border bg-surface-2/60"}`}>
+          {block.title && <p className="font-semibold text-foreground">{block.title}</p>}
+          {block.blocks.map((inner, i) => (
+            <BlockView key={i} block={inner} />
+          ))}
+        </div>
+      );
     case "table":
       return (
         <div className="overflow-x-auto">

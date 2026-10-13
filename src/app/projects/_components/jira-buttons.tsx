@@ -97,7 +97,8 @@ export function JiraBar({
       )}
       <span>
         From {siteName}
-        {syncedAt ? `, last synced ${syncedAt}${automatic ? " automatically" : ""}` : ""}.
+        {syncedAt ? `, last synced ${syncedAt}${automatic ? " automatically" : ""}` : ""}. Statuses come from Jira: change
+        them there, and Sync brings them in (a status changed here goes back to Jira&apos;s at the next sync).
       </span>
       {nightlyError && !state?.message && (
         <div className="flex w-full flex-wrap items-center gap-3">
