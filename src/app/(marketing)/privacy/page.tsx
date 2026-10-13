@@ -30,6 +30,10 @@ export default function PrivacyPage() {
             A count of sign-in attempts per IP address, signed in or not, to slow down repeated tries. Counts older than a
             day are deleted daily, as are ended sessions.
           </li>
+          <li>
+            How many Jira requests, imports and rule changes your account made in the last few minutes, to stop a runaway
+            script. Just the counts, deleted after a day.
+          </li>
           {aiConfigured && <li>A count of how many AI suggestions you asked for each day, to enforce the daily limit.</li>}
           <li>
             Anonymous usage counts (checks run, imports, reports) with no user id or story text. Whoever runs
