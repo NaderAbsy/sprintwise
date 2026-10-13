@@ -28,7 +28,7 @@ export function JiraSource({
 }: {
   projectId: string;
   jira: JiraSourceProps;
-  onLoaded: (csv: string, note: string) => void;
+  onLoaded: (csv: string, note: string, searchedAt: string) => void;
 }) {
   const id = useId();
   const [cloudId, setCloudId] = useState(jira.cloudId && jira.sites.some((s) => s.id === jira.cloudId) ? jira.cloudId : (jira.sites[0]?.id ?? ""));
@@ -133,6 +133,7 @@ export function JiraSource({
                   onLoaded(
                     result.csv,
                     `${result.count} ${result.count === 1 ? "issue" : "issues"} from Jira${result.truncated ? " (the first 1,000; narrow the search for the rest)" : ""}.`,
+                    result.searchedAt,
                   );
               });
             }}

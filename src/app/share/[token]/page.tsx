@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Logo } from "@/components/logo";
+import { SharedFooter } from "@/components/shared-footer";
 import { SprintReport } from "@/components/sprint-report";
 import { db } from "@/lib/server/db";
 import { settingsOf, toStory } from "@/lib/server/readiness";
@@ -42,6 +43,7 @@ export default async function SharedReportPage({ params }: PageProps<"/share/[to
           snapshots={snapshots.map((s) => ({ asOfDate: s.asOfDate, items: s.items.map(toStory) }))}
         />
       </main>
+      <SharedFooter />
     </div>
   );
 }

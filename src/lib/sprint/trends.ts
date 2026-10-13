@@ -1,6 +1,6 @@
 import { scoreStory, type RuleSettings } from "@/lib/readiness/rules";
 import { indexByKey } from "@/lib/sprint/diff";
-import { computeMetrics, DONE_STATUSES } from "@/lib/sprint/metrics";
+import { computeMetrics, DONE_STATUSES, sumPoints } from "@/lib/sprint/metrics";
 import { isBugType } from "@/lib/sprint/reasons";
 import type { Story } from "@/lib/stories/types";
 
@@ -58,7 +58,7 @@ export function trendRows(
         committed: m.baselineTotal,
         done: m.donePoints,
         added: m.scopeAdded,
-        addedBugs: addedStories.filter((story) => isBugType(story.issueType)).reduce((sum, story) => sum + (story.storyPoints ?? 0), 0),
+        addedBugs: sumPoints(addedStories.filter((story) => isBugType(story.issueType)).map((story) => story.storyPoints ?? 0)),
         completion: m.completion,
         churn: m.churn,
         netChange: m.netChange,

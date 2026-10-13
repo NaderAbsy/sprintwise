@@ -83,7 +83,8 @@ export function parsePoints(raw: string | number | null | undefined): {
   valid: boolean;
 } {
   if (raw === null || raw === undefined) return { points: null, valid: true };
-  const text = String(raw).trim();
+  // "1,5" is how much of Europe writes 1.5, and the only decimal key on many phones there.
+  const text = String(raw).trim().replace(/^(\d+),(\d+)$/, "$1.$2");
   if (text === "") return { points: null, valid: true };
   const value = Number(text);
   if (!Number.isFinite(value) || value < 0) return { points: null, valid: false };
@@ -109,4 +110,9 @@ export function withCriteriaInDescription(description: string, criteria: string)
 /** Epics group stories; they're never planned into a sprint, so imports and syncs leave them out unless asked. */
 export function isEpic(issueType: string | undefined): boolean {
   return issueType?.trim().toLowerCase() === "epic";
+}
+
+/** Sub-tasks are steps inside a story, not planned on their own, so they're left out the same way. */
+export function isSubtask(issueType: string | undefined): boolean {
+  return /^sub[- ]?task$/i.test(issueType?.trim() ?? "");
 }

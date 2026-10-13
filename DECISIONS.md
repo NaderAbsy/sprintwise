@@ -2,6 +2,27 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-13 — v2.19: a second full user cycle, and a code review
+
+A second run as a new PO on a local build (sign up, import a Jira-style CSV with duplicate Sprint and Labels columns, a BOM, CRLF, sub-tasks, a 0.5 and a 200-point story; fix a story; plan, lock, re-estimate, add mid-sprint; report, share signed out on a phone, trends, settings, refinement, account), a live speed check, and a read-only code review whose findings were each checked before acting. The public site was already fast (home about 330 KB, LCP under 1 s, no layout shift). The user asked for all of it:
+
+1. **Long Jira text:** issues whose description, criteria or title are over Sprintwise's limits used to fail the row checks, so Sync silently stopped updating them, status included. `issuesAsCsv` now cuts them to fit and ends them with `JIRA_CUT`; an estimate over 1,000 is left blank. Send to Jira refuses a story holding `JIRA_CUT`, so the full text in Jira is never overwritten with the cut copy.
+2. **Edits racing a sync or a send:** `saveStories` is now one interactive transaction that locks the project's stories (`FOR UPDATE`) and, for Sync (`keepEdited`), re-checks `editedAt` under the lock. An edit saved meanwhile either waits or is seen and kept. After each Send, `editedAt` is cleared only if it hasn't changed since the read.
+3. **Issues created between Preview and Import:** the time saved as `jiraSyncedAt` is the search's, not the import's (the preview hands it to the form; the server accepts it only if within the last day). Sync does the same.
+4. **Key reuse:** `nextStoryKey` also counts STORY-n keys in sprint snapshots, so deleting STORY-5 and adding a story can't give the new one STORY-5, which sprints would treat as the old story.
+5. **Concurrent snapshots:** `uploadSnapshot` locks the sprint and checks the latest snapshot is still the one it diffed against; otherwise it asks the user to check and save again. Adding a story with a key saved a moment ago in another tab shows a field error instead of the error page.
+6. **Decimal comma:** `parsePoints` reads `1,5` as 1.5 (only digits, one comma); most European phone keypads offer no point.
+7. **Float leftovers:** `sumPoints` rounds sums to six places; used by metrics, the burn-up, reasons, trends and the sprint forms. `formatPoints` rounds too, and the burn-up's axis ticks are de-duplicated.
+8. **Speed:** the Sprints page loads only key, points and status for each sprint's baseline and latest snapshot, instead of every item of every snapshot. The sprint page sends the backlog's saved bands instead of descriptions, and loads in parallel. `createManyAndReturn` adds new stories in two statements. Indexes on `changes.fromSnapshotId` and `toSnapshotId`, which the automatic tracking's replace and every cascade delete use.
+9. **Sub-tasks:** unticked at import with a note and not added by Sync (`isSubtask`), like epics.
+10. **Criteria warning:** with a Description column but no Acceptance criteria column, the import says stories score low unless their criteria are in the description, instead of "every story will score low".
+11. **Capped stories in lists:** `capNote` adds "Too big", "Not estimated", "Team check" or "Needs a re-read" under the band when a score of 80+ is held below Ready, in the backlog and the demo.
+12. **Sprint dates:** `sprintStatus` shows "Day 3 of 14 · 11 days left", "Last day" or "Starts in 2 days" on the sprint page and the Sprints list. A new sprint suggests the next name (`nextSprintName`) and starts the day after the last one ends (or today, if later), as long as the last one.
+13. **Refinement:** "Not ready yet" leaves out stories in a running sprint's latest snapshot, and says how many; "All unfinished" still shows them.
+14. **Report wording:** a running sprint's headline reads "So far: … is done"; "CSV snapshots show when…" is now "Snapshots…", since many sprints follow the backlog.
+15. **Shared pages:** a "Made with Sprintwise" card with Try the demo under shared reports and backlogs (not printed). Viewers are the people most likely to try it next.
+16. **Small copy:** the home badge shows the newest release that adds something (`Release.feature`), not a fixes release; the account page no longer says "all 1 of your projects"; the project name example is "Mobile app backlog"; story tabs show the key.
+
 ## 2026-10-12 — v2.18: fixes from a full user cycle
 
 A run through everything a new PO does (sign up, import a messy Jira export, fix and add stories, refinement, settings, plan, lock, change, report, share, trends, export, phone, dark mode, bad files) on a local build with test sign-in and the pretend Jira. No crashes or console errors; ten fixes:

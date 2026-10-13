@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDay, parseDay, validateSnapshotDate, validateSprintDates } from "@/lib/sprint/dates";
+import { formatDay, nextSprintName, parseDay, sprintStatus, validateSnapshotDate, validateSprintDates } from "@/lib/sprint/dates";
 
 const day = (text: string) => parseDay(text)!;
 const sprint = { startDate: day("2026-10-05"), endDate: day("2026-10-16") };
@@ -49,5 +49,28 @@ describe("validateSnapshotDate", () => {
 
   it("needs a date", () => {
     expect(validateSnapshotDate("", sprint, null)).toEqual({ ok: false, errors: { asOfDate: "Enter the date this snapshot is from." } });
+  });
+});
+
+describe("sprintStatus", () => {
+  const start = day("2026-10-13");
+  const end = day("2026-10-26");
+  it("counts both ends of the sprint", () => {
+    expect(sprintStatus(start, end, day("2026-10-13"))).toEqual({ running: true, label: "Day 1 of 14 · 13 days left" });
+    expect(sprintStatus(start, end, day("2026-10-25"))).toEqual({ running: true, label: "Day 13 of 14 · 1 day left" });
+    expect(sprintStatus(start, end, day("2026-10-26"))).toEqual({ running: true, label: "Last day" });
+  });
+  it("says when it starts, and when it's over", () => {
+    expect(sprintStatus(start, end, day("2026-10-12"))).toEqual({ running: true, label: "Starts in 1 day" });
+    expect(sprintStatus(start, end, day("2026-10-27"))).toEqual({ running: false, label: "Finished" });
+  });
+});
+
+describe("nextSprintName", () => {
+  it("counts on from the last sprint", () => {
+    expect(nextSprintName(undefined)).toBe("Sprint 1");
+    expect(nextSprintName("Sprint 5")).toBe("Sprint 6");
+    expect(nextSprintName("Mobile 2026-09")).toBe("Mobile 2026-10");
+    expect(nextSprintName("Launch prep")).toBe("");
   });
 });

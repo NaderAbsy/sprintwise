@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import type { FormState } from "@/lib/form-state";
 import { db } from "@/lib/server/db";
 import { isId, requireFreshUser, requireProject, requireUser } from "@/lib/server/dal";
-import { issuesAsCsv, JiraError, jiraSites, searchJira, updateJiraIssue } from "@/lib/server/jira";
+import { issuesAsCsv, JIRA_CUT, JiraError, jiraSites, searchJira, updateJiraIssue } from "@/lib/server/jira";
 import { jiraFailure, syncProjectFromJira } from "@/lib/server/jira-sync";
 
 const JQL_MAX = 2000;
@@ -21,7 +21,7 @@ export async function previewFromJira(
   projectId: string,
   cloudId: string,
   jql: string,
-): Promise<{ csv: string; count: number; truncated: boolean } | { error: string }> {
+): Promise<{ csv: string; count: number; truncated: boolean; searchedAt: string } | { error: string }> {
   const project = await requireProject(projectId);
   const user = await requireUser();
   const search = String(jql ?? "").trim();
@@ -30,13 +30,14 @@ export async function previewFromJira(
   try {
     const site = (await jiraSites(user.id)).find((s) => s.id === cloudId);
     if (!site) return { error: "Choose one of your Jira sites." };
+    const searchedAt = new Date().toISOString();
     const { issues, truncated } = await searchJira(user.id, site.id, search);
     await db.project.update({
       where: { id: project.id },
       data: { jiraCloudId: site.id, jiraSiteName: site.name, jiraSiteUrl: site.url, jiraJql: search },
     });
     if (issues.length === 0) return { error: "That search found no issues in Jira." };
-    return { csv: issuesAsCsv(issues), count: issues.length, truncated };
+    return { csv: issuesAsCsv(issues), count: issues.length, truncated, searchedAt };
   } catch (error) {
     return { error: failure(error) };
   }
@@ -69,6 +70,10 @@ export async function sendToJira(projectId: string, storyIds: string[]): Promise
   const sent: string[] = [];
   const notes: string[] = [];
   for (const story of stories) {
+    if ([story.title, story.description, story.acceptanceCriteria].some((text) => text.includes(JIRA_CUT))) {
+      notes.push(`${story.key}: its Jira text is longer than Sprintwise keeps, so sending it would cut it short. Edit it in Jira instead.`);
+      continue;
+    }
     try {
       const { skipped, criteriaInDescription } = await updateJiraIssue(user.id, project.jiraCloudId, story.key, {
         summary: story.title,
@@ -76,7 +81,8 @@ export async function sendToJira(projectId: string, storyIds: string[]): Promise
         acceptanceCriteria: story.acceptanceCriteria,
         storyPoints: story.storyPoints,
       });
-      await db.story.update({ where: { id: story.id }, data: { editedAt: null } });
+      // Only if it wasn't edited again meanwhile: that newer edit still needs sending.
+      await db.story.updateMany({ where: { id: story.id, editedAt: story.editedAt }, data: { editedAt: null } });
       sent.push(story.key);
       if (criteriaInDescription) notes.push(`${story.key}: this Jira has no acceptance criteria field, so the criteria went into the description.`);
       if (skipped.length > 0) notes.push(`${story.key}: Jira doesn't allow ${skipped.join(" or ")} on this issue type, so ${skipped.length === 1 ? "it wasn't" : "they weren't"} sent.`);

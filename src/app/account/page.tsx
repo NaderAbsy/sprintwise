@@ -14,6 +14,12 @@ export const metadata: Metadata = { title: "Account" };
 export default async function AccountPage() {
   const user = await requireUser();
   const projects = await db.project.count({ where: { userId: user.id } });
+  const removes =
+    projects === 0
+      ? "your account"
+      : projects === 1
+        ? "your account and your project, with its stories, sprints and snapshots"
+        : `your account and all ${projects} of your projects, with their stories, sprints and snapshots`;
   const jira = await jiraAccount(user.id);
   const owner = await isSiteOwner(user);
 
@@ -92,13 +98,12 @@ export default async function AccountPage() {
             Danger zone
           </h2>
           <p className="text-sm text-muted">
-            Deleting your account removes it and all {projects} of your projects, with their stories, sprints and
-            snapshots.
+            This removes {removes}.
           </p>
           <ConfirmButton
             label="Delete my account"
             title="Delete your account?"
-            body={`This deletes your account and all ${projects} of your projects, with their stories, sprints and snapshots. It can't be undone.`}
+            body={`This deletes ${removes}. It can't be undone.`}
             confirmLabel="Delete everything"
             action={deleteAccount}
           />

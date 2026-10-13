@@ -25,7 +25,13 @@ import { criteriaOf } from "@/lib/stories/types";
 import { doneStatusesOf } from "@/lib/server/sprint";
 import { isDone } from "@/lib/sprint/metrics";
 
-export const metadata: Metadata = { title: "Story" };
+/** The story's key in the tab title, so several open stories can be told apart. */
+export async function generateMetadata({ params }: PageProps<"/projects/[projectId]/stories/[storyId]">): Promise<Metadata> {
+  const { projectId, storyId } = await params;
+  const project = await requireProject(projectId);
+  const row = await db.story.findFirst({ where: { id: storyId, projectId: project.id }, select: { key: true } });
+  return { title: row ? `${row.key} · Story` : "Story" };
+}
 
 export default async function StoryPage({ params, searchParams }: PageProps<"/projects/[projectId]/stories/[storyId]">) {
   const { projectId, storyId } = await params;

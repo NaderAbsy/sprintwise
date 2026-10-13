@@ -139,7 +139,15 @@ export async function uploadSnapshot(
   if (!("stories" in csv)) return csv;
 
   const changes = defaultReasons(diffSnapshots(previous.items.map(toStory), csv.stories), csv.stories);
-  await db.$transaction(async (tx) => {
+  const saved = await db.$transaction(async (tx) => {
+    // One save at a time per sprint; if another landed first, this one's changes were measured against an old snapshot.
+    await tx.$queryRaw`SELECT id FROM sprints WHERE id = ${sprint.id} FOR UPDATE`;
+    const latest = await tx.snapshot.findFirst({
+      where: { sprintId: sprint.id },
+      orderBy: [{ asOfDate: "desc" }, { uploadedAt: "desc" }],
+      select: { id: true },
+    });
+    if (latest?.id !== previous.id) return false;
     const snapshot = await tx.snapshot.create({
       data: { sprintId: sprint.id, asOfDate: date.asOfDate, locked: true, items: { create: csv.stories } },
     });
@@ -160,8 +168,10 @@ export async function uploadSnapshot(
         })),
       });
     }
+    return true;
   });
   revalidatePath(sprintPath(project.id, sprint.id));
+  if (!saved) return { error: "Another snapshot was saved a moment ago, perhaps in another tab. Check the change log, then save again if something's missing." };
   return {
     message:
       changes.length === 0

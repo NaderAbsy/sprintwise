@@ -12,11 +12,12 @@ async function sprintWithBaseline(page: Page, baseline: Buffer) {
   await page.getByRole("navigation", { name: "Project sections" }).getByRole("link", { name: "Sprints" }).click();
   await page.getByRole("link", { name: "New sprint" }).click();
   await page.getByLabel("Name").fill("Sprint 15");
-  await page.getByLabel("Start date").fill("2026-10-05");
-  await page.getByLabel("End date").fill("2026-10-16");
+  // A finished sprint, so the report reads as a result rather than "so far".
+  await page.getByLabel("Start date").fill("2026-09-21");
+  await page.getByLabel("End date").fill("2026-10-02");
   await page.getByRole("button", { name: "Create sprint" }).click();
   await page.getByLabel("Day-one CSV").setInputFiles({ name: "day1.csv", mimeType: "text/csv", buffer: baseline });
-  await page.getByLabel("As of").fill("2026-10-05");
+  await page.getByLabel("As of").fill("2026-09-21");
   await page.getByRole("button", { name: "Lock as baseline" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Lock baseline" }).click();
   await expect(page.getByText("Baseline · locked")).toBeVisible();
@@ -43,7 +44,7 @@ test("the sprint report shows the worked example on one page", async ({ page }) 
   await uploadSnapshot(
     page,
     csv(["A,Story A,8,Done", "C,Story C,8,Done", "D,Story D renamed,8,Done", "E,Story E,6,In progress", "F,Story F,5,Done"]),
-    "2026-10-08",
+    "2026-09-24",
   );
 
   await page.getByRole("link", { name: "Open sprint report" }).click();
@@ -78,7 +79,7 @@ test("a long change log still prints on one page", async ({ page }) => {
   const stories = Array.from({ length: 30 }, (_, i) => `K-${i + 1},Story ${i + 1},3,To Do`);
   await sprintWithBaseline(page, csv(stories));
   // Remove 25 of 30 stories: 25 scope changes, more than the report lists.
-  await uploadSnapshot(page, csv(stories.slice(0, 5)), "2026-10-09");
+  await uploadSnapshot(page, csv(stories.slice(0, 5)), "2026-09-25");
 
   await page.getByRole("link", { name: "Open sprint report" }).click();
   await expect(page.getByText(/Showing the 10 most recent of 25/)).toBeVisible();

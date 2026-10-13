@@ -5,7 +5,7 @@ vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 vi.mock("@/lib/server/auth", () => ({ auth: { api: {} } }));
 vi.mock("@/lib/server/db", () => ({ db: {} }));
 
-const { issuesAsCsv } = await import("@/lib/server/jira");
+const { issuesAsCsv, JIRA_CUT } = await import("@/lib/server/jira");
 const { readCsvTable } = await import("@/lib/csv/parse");
 
 describe("issuesAsCsv", () => {
@@ -53,6 +53,36 @@ describe("issuesAsCsv", () => {
       errors: [],
     });
     expect(table.rows[1]).toMatchObject({ story: { key: "ABC-2", storyPoints: null, issueType: "Bug" }, epic: "", labels: [] });
+  });
+});
+
+describe("issuesAsCsv with text longer than Sprintwise keeps", () => {
+  it("cuts it short and marks it, so the issue still imports and syncs", () => {
+    const csv = issuesAsCsv([
+      {
+        key: "ABC-9",
+        summary: "S".repeat(400),
+        description: "D".repeat(9000),
+        acceptanceCriteria: "- One",
+        storyPoints: 5000,
+        status: "In Progress",
+        issueType: "Story",
+        parent: "",
+        labels: [],
+        created: null,
+      },
+    ]);
+    const table = readCsvTable(csv, { maxBytes: 1_000_000, maxRows: 1000 });
+    expect(table.ok).toBe(true);
+    if (!table.ok) return;
+    const [row] = table.rows;
+    expect(row.errors).toEqual([]);
+    expect(row.story.title).toHaveLength(300);
+    expect(row.story.description).toHaveLength(5000);
+    expect(row.story.description.endsWith(JIRA_CUT)).toBe(true);
+    // An estimate too big to keep is left blank rather than blocking the status update.
+    expect(row.story.storyPoints).toBeNull();
+    expect(row.story.status).toBe("In Progress");
   });
 });
 

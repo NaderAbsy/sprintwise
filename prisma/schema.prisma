@@ -251,6 +251,8 @@ model Change {
   reason         String?
 
   @@index([sprintId])
+  @@index([fromSnapshotId])
+  @@index([toSnapshotId])
   @@map("changes")
 }
 

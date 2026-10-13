@@ -26,7 +26,7 @@ export function CreateProjectForm({ framed = true }: { framed?: boolean }) {
             id="project-name"
             name="name"
             className="field mt-1"
-            placeholder="e.g. Payments team backlog"
+            placeholder="e.g. Mobile app backlog"
             aria-invalid={state.fieldErrors?.name ? true : undefined}
             aria-describedby="project-name-error"
           />

@@ -91,7 +91,11 @@ export async function loadProjectTrends(
   const ids = [...new Set(pairs.flatMap((p) => [p.baselineId, p.latestId]))];
   const items = await db.snapshotItem.findMany({ where: { snapshotId: { in: ids } } });
   const bySnapshot = new Map<string, Story[]>();
-  for (const item of items) bySnapshot.set(item.snapshotId, [...(bySnapshot.get(item.snapshotId) ?? []), toStory(item)]);
+  for (const item of items) {
+    const list = bySnapshot.get(item.snapshotId) ?? [];
+    list.push(toStory(item));
+    bySnapshot.set(item.snapshotId, list);
+  }
 
   return trendRows(
     pairs.map((p) => ({

@@ -3,11 +3,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { EmptyState } from "@/components/empty-state";
 import { SectionHeader } from "@/components/section-header";
-import { formatDay } from "@/lib/sprint/dates";
+import { formatDay, sprintStatus } from "@/lib/sprint/dates";
+import { utcToday } from "@/lib/sprint/tracking";
+import type { Story } from "@/lib/stories/types";
 import { computeMetrics, formatPercent } from "@/lib/sprint/metrics";
 import { db } from "@/lib/server/db";
 import { requireProject } from "@/lib/server/dal";
-import { toStory } from "@/lib/server/readiness";
 import { doneStatusesOf } from "@/lib/server/sprint";
 
 export const metadata: Metadata = { title: "Sprints" };
@@ -18,8 +19,24 @@ export default async function SprintsPage({ params }: PageProps<"/projects/[proj
   const sprints = await db.sprint.findMany({
     where: { projectId: project.id },
     orderBy: { startDate: "desc" },
-    include: { snapshots: { orderBy: [{ asOfDate: "asc" }, { uploadedAt: "asc" }], include: { items: true } } },
+    include: { snapshots: { orderBy: [{ asOfDate: "asc" }, { uploadedAt: "asc" }], select: { id: true, isBaseline: true } } },
   });
+  // The metrics need only the baseline and latest snapshot, and only each story's key, points and status.
+  const ids = sprints.flatMap((s) => {
+    const baseline = s.snapshots.find((x) => x.isBaseline);
+    return baseline ? [baseline.id, s.snapshots.at(-1)!.id] : [];
+  });
+  const items = await db.snapshotItem.findMany({
+    where: { snapshotId: { in: [...new Set(ids)] } },
+    select: { snapshotId: true, key: true, storyPoints: true, status: true },
+  });
+  const storiesOf = new Map<string, Story[]>();
+  for (const { snapshotId, ...item } of items) {
+    const list = storiesOf.get(snapshotId) ?? [];
+    list.push({ ...item, title: "", description: "", acceptanceCriteria: "" });
+    storiesOf.set(snapshotId, list);
+  }
+  const today = utcToday();
   const newSprint = (
     <Link href={`${base}/new`} className="btn-primary">
       <Plus aria-hidden="true" className="h-4 w-4" />
@@ -43,7 +60,11 @@ export default async function SprintsPage({ params }: PageProps<"/projects/[proj
           {sprints.map((sprint) => {
             const baseline = sprint.snapshots.find((s) => s.isBaseline);
             const latest = sprint.snapshots.at(-1);
-            const m = baseline && latest ? computeMetrics(baseline.items.map(toStory), latest.items.map(toStory), doneStatusesOf(project)) : null;
+            const m =
+              baseline && latest
+                ? computeMetrics(storiesOf.get(baseline.id) ?? [], storiesOf.get(latest.id) ?? [], doneStatusesOf(project))
+                : null;
+            const status = sprintStatus(sprint.startDate, sprint.endDate, today);
             return (
               <li key={sprint.id}>
                 <Link
@@ -51,7 +72,12 @@ export default async function SprintsPage({ params }: PageProps<"/projects/[proj
                   className="card group flex flex-wrap items-center justify-between gap-4 p-5 transition-colors hover:border-accent/50"
                 >
                   <div className="min-w-0">
-                    <p className="font-semibold group-hover:text-accent">{sprint.name}</p>
+                    <p className="flex flex-wrap items-center gap-2 font-semibold group-hover:text-accent">
+                      {sprint.name}
+                      {status.running && (
+                        <span className="rounded-full border border-border px-2 py-0.5 text-xs font-medium text-muted">{status.label}</span>
+                      )}
+                    </p>
                     <p className="mt-0.5 text-sm text-muted">
                       {formatDay(sprint.startDate)} to {formatDay(sprint.endDate)} ·{" "}
                       {sprint.snapshots.length === 0

@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { BandBadge } from "@/components/band-badge";
 import { ReadinessBreakdown } from "@/components/readiness-breakdown";
 import { ScoreRing } from "@/components/score-ring";
-import type { Readiness } from "@/lib/readiness/rules";
+import { capNote, type Readiness } from "@/lib/readiness/rules";
 import type { Story } from "@/lib/stories/types";
 
 export function DemoBacklog({ scored }: { scored: { story: Story; readiness: Readiness }[] }) {
@@ -33,6 +33,10 @@ export function DemoBacklog({ scored }: { scored: { story: Story; readiness: Rea
           <tbody>
             {scored.map(({ story, readiness }) => {
               const selected = story.key === openKey;
+              const note = capNote(readiness.score, readiness.band, [
+                ...readiness.findings.map((f) => f.id),
+                ...(readiness.custom.some((c) => !c.passed) ? ["custom"] : []),
+              ]);
               return (
                 <tr key={story.key} className={selected ? "bg-accent-soft/60 hover:bg-accent-soft/60" : ""}>
                   <td>
@@ -52,6 +56,7 @@ export function DemoBacklog({ scored }: { scored: { story: Story; readiness: Rea
                   </td>
                   <td>
                     <BandBadge band={readiness.band} />
+                    {note && <span className="mt-1 block text-xs text-subtle">{note}</span>}
                   </td>
                 </tr>
               );

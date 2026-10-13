@@ -8,20 +8,24 @@ import { formatDay } from "@/lib/sprint/dates";
 import { computeMetrics, formatPercent, formatPoints, reestimateNote, unestimatedNote, type SprintMetrics } from "@/lib/sprint/metrics";
 import { compareReadiness, isScopeChange, readinessFinding, type LogRow } from "@/lib/sprint/report";
 import { GOAL_OUTCOMES, reasonFinding, summarizeReasons } from "@/lib/sprint/reasons";
+import { utcToday } from "@/lib/sprint/tracking";
 import type { Story } from "@/lib/stories/types";
 
 /** Rows that still fit one A4 page alongside the metrics and the chart; the sprint page has the full log. */
 const MAX_LOG_ROWS = 10;
 
-function headline(m: SprintMetrics): string {
+/** The report's one-line summary; while the sprint runs it reads as "so far", not as a final result. */
+function headline(m: SprintMetrics, running: boolean): string {
   if (m.netChange === null || m.churn === null || m.completion === null) {
     return "The baseline has 0 points, so scope change can't be measured.";
   }
   const net =
     m.netChange === 0
-      ? "Scope held at the committed size"
-      : `Scope ${m.netChange > 0 ? "grew" : "shrank"} ${formatPercent(Math.abs(m.netChange))}`;
-  return `${net}, churn was ${formatPercent(m.churn)}, and ${formatPercent(m.completion)} of the original commitment was done.`;
+      ? `Scope ${running ? "has held" : "held"} at the committed size`
+      : `Scope ${running ? "has " : ""}${m.netChange > 0 ? (running ? "grown" : "grew") : running ? "shrunk" : "shrank"} ${formatPercent(Math.abs(m.netChange))}`;
+  return running
+    ? `So far: ${net.charAt(0).toLowerCase()}${net.slice(1)}, churn is ${formatPercent(m.churn)}, and ${formatPercent(m.completion)} of the original commitment is done.`
+    : `${net}, churn was ${formatPercent(m.churn)}, and ${formatPercent(m.completion)} of the original commitment was done.`;
 }
 
 const score = (value: number | null) => (value === null ? "—" : String(Math.round(value)));
@@ -122,7 +126,7 @@ export function SprintReport({
             )}
           </p>
         )}
-        <p className="mt-3 text-lg font-medium">{headline(metrics)}</p>
+        <p className="mt-3 text-lg font-medium">{headline(metrics, sprint.endDate >= utcToday())}</p>
       </header>
 
       <section aria-labelledby="report-metrics">
@@ -229,7 +233,7 @@ export function SprintReport({
           {scopeLog.length > MAX_LOG_ROWS &&
             `Showing the ${MAX_LOG_ROWS} most recent of ${scopeLog.length}; the sprint page has the full log. `}
           {notListed.length > 0 && `Not listed because they don't change scope: ${notListed.join(" and ")}. `}
-          CSV snapshots show when a change appeared, not who made it.
+          Snapshots show when a change appeared, not who made it.
         </p>
       </section>
 

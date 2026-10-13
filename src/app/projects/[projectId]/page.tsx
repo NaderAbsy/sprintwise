@@ -9,7 +9,7 @@ import { BacklogToolbar, NO_STATUS } from "@/app/projects/_components/backlog-to
 import { StatusOptions } from "@/app/projects/_components/quick-field";
 import { EmptyState } from "@/components/empty-state";
 import { SectionHeader } from "@/components/section-header";
-import type { Band } from "@/lib/readiness/rules";
+import { capNote, type Band } from "@/lib/readiness/rules";
 import { db } from "@/lib/server/db";
 import { requireProject, requireUser } from "@/lib/server/dal";
 import { jiraAccount, jiraConfigured } from "@/lib/server/jira";
@@ -305,6 +305,7 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
               storyPoints: s.storyPoints,
               score: s.readiness?.score ?? null,
               band: (s.readiness?.band as Band | undefined) ?? null,
+              capNote: s.readiness ? capNote(s.readiness.score, s.readiness.band, failedIds(s.readiness.failedRules)) : null,
             }))}
           />
         </div>
@@ -343,4 +344,9 @@ function FilterCard({
       <span className="text-lg font-semibold tabular-nums">{value}</span>
     </Link>
   );
+}
+
+/** The ids of a saved score's failed rules ("C7", "custom"…). */
+function failedIds(failedRules: unknown): string[] {
+  return Array.isArray(failedRules) ? failedRules.map((f) => String((f as { id?: unknown })?.id ?? "")) : [];
 }

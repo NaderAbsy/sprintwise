@@ -19,7 +19,7 @@ import {
 import { emptyFormState } from "@/lib/form-state";
 import { readySummary, scoreStory, type RuleSettings } from "@/lib/readiness/rules";
 import { isDone } from "@/lib/sprint/metrics";
-import { isEpic } from "@/lib/stories/types";
+import { isEpic, isSubtask } from "@/lib/stories/types";
 import { keepValuesOnSubmit } from "@/lib/keep-values-on-submit";
 
 const NONE = "__none__";
@@ -54,7 +54,7 @@ export function ImportForm({
   const [state, action, pending] = useActionState(importStories.bind(null, projectId), emptyFormState);
   const [text, setText] = useState<string | null>(null);
   // Where the rows came from: a file, or a Jira search (whose note says how many and from where).
-  const [origin, setOrigin] = useState<{ source: "file" | "jira"; note?: string }>({ source: "file" });
+  const [origin, setOrigin] = useState<{ source: "file" | "jira"; note?: string; searchedAt?: string }>({ source: "file" });
   const [fileError, setFileError] = useState<string | null>(null);
   const [mapping, setMapping] = useState<ColumnMapping>(savedColumns);
   const [ticked, setTicked] = useState<Set<number>>(new Set());
@@ -114,7 +114,12 @@ export function ImportForm({
   if (table?.ok && text !== null && tickedFor !== text) {
     setTickedFor(text);
     const ready = table.rows.filter(
-      (r) => r.errors.length === 0 && !isDone(r.story.status, doneStatuses) && !isEpic(r.story.issueType) && !edited.has(r.story.key),
+      (r) =>
+        r.errors.length === 0 &&
+        !isDone(r.story.status, doneStatuses) &&
+        !isEpic(r.story.issueType) &&
+        !isSubtask(r.story.issueType) &&
+        !edited.has(r.story.key),
     );
     setTicked(ready.length <= IMPORT_MAX_STORIES ? new Set(ready.map((r) => r.row)) : new Set());
   }
@@ -145,6 +150,7 @@ export function ImportForm({
   const finished = rows.filter((r) => usable(r) && isDone(r.story.status, doneStatuses));
   const overwriting = rows.filter((r) => usable(r) && edited.has(r.story.key));
   const epicRows = rows.filter((r) => usable(r) && !isDone(r.story.status, doneStatuses) && isEpic(r.story.issueType));
+  const subtaskRows = rows.filter((r) => usable(r) && !isDone(r.story.status, doneStatuses) && isSubtask(r.story.issueType));
   const noText = table?.ok
     ? [table.columns.description === null && "Description", table.columns.acceptance_criteria === null && "Acceptance criteria"].filter(
         (c): c is string => Boolean(c),
@@ -178,9 +184,9 @@ export function ImportForm({
         <JiraSource
           projectId={projectId}
           jira={jira}
-          onLoaded={(csv, note) => {
+          onLoaded={(csv, note, searchedAt) => {
             reset();
-            setOrigin({ source: "jira", note });
+            setOrigin({ source: "jira", note, searchedAt });
             setText(csv);
           }}
         />
@@ -193,6 +199,7 @@ export function ImportForm({
         <input type="hidden" name="stories" value={payload} />
         <input type="hidden" name="mapping" value={JSON.stringify(mapping)} />
         <input type="hidden" name="source" value={origin.source} />
+        <input type="hidden" name="searchedAt" value={origin.searchedAt ?? ""} />
         <p className="mt-2 text-xs text-muted">
           The file is read on your computer. Only the stories you tick are sent to Sprintwise.
         </p>
@@ -228,12 +235,15 @@ export function ImportForm({
           {noText.length > 0 && (
             <div className="rounded-lg bg-needs-work-bg p-4 text-sm text-needs-work">
               <p className="font-medium">
-                No {noText.join(" or ")} column, so every story will score low.
+                {noText.includes("Description")
+                  ? `No ${noText.join(" or ")} column, so every story will score low.`
+                  : "No Acceptance criteria column, so stories score low unless their criteria are in the description."}
               </p>
               <p className="mt-1">
                 The score reads the story text: who wants what and why, and how you&apos;ll know it&apos;s done. Pick the
-                column under Match columns, or show it in Jira&apos;s list view and export again. If your team writes
-                acceptance criteria inside the description, a Description column is enough.
+                column under Match columns, or show it in Jira&apos;s list view and export again.
+                {!noText.includes("Description") &&
+                  " If your team writes acceptance criteria inside the description, nothing needs to change."}
               </p>
             </div>
           )}
@@ -275,6 +285,13 @@ export function ImportForm({
                 {epicRows.length === 1 ? "1 epic" : `${epicRows.length} epics`} left unticked: epics group stories and
                 aren&apos;t planned into a sprint. Tick {epicRows.length === 1 ? "it" : "them"} to score{" "}
                 {epicRows.length === 1 ? "it" : "them"} anyway.
+              </p>
+            )}
+            {subtaskRows.length > 0 && (
+              <p className="w-full text-muted">
+                {subtaskRows.length === 1 ? "1 sub-task" : `${subtaskRows.length} sub-tasks`} left unticked: sub-tasks are
+                steps inside a story, so their story is the one to check. Tick {subtaskRows.length === 1 ? "it" : "them"} to
+                score {subtaskRows.length === 1 ? "it" : "them"} anyway.
               </p>
             )}
             {overwriting.length > 0 && (

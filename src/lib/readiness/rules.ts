@@ -140,6 +140,18 @@ function bandCapFor(rules: RuleResult[]): string | undefined {
   return BLOCKERS.find((b) => rules.some((r) => r.id === b.id && !r.passed))?.cap;
 }
 
+/**
+ * A two-word reason for lists, when a score of 80 or more is held below Ready:
+ * the full sentence (`bandCap`) is on the story. `failedIds` are the failed rules' ids ("C7", "custom"…).
+ */
+export function capNote(score: number, band: string, failedIds: (string | undefined)[]): string | null {
+  if (bandFor(score) !== "Ready" || band === "Ready") return null;
+  if (failedIds.includes("C7")) return "Too big";
+  if (failedIds.includes("C6")) return "Not estimated";
+  if (failedIds.includes("custom")) return "Team check";
+  return "Needs a re-read";
+}
+
 export function bandFor(score: number): Band {
   if (score >= 80) return "Ready";
   if (score >= 50) return "Needs work";
