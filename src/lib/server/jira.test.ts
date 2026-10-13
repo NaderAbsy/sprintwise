@@ -86,6 +86,28 @@ describe("issuesAsCsv with text longer than Sprintwise keeps", () => {
   });
 });
 
+describe("issuesAsCsv with criteria past the cut", () => {
+  it("moves the criteria section to the criteria column before cutting the description", () => {
+    const description = `As an agent I want refunds over the total blocked so that we never overpay.\n\n${"Background. ".repeat(600)}\n\nh3. Acceptance criteria\n* A refund above the total is refused`;
+    const csv = issuesAsCsv([
+      { key: "ABC-7", summary: "Block big refunds", description, acceptanceCriteria: "", storyPoints: 3, status: "Idea", issueType: "Feature", parent: "", labels: [], created: null },
+    ]);
+    const table = readCsvTable(csv, { maxBytes: 1_000_000, maxRows: 1000 });
+    expect(table.ok).toBe(true);
+    if (!table.ok) return;
+    expect(table.rows[0].story.acceptanceCriteria).toBe("* A refund above the total is refused");
+    expect(table.rows[0].story.description.endsWith(JIRA_CUT)).toBe(true);
+  });
+
+  it("doesn't list a sub-task's parent story as its epic", () => {
+    const csv = issuesAsCsv([
+      { key: "ABC-8", summary: "Add the button", description: "", acceptanceCriteria: "", storyPoints: 1, status: "Idea", issueType: "Subtask", parent: "Rebook my cleaner", labels: [], created: null },
+    ]);
+    const table = readCsvTable(csv, { maxBytes: 1_000_000, maxRows: 1000 });
+    expect(table.ok && table.rows[0].epic).toBe("");
+  });
+});
+
 describe("isJiraKey", () => {
   it("accepts issue keys and refuses anything that could change the request's path", async () => {
     const { isJiraKey } = await import("@/lib/server/jira");

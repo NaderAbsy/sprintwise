@@ -88,3 +88,26 @@ describe("hostile text", () => {
     expect(performance.now() - start).toBeLessThan(50);
   });
 });
+
+describe("criteria sections from a real Jira Cloud site", () => {
+  it("end at a code sample, panel or table, which aren't criteria", () => {
+    const description =
+      "h2. Acceptance Criteria\n\n* Saved cards list the last four digits\n** Expired cards are greyed out\n* Paying asks for the CVC only\n\n{code:json}{ \"card\": \"tok_123\" }{code}";
+    expect(criteriaOf(story(description)).lines).toEqual(["Saved cards list the last four digits", "Expired cards are greyed out", "Paying asks for the CVC only"]);
+    expect(splitCriteria(criteriaFromDescription("*Acceptance criteria*\n* One\n{panel}\nNote\n{panel}"))).toEqual(["One"]);
+  });
+
+  it("score a story whose criteria are a Jira numbered list as Ready", () => {
+    const r = scoreStory({
+      key: "SCRUM-18",
+      title: "Choose a cleaner by rating",
+      description:
+        "As a new customer I want to choose a cleaner by rating so that I pick one with many reviews.\n\n*Acceptance Criteria:*\n\n# Given I search, when results load, then they are sorted by rating\n# Given two cleaners tie, when sorted, then the one with more reviews comes first",
+      acceptanceCriteria: "",
+      storyPoints: 8,
+      status: "Idea",
+      issueType: "Feature",
+    });
+    expect(r.band).toBe("Ready");
+  });
+});

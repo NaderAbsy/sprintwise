@@ -24,6 +24,22 @@ export type Release = {
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.21",
+    date: "2026-10-13",
+    title: "Tested against a real Jira site",
+    summary: "Fixes from importing, editing, sending and syncing real, messy Jira Cloud issues.",
+    items: [
+      "Jira's numbered lists are no longer mistaken for text left over from an AI chat, which held those stories below Ready.",
+      "Inline code keeps its braces, as in {{GET /cards/{id}}}.",
+      "A code sample, panel or table after the acceptance criteria isn't counted as a criterion.",
+      "Jira's info, note, warning and plain panels show as boxes instead of raw tags.",
+      "Checklists read as bullets, with ticked items struck through.",
+      "When a very long description is cut to fit, criteria written at its end are kept.",
+      "A sub-task's parent story is no longer listed as an epic in the import filters.",
+      "Projects linked to Jira say that statuses come from Jira, since Sync puts Jira's status back.",
+    ],
+  },
+  {
     version: "v2.20",
     date: "2026-10-13",
     title: "Safer when things go wrong",

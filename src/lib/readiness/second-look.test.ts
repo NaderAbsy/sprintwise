@@ -17,6 +17,12 @@ describe("secondLook", () => {
     expect(kinds({ description: "Certainly! Here's a user story for refunds:\nAs a support agent…" })).toEqual(["leftover"]);
     expect(kinds({ description: `${clean.description}\n\nI hope this helps!` })).toEqual(["leftover"]);
     expect(kinds({ description: "**User story:** As a support agent I want to refund" })).toEqual(["leftover"]);
+    expect(kinds({ description: "### User story\nAs a support agent I want to refund" })).toEqual(["leftover"]);
+  });
+
+  it("doesn't take Jira's numbered lists for Markdown headings", () => {
+    const description = "As a new customer I want to choose a cleaner by rating so that I pick one.\n\n*Acceptance criteria:*\n\n# Given I search, then results are sorted by rating\n# Given a tie, then more reviews come first\n## Nested step";
+    expect(kinds({ description })).toEqual([]);
     expect(secondLook({ ...clean, description: "Here is the acceptance criteria you asked for" })[0].message).toMatch(/left over from an AI chat/);
   });
 

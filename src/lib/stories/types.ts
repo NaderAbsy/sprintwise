@@ -50,6 +50,8 @@ function isCriteriaHeading(line: string): boolean {
 }
 /** The heading of the next section, which ends the criteria. Bullets ("* item") don't count. */
 const NEXT_HEADING = /^\s*(?:h[1-6]\.\s|#{1,6}\s|[*_]{1,2}[^*_\n]{1,60}[*_]{1,2}\s*:?\s*$|[A-Z][^.\n]{0,40}:\s*$)/;
+/** A code sample, panel, table or rule after the criteria ends the section: it isn't a criterion. */
+const BLOCK_START = /^\s*(?:\{(?:code|noformat|panel|info|note|tip|warning|quote|expand)\b|\|\||-{4,}\s*$)/i;
 
 /** The text under a description's "Acceptance criteria" heading, up to the next heading; "" if there's none. */
 export function criteriaFromDescription(description: string): string {
@@ -58,6 +60,7 @@ export function criteriaFromDescription(description: string): string {
   if (start < 0) return "";
   const section: string[] = [];
   for (const line of lines.slice(start + 1)) {
+    if (BLOCK_START.test(line)) break;
     if (NEXT_HEADING.test(line) && !/^\s*[-*•#]+\s/.test(line)) break;
     section.push(line);
   }

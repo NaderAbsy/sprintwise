@@ -6,7 +6,13 @@ import { db } from "@/lib/server/db";
 import { requireProject } from "@/lib/server/dal";
 import { settingsOf } from "@/lib/server/readiness";
 
-export const metadata: Metadata = { title: "Edit story" };
+/** The story's key in the tab title, as on the story page. */
+export async function generateMetadata({ params }: PageProps<"/projects/[projectId]/stories/[storyId]/edit">): Promise<Metadata> {
+  const { projectId, storyId } = await params;
+  const project = await requireProject(projectId);
+  const row = await db.story.findFirst({ where: { id: storyId, projectId: project.id }, select: { key: true } });
+  return { title: row ? `Edit ${row.key}` : "Edit story" };
+}
 
 export default async function EditStoryPage({ params, searchParams }: PageProps<"/projects/[projectId]/stories/[storyId]/edit">) {
   const { projectId, storyId } = await params;
