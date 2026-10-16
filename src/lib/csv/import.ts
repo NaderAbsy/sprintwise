@@ -66,3 +66,47 @@ export function readImportPayload(
   }
   return { ok: true, stories, mapping: mapping.success ? (mapping.data as ColumnMapping) : {} };
 }
+
+/** The story field each optional import column fills. */
+const COLUMN_FIELDS = {
+  description: "description",
+  acceptance_criteria: "acceptanceCriteria",
+  story_points: "storyPoints",
+  status: "status",
+  epic: "epic",
+  issue_type: "issueType",
+} as const;
+export type ImportedField = "title" | (typeof COLUMN_FIELDS)[keyof typeof COLUMN_FIELDS];
+
+/**
+ * The columns the file had (import fields, as the browser matched them), as the
+ * story fields they fill; undefined when not sent, which means all of them. A
+ * story already saved keeps the fields the file has no column for.
+ */
+export function readImportedFields(json: unknown): Set<ImportedField> | undefined {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(typeof json === "string" ? json : "");
+  } catch {
+    return undefined;
+  }
+  if (!Array.isArray(raw)) return undefined;
+  const fields = new Set<ImportedField>(["title"]);
+  for (const column of raw) {
+    if (typeof column === "string" && Object.hasOwn(COLUMN_FIELDS, column)) fields.add(COLUMN_FIELDS[column as keyof typeof COLUMN_FIELDS]);
+  }
+  return fields;
+}
+
+/** Keys a Jira import showed but didn't tick, so Sync doesn't add them later. At most 2,000, each a plausible key. */
+export function readLeftOut(json: unknown): string[] {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(typeof json === "string" ? json : "");
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(raw)) return [];
+  const keys = raw.filter((k): k is string => typeof k === "string" && k.length <= 60).map(normalizeKey).filter(Boolean);
+  return [...new Set(keys)].slice(0, 2000);
+}

@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import type { FormState } from "@/lib/form-state";
 import { db } from "@/lib/server/db";
 import { isId, requireFreshUser, requireProject, requireUser } from "@/lib/server/dal";
-import { issuesAsCsv, JIRA_CUT, JiraBusyError, JiraError, jiraSites, jiraWriter, searchJira, updateJiraIssue, type JiraWriter } from "@/lib/server/jira";
+import { issuesAsCsv, JIRA_TITLE_MAX, JiraBusyError, JiraError, jiraSites, jiraWriter, searchJira, sendStoryToJira, type JiraWriter } from "@/lib/server/jira";
+import { FIELD_NAMES, JIRA_FIELDS, readBase, sameField, type JiraField } from "@/lib/stories/jira-merge";
+import { toStory } from "@/lib/server/readiness";
 import { overLimit } from "@/lib/server/action-limits";
 import { jiraFailure, otherSite, syncProjectFromJira } from "@/lib/server/jira-sync";
 
@@ -57,9 +59,17 @@ export async function syncFromJira(projectId: string): Promise<FormState> {
   return result;
 }
 
+const list = (fields: JiraField[]) => {
+  const names = fields.map((f) => FIELD_NAMES[f]);
+  return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}` : (names[0] ?? "");
+};
+
 /**
- * Writes stories edited here back to their Jira issues: title, description,
- * acceptance criteria and points. Each one that lands is no longer "edited here".
+ * Writes stories edited here back to their Jira issues: only the fields edited
+ * here (title, description, acceptance criteria, points), after checking Jira
+ * hasn't changed the same field meanwhile. A story whose edits all landed is no
+ * longer "edited here"; one with an edit Jira couldn't take stays edited, so the
+ * next Sync doesn't overwrite it.
  */
 export async function sendToJira(projectId: string, storyIds: string[]): Promise<FormState> {
   const user = await requireFreshUser();
@@ -90,25 +100,32 @@ export async function sendToJira(projectId: string, storyIds: string[]): Promise
       unsent.push(story.key);
       continue;
     }
-    if ([story.title, story.description, story.acceptanceCriteria].some((text) => text.includes(JIRA_CUT))) {
-      notes.push(`${story.key}: its Jira text is longer than Sprintwise keeps, so sending it would cut it short. Edit it in Jira instead.`);
-      continue;
-    }
     try {
-      const { skipped, criteriaInDescription } = await updateJiraIssue(
-        user.id,
-        project.jiraCloudId,
-        story.key,
-        { summary: story.title, description: story.description, acceptanceCriteria: story.acceptanceCriteria, storyPoints: story.storyPoints },
-        writer,
-      );
+      const here = toStory(story);
+      const result = await sendStoryToJira(user.id, project.jiraCloudId, here, readBase(story.jiraBase), writer);
+      const done = JIRA_FIELDS.every((f) => sameField(f, here, result.base));
+      await db.story.updateMany({ where: { id: story.id, projectId: project.id }, data: { jiraBase: result.base } });
       // Only if it wasn't edited again meanwhile: that newer edit still needs sending.
-      await db.story.updateMany({ where: { id: story.id, editedAt: story.editedAt }, data: { editedAt: null } });
-      sent.push(story.key);
-      if (criteriaInDescription) notes.push(`${story.key}: this Jira has no acceptance criteria field, so the criteria went into the description.`);
-      if (skipped.length > 0) notes.push(`${story.key}: Jira doesn't allow ${skipped.join(" or ")} on this issue type, so ${skipped.length === 1 ? "it wasn't" : "they weren't"} sent.`);
+      if (done) await db.story.updateMany({ where: { id: story.id, editedAt: story.editedAt }, data: { editedAt: null } });
+      if (result.sent.length > 0) sent.push(story.key);
+      else if (done) notes.push(`${story.key}: Jira already had these changes.`);
+      if (result.criteriaInDescription) notes.push(`${story.key}: this Jira has no acceptance criteria field here, so the criteria went into the description.`);
+      if (result.conflicts.length > 0)
+        notes.push(
+          `${story.key}: the ${list(result.conflicts)} also changed in Jira since Sprintwise last read ${story.key}, so ${result.conflicts.length === 1 ? "it wasn't" : "they weren't"} sent (that would overwrite the change in Jira). Copy your version into Jira from the story page, then click Mark as copied.`,
+        );
+      if (result.notAllowed.length > 0)
+        notes.push(`${story.key}: Jira doesn't allow ${list(result.notAllowed)} on this issue type, so ${result.notAllowed.length === 1 ? "it wasn't" : "they weren't"} sent. It stays edited here, so Sync won't overwrite it.`);
+      if (result.tooLong.length > 0)
+        notes.push(
+          `${story.key}: the ${list(result.tooLong)} wasn't sent: ${
+            result.tooLong.includes("title") && story.title.length > JIRA_TITLE_MAX
+              ? `Jira titles can be at most ${JIRA_TITLE_MAX} characters.`
+              : "its Jira text is longer than Sprintwise keeps, so sending it would cut it short. Edit it in Jira instead."
+          }`,
+        );
     } catch (error) {
-      notes.push(`${story.key}: ${error instanceof JiraError && /does not exist|no issue/i.test(error.message) ? "isn't in Jira (written here?)." : failure(error)}`);
+      notes.push(`${story.key}: ${error instanceof JiraError && /does not exist|no issue|404/i.test(error.message) ? "isn't in Jira (written here?)." : failure(error)}`);
       // Connection problems apply to every story, and a busy Jira asked to wait; stop at the first.
       if (error instanceof JiraBusyError || (error instanceof JiraError && /connect jira/i.test(error.message))) {
         unsent.push(...stories.slice(stories.indexOf(story) + 1).map((s) => s.key));

@@ -10,3 +10,9 @@ export const MAX_SNAPSHOTS_PER_SPRINT = 30;
  * account from filling the database with millions.
  */
 export const MAX_SNAPSHOT_ITEMS_PER_ACCOUNT = 100_000;
+/**
+ * The text those copies may add up to (titles, descriptions and criteria). The same busy
+ * team stores about 20 MB a year; without this, copies of long stories could pass the
+ * story count's intent many times over.
+ */
+export const MAX_SNAPSHOT_BYTES_PER_ACCOUNT = 50 * 1024 * 1024;

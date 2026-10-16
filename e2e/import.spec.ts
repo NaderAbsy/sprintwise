@@ -91,7 +91,7 @@ test("finished stories start unticked, and a missing story-text column is flagge
   await openImport(page, "Done and bare");
   const csv = "Issue key,Summary,Status\nA-1,Refund a payment,To Do\nA-2,Export statements,Done\nA-3,Search orders,Closed";
   await page.getByLabel("CSV file").setInputFiles({ name: "bare.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
-  await expect(page.getByText("No Description or Acceptance criteria column, so every story will score low.")).toBeVisible();
+  await expect(page.getByText("No Description or Acceptance criteria column, so new stories will score low.")).toBeVisible();
   await expect(page.getByText("2 stories already finished (Done, Closed) left unticked", { exact: false })).toBeVisible();
   await expect(page.getByRole("checkbox", { name: "Import A-1" })).toBeChecked();
   await expect(page.getByRole("checkbox", { name: "Import A-2" })).not.toBeChecked();

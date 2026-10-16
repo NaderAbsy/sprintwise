@@ -2,7 +2,7 @@ import { secondLook } from "@/lib/readiness/second-look";
 import { criteriaOf, type Story } from "@/lib/stories/types";
 
 /** Bump whenever a rule, weight or default changes, so old scores stay explainable. */
-export const RULES_VERSION = 5;
+export const RULES_VERSION = 6;
 
 export const DEFAULT_MAX_POINTS = 8;
 

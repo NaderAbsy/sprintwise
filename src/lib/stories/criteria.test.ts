@@ -22,6 +22,14 @@ describe("criteria written inside the description", () => {
     expect(criteriaOf(story(description))).toEqual({ lines: ["Slots for 14 days", "Confirms in 5 seconds"], fromDescription: true });
   });
 
+  it("ends a list at a paragraph after a blank line, but not plain criteria with blank lines (rules v6)", () => {
+    expect(criteriaFromDescription("h3. Acceptance criteria\n* One\n* Two\n\nDesign notes are in Figma.")).toBe("* One\n* Two");
+    expect(criteriaFromDescription("h3. Acceptance criteria\n* One\n\n* Two")).toBe("* One\n\n* Two");
+    expect(criteriaFromDescription("Acceptance criteria:\nGiven a slot\n\nWhen I book it\n\nThen it's mine")).toBe(
+      "Given a slot\n\nWhen I book it\n\nThen it's mine",
+    );
+  });
+
   it("stops at the next heading", () => {
     const description = "Intro.\nh3. Acceptance criteria\n* One\n* Two\nh3. Notes\nNot a criterion";
     expect(criteriaFromDescription(description)).toBe("* One\n* Two");
@@ -65,6 +73,17 @@ describe("withCriteriaInDescription (Jira sites with no criteria field)", () => 
   it("replaces an existing section and keeps what follows it", () => {
     const description = "Intro.\n\nh3. Acceptance criteria\n* Old one\n* Old two\n\nh3. Notes\nKeep me";
     expect(withCriteriaInDescription(description, "- New one")).toBe("Intro.\n\nh3. Acceptance criteria\n* New one\n\nh3. Notes\nKeep me");
+  });
+
+  it("keeps code, tables, panels and notes after the section (v2.22)", () => {
+    const description =
+      "Intro.\nh3. Acceptance criteria\n* Old one\n\n{code}GET /cards/{id}{code}\n\n||Field||Rule||\n|cvc|3 digits|\n\n{info}Rollout in May{info}";
+    expect(withCriteriaInDescription(description, "- New one")).toBe(
+      "Intro.\nh3. Acceptance criteria\n* New one\n\n{code}GET /cards/{id}{code}\n\n||Field||Rule||\n|cvc|3 digits|\n\n{info}Rollout in May{info}",
+    );
+    expect(withCriteriaInDescription("Intro.\nh3. Acceptance criteria\n* Old\n\nDesign notes are in Figma.", "- New")).toBe(
+      "Intro.\nh3. Acceptance criteria\n* New\n\nDesign notes are in Figma.",
+    );
   });
 
   it("leaves the description alone when there are no criteria", () => {

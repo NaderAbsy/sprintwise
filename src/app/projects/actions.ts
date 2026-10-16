@@ -4,16 +4,16 @@ import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { readImportPayload } from "@/lib/csv/import";
+import { readImportedFields, readImportPayload, readLeftOut } from "@/lib/csv/import";
 import { rememberedColumns } from "@/lib/csv/parse";
 import type { FormState } from "@/lib/form-state";
 import { db } from "@/lib/server/db";
 import { assertId, isId, requireFreshUser, requireProject, requireUser } from "@/lib/server/dal";
-import { projectDefaults, readinessData, settingsOf, toStory } from "@/lib/server/readiness";
+import { projectDefaults, readinessData, settingsOf, toStory, writeScores } from "@/lib/server/readiness";
 import { doneStatusesOf } from "@/lib/server/sprint";
 import { bottomRank, saveStories } from "@/lib/server/save-stories";
 import { jiraSites } from "@/lib/server/jira";
-import { jiraFailure, otherSite } from "@/lib/server/jira-sync";
+import { jiraFailure, leaveOutOfSync, otherSite } from "@/lib/server/jira-sync";
 import { recordSprintChanges } from "@/lib/server/tracking";
 import { LimitError, withinLimit } from "@/lib/server/within-limit";
 import { overLimit } from "@/lib/server/action-limits";
@@ -204,6 +204,7 @@ export async function importStories(projectId: string, _prev: FormState, formDat
   if (limited) return { error: limited };
 
   const { stories, mapping } = payload;
+  const importedKeys = new Set(stories.map((s) => s.key));
 
   const existingKeys = new Set(
     (await db.story.findMany({ where: { projectId: project.id }, select: { key: true } })).map((s) => s.key),
@@ -237,12 +238,21 @@ export async function importStories(projectId: string, _prev: FormState, formDat
   try {
     await saveStories(project, stories, {
       maxStories: MAX_STORIES_PER_PROJECT,
+      fromJira,
+      // A file without, say, a Description column leaves the descriptions already saved as they are.
+      fields: fromJira ? undefined : readImportedFields(formData.get("fields")),
       extra: (tx) =>
         fromJira
-          ? // Sync adds issues created after the preview's search; ones left unticked now stay out.
+          ? // Sync adds issues Jira's search finds later; the ones left unticked now stay out.
             tx.project.update({
               where: { id: project.id },
-              data: { ...jira, jiraSyncedAt: searchTime(formData.get("searchedAt")), jiraAutoSynced: false, jiraSyncError: null },
+              data: {
+                ...jira,
+                jiraLeftOut: readLeftOut(formData.get("leftOut")).filter((key) => !importedKeys.has(key)),
+                jiraSyncedAt: searchTime(formData.get("searchedAt")),
+                jiraAutoSynced: false,
+                jiraSyncError: null,
+              },
             })
           : tx.project.update({ where: { id: project.id }, data: { importColumns: rememberedColumns(mapping) } }),
     });
@@ -280,7 +290,9 @@ export async function addSampleStories(projectId: string) {
 export async function deleteStory(projectId: string, storyId: string) {
   const project = await requireProject(projectId);
   assertId(storyId);
+  const gone = await db.story.findMany({ where: { id: storyId, projectId: project.id }, select: { key: true } });
   await db.story.deleteMany({ where: { id: storyId, projectId: project.id } });
+  await leaveOutOfSync(project.id, gone.map((s) => s.key));
   revalidatePath(`/projects/${project.id}`);
   redirect(`/projects/${project.id}`);
 }
@@ -289,21 +301,22 @@ export async function deleteStory(projectId: string, storyId: string) {
 // Rule settings (story R-6)
 // ---------------------------------------------------------------------------
 
-/** Saves settings and re-scores every story in one transaction, so scores are never half old, half new. */
+/**
+ * Saves settings and re-scores every story in one transaction, so scores are never
+ * half old, half new. The project row is locked first and the stories read under
+ * it, so a story saved at the same moment is scored with its new text.
+ */
 async function rescoreProject(projectId: string, settings: RuleSettings, data: Prisma.ProjectUpdateInput) {
-  const stories = await db.story.findMany({ where: { projectId } });
-  await db.$transaction([
-    db.project.update({ where: { id: projectId }, data }),
-    ...stories.map((row) => {
-      const readiness = readinessData(toStory(row), settings);
-      return db.readinessResult.upsert({
-        where: { storyId: row.id },
-        create: { storyId: row.id, ...readiness },
-        update: readiness,
-      });
-    }),
-  ]);
-  return stories;
+  return db.$transaction(
+    async (tx) => {
+      await tx.$queryRaw`SELECT id FROM projects WHERE id = ${projectId} FOR UPDATE`;
+      await tx.project.update({ where: { id: projectId }, data });
+      const stories = await tx.story.findMany({ where: { projectId } });
+      await writeScores(tx, stories.map((row) => ({ storyId: row.id, readiness: readinessData(toStory(row), settings) })));
+      return stories;
+    },
+    { timeout: 30_000, maxWait: 10_000 },
+  );
 }
 
 /** Saves the project's max points and vague words, then re-scores every story with them. */
@@ -483,6 +496,9 @@ export async function bulkSetStatus(projectId: string, ids: string[], status: st
 /** Deletes several stories. Sprints that include them keep their own copies. */
 export async function bulkDeleteStories(projectId: string, ids: string[]) {
   const project = await requireProject(projectId);
-  await db.story.deleteMany({ where: { projectId: project.id, id: { in: selectedIds(ids) } } });
+  const where = { projectId: project.id, id: { in: selectedIds(ids) } };
+  const gone = await db.story.findMany({ where, select: { key: true } });
+  await db.story.deleteMany({ where });
+  await leaveOutOfSync(project.id, gone.map((s) => s.key));
   revalidatePath(`/projects/${project.id}`, "layout");
 }

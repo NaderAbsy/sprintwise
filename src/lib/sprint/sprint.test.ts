@@ -184,3 +184,24 @@ describe("point sums", () => {
     expect(m.baselineTotal).toBe(0.3);
   });
 });
+
+describe("criteria moving between the description and the criteria field (v2.22)", () => {
+  const story = (description: string, acceptanceCriteria: string) => ({
+    key: "A-1",
+    title: "Refund",
+    description,
+    acceptanceCriteria,
+    storyPoints: 3,
+    status: "To Do",
+  });
+  it("isn't a change when the same criteria move", () => {
+    const before = story("Intro.", "- One\n- Two");
+    const after = story("Intro.\n\nh3. Acceptance criteria\n* One\n* Two", "");
+    expect(diffSnapshots([before], [after])).toEqual([]);
+  });
+  it("is a change when criteria in the description are edited", () => {
+    const before = story("Intro.\nh3. Acceptance criteria\n* One", "");
+    const after = story("Intro.\nh3. Acceptance criteria\n* One\n* Two", "");
+    expect(diffSnapshots([before], [after]).map((c) => c.type)).toEqual(["criteria-changed"]);
+  });
+});

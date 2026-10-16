@@ -9,6 +9,8 @@ import { utcToday } from "@/lib/sprint/tracking";
  * seconds, but a slow Jira can take two or three, so this leaves room for the last one to finish.
  */
 const BUDGET_MS = 2 * 60 * 1000;
+/** One project's Jira requests stop paging after this long, so the last one started still ends in time. */
+const PROJECT_BUDGET_MS = 90 * 1000;
 
 export type NightlyResult = { synced: string[]; failed: number; leftForTomorrow: number };
 
@@ -40,16 +42,23 @@ export async function syncJiraProjectsNightly(now = Date.now()): Promise<Nightly
       result.leftForTomorrow = projects.length - i;
       break;
     }
-    const error = !(await jiraAccount(project.userId))
-      ? "Jira isn't connected to your account. Connect it from the Import page."
-      : (
-          await syncProjectFromJira(project, project.userId, { automatic: true }).catch(() => ({
-            error: "The sync stopped with an error on Sprintwise's side. Try Sync from Jira on the backlog.",
-          }))
-        ).error;
+    // Each project on its own: one that fails, or was deleted meanwhile, doesn't stop the rest.
+    let error: string | undefined;
+    try {
+      error = !(await jiraAccount(project.userId))
+        ? "Jira isn't connected to your account. Connect it from the Import page."
+        : (await syncProjectFromJira(project, project.userId, { automatic: true, deadline: Date.now() + PROJECT_BUDGET_MS })).error;
+    } catch (cause) {
+      console.error("Nightly Jira sync failed for a project", {
+        projectId: project.id,
+        error: cause instanceof Error ? `${cause.name}: ${cause.message}` : String(cause),
+      });
+      error = "The sync stopped with an error on Sprintwise's side. Try Sync from Jira on the backlog.";
+    }
     if (error) {
       result.failed++;
-      await db.project.update({ where: { id: project.id }, data: { jiraSyncError: error } });
+      // updateMany: a project deleted while this ran has nothing to update.
+      await db.project.updateMany({ where: { id: project.id }, data: { jiraSyncError: error } }).catch(() => undefined);
     } else {
       result.synced.push(project.id);
     }

@@ -4,7 +4,10 @@ import { db } from "@/lib/server/db";
 import { EPIC_MAX_LENGTH } from "@/lib/csv/template";
 import { STORY_LIMITS } from "@/lib/stories/form";
 import { cutText } from "@/lib/text";
+import { readCsvTable } from "@/lib/csv/parse";
+import { baseOf, JIRA_FIELDS, planSend, type JiraField, type JiraText } from "@/lib/stories/jira-merge";
 import { criteriaFromDescription, withCriteriaInDescription } from "@/lib/stories/types";
+import { FAKE_SITE, fakeChange, fakeIssue, fakeSearch } from "@/lib/server/jira-fake";
 
 /**
  * Jira Cloud through Atlassian's OAuth 2.0 (3LO). Tokens are stored by Better
@@ -38,9 +41,6 @@ export type JiraIssue = {
   created: string | null;
 };
 
-/** The fields Sprintwise writes back: what was edited here. */
-export type JiraUpdate = { summary: string; description: string; acceptanceCriteria: string; storyPoints: number | null };
-
 export class JiraError extends Error {}
 
 /** Jira's results come back 100 at a time; a backlog import reads at most this many. */
@@ -61,84 +61,42 @@ function siteApi(cloudId: string): string {
 export const isJiraKey = (key: string) => /^[A-Za-z][A-Za-z0-9_]{0,49}-\d{1,12}$/.test(key);
 
 // ---------------------------------------------------------------------------
-// The pretend Jira (tests only)
-// ---------------------------------------------------------------------------
-
-const FAKE_SITE: JiraSite = { id: "fake-cloud-id", name: "Example Jira", url: "https://example.atlassian.net" };
-const fakeIssues = new Map<string, JiraIssue>(
-  [
-    {
-      key: "SHOP-1",
-      summary: "Refund a payment",
-      description: "h3. Context\nAs a support agent I want to refund a payment so that the customer gets their money back",
-      acceptanceCriteria: "- Full and partial refunds\n- The customer gets an email",
-      storyPoints: 3,
-      status: "To Do",
-      issueType: "Story",
-      parent: "Refunds",
-      labels: ["payments"],
-      created: "2026-01-05T09:00:00.000Z",
-    },
-    {
-      key: "SHOP-2",
-      summary: "Refund total ignores the discount",
-      description: "The refund page adds the discount back before refunding.",
-      acceptanceCriteria: "",
-      storyPoints: null,
-      status: "To Do",
-      issueType: "Bug",
-      parent: "Refunds",
-      labels: [],
-      created: "2026-01-05T09:00:00.000Z",
-    },
-    {
-      key: "SHOP-3",
-      summary: "Export statements",
-      description: "",
-      acceptanceCriteria: "",
-      storyPoints: 5,
-      status: "In Progress",
-      issueType: "Story",
-      parent: "Statements",
-      labels: ["finance"],
-      created: "2026-01-05T09:00:00.000Z",
-    },
-    {
-      key: "SHOP-4",
-      summary: "Old checkout clean-up",
-      description: "",
-      acceptanceCriteria: "",
-      storyPoints: 1,
-      status: "Done",
-      issueType: "Task",
-      parent: "",
-      labels: [],
-      created: "2026-01-05T09:00:00.000Z",
-    },
-  ].map((issue) => [issue.key, issue]),
-);
-
-// ---------------------------------------------------------------------------
 // Connection
 // ---------------------------------------------------------------------------
 
-/** The signed-in user's Atlassian account, if they connected one. */
+/** The signed-in user's Atlassian account, if they connected one: the latest, if there's ever more than one. */
 export async function jiraAccount(userId: string) {
   if (jiraFake) return { id: "fake-account" };
   if (!jiraConfigured) return null;
-  return db.account.findFirst({ where: { userId, providerId: "atlassian" }, select: { id: true } });
+  return db.account.findFirst({ where: { userId, providerId: "atlassian" }, orderBy: { updatedAt: "desc" }, select: { id: true } });
 }
+
+/** A token this close to expiring is refreshed first, so a long Sync or Send doesn't lose it halfway. */
+const REFRESH_AHEAD_MS = 2 * 60_000;
 
 async function accessToken(userId: string): Promise<string> {
   if (jiraFake) return "fake-token";
   const account = await jiraAccount(userId);
   if (!account) throw new JiraError("Connect Jira first.");
   try {
-    // By user id rather than the browser's session, so the nightly sync can use it too. Better Auth
-    // refreshes an expired token and stores Atlassian's new refresh token.
-    const { accessToken } = await auth.api.getAccessToken({ body: { accountId: account.id, userId } });
-    if (!accessToken) throw new Error("no token");
-    return accessToken;
+    // Atlassian replaces the refresh token each time it's used. Two requests refreshing at once (two tabs,
+    // or a click during the nightly sync) would leave one holding a dead token, so one refreshes at a time;
+    // the second then finds the fresh token. By user id rather than the browser's session, so the nightly
+    // sync can use it too.
+    return await db.$transaction(
+      async (tx) => {
+        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`atlassian-token:${account.id}`}))`;
+        const stored = await tx.account.findUnique({ where: { id: account.id }, select: { accessTokenExpiresAt: true } });
+        const expires = stored?.accessTokenExpiresAt?.getTime();
+        const { accessToken } =
+          expires !== undefined && expires - Date.now() < REFRESH_AHEAD_MS
+            ? await auth.api.refreshToken({ body: { accountId: account.id, userId } })
+            : await auth.api.getAccessToken({ body: { accountId: account.id, userId } });
+        if (!accessToken) throw new Error("no token");
+        return accessToken;
+      },
+      { timeout: 30_000, maxWait: 30_000 },
+    );
   } catch {
     throw new JiraError("The Jira connection has expired. Connect Jira again.");
   }
@@ -227,16 +185,28 @@ function toIssue(raw: RawIssue, ids: FieldIds): JiraIssue {
   };
 }
 
-/** Runs a JQL search and returns up to JIRA_MAX_ISSUES issues, in Jira's order. */
-export async function searchJira(userId: string, cloudId: string, jql: string): Promise<{ issues: JiraIssue[]; truncated: boolean }> {
-  if (jiraFake) {
-    const issues = [...fakeIssues.values()];
-    return { issues: /statusCategory\s*!=\s*Done/i.test(jql) ? issues.filter((i) => i.status !== "Done") : issues, truncated: false };
-  }
-  const token = await accessToken(userId);
-  const ids = await fieldIds(token, cloudId);
+function searchFields(ids: FieldIds): string[] {
   const fields = ["summary", "description", "status", "issuetype", "parent", "labels", "created", ...ids.storyPoints];
   if (ids.acceptanceCriteria) fields.push(ids.acceptanceCriteria);
+  return fields;
+}
+
+/**
+ * Runs a JQL search and returns up to JIRA_MAX_ISSUES issues, in Jira's order.
+ * With a `deadline` (ms since epoch), it stops asking for more pages once that
+ * has passed and says the list was cut short, so a slow Jira can't run a nightly
+ * sync past the time the server allows.
+ */
+export async function searchJira(
+  userId: string,
+  cloudId: string,
+  jql: string,
+  { deadline }: { deadline?: number } = {},
+): Promise<{ issues: JiraIssue[]; truncated: boolean }> {
+  if (jiraFake) return { issues: fakeSearch(userId, jql), truncated: false };
+  const token = await accessToken(userId);
+  const ids = await fieldIds(token, cloudId);
+  const fields = searchFields(ids);
 
   const issues: JiraIssue[] = [];
   let nextPageToken: string | undefined;
@@ -248,8 +218,29 @@ export async function searchJira(userId: string, cloudId: string, jql: string): 
     );
     issues.push(...page.issues.map((raw) => toIssue(raw, ids)));
     nextPageToken = page.isLast ? undefined : page.nextPageToken;
-  } while (nextPageToken && issues.length < JIRA_MAX_ISSUES);
-  return { issues: issues.slice(0, JIRA_MAX_ISSUES), truncated: issues.length >= JIRA_MAX_ISSUES && Boolean(nextPageToken) };
+  } while (nextPageToken && issues.length < JIRA_MAX_ISSUES && !(deadline && Date.now() > deadline));
+  return { issues: issues.slice(0, JIRA_MAX_ISSUES), truncated: Boolean(nextPageToken) };
+}
+
+/**
+ * Looks issues up by key, 100 at a time: those a project already has but its
+ * search no longer finds (finished, moved to another sprint). Keys Jira doesn't
+ * have any more are simply missing from the result.
+ */
+export async function jiraIssuesByKey(
+  userId: string,
+  cloudId: string,
+  keys: string[],
+  { deadline }: { deadline?: number } = {},
+): Promise<{ issues: JiraIssue[]; complete: boolean }> {
+  const valid = [...new Set(keys.filter(isJiraKey).map((k) => k.toUpperCase()))];
+  const issues: JiraIssue[] = [];
+  for (let i = 0; i < valid.length; i += 100) {
+    if (deadline && Date.now() > deadline) return { issues, complete: false };
+    const { issues: found } = await searchJira(userId, cloudId, `key in (${valid.slice(i, i + 100).join(",")})`, { deadline });
+    issues.push(...found);
+  }
+  return { issues, complete: true };
 }
 
 // ---------------------------------------------------------------------------
@@ -260,50 +251,148 @@ export async function searchJira(userId: string, cloudId: string, jql: string): 
 export type JiraWriter = { token: string; ids: FieldIds };
 
 export async function jiraWriter(userId: string, cloudId: string): Promise<JiraWriter> {
-  if (jiraFake) return { token: "fake-token", ids: { storyPoints: [], acceptanceCriteria: null } };
+  if (jiraFake) return { token: "fake-token", ids: { storyPoints: ["storyPoints"], acceptanceCriteria: "acceptanceCriteria" } };
   const token = await accessToken(userId);
   return { token, ids: await fieldIds(token, cloudId) };
 }
 
+/** Jira's limit for an issue's summary. */
+export const JIRA_TITLE_MAX = 255;
+
+/** One issue as Sprintwise would store it: cut to fit, criteria moved out of long descriptions. */
+export function jiraView(issue: JiraIssue): JiraText {
+  const table = readCsvTable(issuesAsCsv([issue]), { maxBytes: Number.MAX_SAFE_INTEGER, maxRows: 1 });
+  const row = table.ok ? table.rows[0] : undefined;
+  if (!row) return { title: issue.summary, description: issue.description, acceptanceCriteria: issue.acceptanceCriteria, storyPoints: issue.storyPoints };
+  return baseOf(row.story);
+}
+
+export type SendResult = {
+  /** Written to Jira. */
+  sent: JiraField[];
+  /** Changed in Jira too since Sprintwise last read it: not sent, so nobody's work is overwritten. */
+  conflicts: JiraField[];
+  /** Jira doesn't allow the field on this issue type. */
+  notAllowed: JiraField[];
+  /** Too long for Jira, or text Sprintwise only holds part of: sending would cut Jira's copy short. */
+  tooLong: JiraField[];
+  criteriaInDescription: boolean;
+  /** What to remember as Jira's version from now on (see mergeEdited). */
+  base: JiraText;
+};
+
 /**
- * Writes a story's edited fields to its Jira issue. Points and criteria go only
- * where the site has those fields; if the issue type's screen doesn't allow
- * them (often the case for bugs), the title and description are still sent and
- * the skipped fields are named.
+ * Sends a story's edits to its Jira issue: reads the issue first, then writes
+ * only the fields edited here (planSend), each where this issue type allows it.
+ * Points go to whichever story points field the issue uses. With no criteria
+ * field, criteria go into the description's "Acceptance criteria" section, in
+ * Jira's current description, so the rest of it is left as it is.
  */
-export async function updateJiraIssue(
+export async function sendStoryToJira(
   userId: string,
   cloudId: string,
-  key: string,
-  update: JiraUpdate,
+  story: JiraText & { key: string },
+  base: JiraText | null,
   writer?: JiraWriter,
-): Promise<{ skipped: string[]; criteriaInDescription: boolean }> {
-  if (jiraFake) {
-    const issue = fakeIssues.get(key);
-    if (!issue) throw new JiraError(`Jira has no issue ${key}.`);
-    fakeIssues.set(key, { ...issue, ...update });
-    return { skipped: [], criteriaInDescription: false };
-  }
-  if (!isJiraKey(key)) throw new JiraError(`${cutText(key, 60)} isn't a Jira issue key, so it can't be sent.`);
+): Promise<SendResult> {
+  if (!isJiraKey(story.key) && !jiraFake) throw new JiraError(`${cutText(story.key, 60)} isn't a Jira issue key, so it can't be sent.`);
   const { token, ids } = writer ?? (await jiraWriter(userId, cloudId));
-  const url = `${siteApi(cloudId)}/issue/${encodeURIComponent(key)}?notifyUsers=false`;
-  // With no criteria field on this site, criteria written here go into the description, where the team keeps them.
-  const criteriaInDescription = !ids.acceptanceCriteria && update.acceptanceCriteria.trim() !== "";
-  const description = criteriaInDescription ? withCriteriaInDescription(update.description, update.acceptanceCriteria) : update.description;
-  const base: Record<string, unknown> = { summary: update.summary, description };
-  const extra: Record<string, unknown> = {};
-  if (ids.storyPoints[0]) extra[ids.storyPoints[0]] = update.storyPoints;
-  if (ids.acceptanceCriteria) extra[ids.acceptanceCriteria] = update.acceptanceCriteria;
-  try {
-    await call<void>(token, url, { method: "PUT", body: JSON.stringify({ fields: { ...base, ...extra } }) });
-    return { skipped: [], criteriaInDescription };
-  } catch (error) {
-    const notOnScreen = error instanceof JiraError && /cannot be set|not on the appropriate screen|unknown/i.test(error.message);
-    if (!notOnScreen || Object.keys(extra).length === 0) throw error;
-    await call<void>(token, url, { method: "PUT", body: JSON.stringify({ fields: base }) });
-    const skipped = [ids.storyPoints[0] && "story points", ids.acceptanceCriteria && "acceptance criteria"].filter(Boolean) as string[];
-    return { skipped, criteriaInDescription };
+
+  // Jira's issue now, and which of its fields can be edited.
+  let current: JiraIssue;
+  let editable: (fieldId: string) => boolean;
+  /** The story points field this issue keeps its estimate in, if any. */
+  let holding: string | undefined;
+  let write: (fields: Record<string, unknown>) => Promise<void>;
+  if (jiraFake) {
+    const issue = fakeIssue(userId, story.key);
+    if (!issue) throw new JiraError(`Jira has no issue ${story.key}.`);
+    current = issue;
+    editable = () => true;
+    holding = "storyPoints";
+    write = async (fields) => {
+      fakeChange(userId, story.key, fields as Partial<JiraIssue>);
+    };
+  } else {
+    const url = `${siteApi(cloudId)}/issue/${encodeURIComponent(story.key)}`;
+    const fields = ["summary", "description", ...ids.storyPoints, ...(ids.acceptanceCriteria ? [ids.acceptanceCriteria] : [])];
+    const raw = await call<RawIssue & { editmeta?: { fields?: Record<string, unknown> } }>(
+      token,
+      `${url}?fields=${fields.map(encodeURIComponent).join(",")}&expand=editmeta`,
+    );
+    current = toIssue({ key: raw.key, fields: raw.fields }, ids);
+    holding = ids.storyPoints.find((id) => typeof raw.fields[id] === "number");
+    const meta = raw.editmeta?.fields;
+    editable = (fieldId) => !meta || fieldId in meta;
+    write = (fields) => call<void>(token, `${url}?notifyUsers=false`, { method: "PUT", body: JSON.stringify({ fields }) });
   }
+
+  const view = jiraView(current);
+  const plan = planSend(story, base, view);
+  const result: SendResult = { sent: [], conflicts: plan.conflicts, notAllowed: [], tooLong: [], criteriaInDescription: false, base: view };
+  const out: Record<string, unknown> = {};
+  const wasCut = (field: JiraField) =>
+    field !== "storyPoints" && (String(story[field]).includes(JIRA_CUT) || String(base?.[field] ?? "").includes(JIRA_CUT));
+
+  let description: string | undefined;
+  for (const field of plan.send) {
+    if (field === "title") {
+      if (story.title.length > JIRA_TITLE_MAX || wasCut("title")) result.tooLong.push("title");
+      else {
+        out.summary = story.title;
+        result.sent.push("title");
+      }
+    } else if (field === "description") {
+      if (wasCut("description")) result.tooLong.push("description");
+      else {
+        description = story.description;
+        result.sent.push("description");
+      }
+    } else if (field === "storyPoints") {
+      // Sites often have two points fields ("Story Points" and "Story point estimate"): use the one this
+      // issue holds a value in, else the first its type can edit.
+      const usable = ids.storyPoints.filter(editable);
+      const target = usable.find((id) => id === holding) ?? usable[0];
+      if (!target) result.notAllowed.push("storyPoints");
+      else {
+        out[target] = story.storyPoints;
+        result.sent.push("storyPoints");
+      }
+    }
+  }
+  if (plan.send.includes("acceptanceCriteria")) {
+    const criteriaField = ids.acceptanceCriteria && editable(ids.acceptanceCriteria) ? ids.acceptanceCriteria : null;
+    if (wasCut("acceptanceCriteria")) result.tooLong.push("acceptanceCriteria");
+    else if (criteriaField) {
+      out[criteriaField] = story.acceptanceCriteria;
+      result.sent.push("acceptanceCriteria");
+    } else if (story.acceptanceCriteria.trim() !== "") {
+      // Into the description being sent, or Jira's own (full, current) one.
+      description = withCriteriaInDescription(description ?? current.description, story.acceptanceCriteria);
+      result.criteriaInDescription = true;
+      result.sent.push("acceptanceCriteria");
+    } else if (result.sent.includes("description")) {
+      // Criteria kept in the description travel with it.
+      result.sent.push("acceptanceCriteria");
+    } else if (result.tooLong.includes("description")) {
+      result.tooLong.push("acceptanceCriteria");
+    } else {
+      result.conflicts.push("acceptanceCriteria");
+    }
+  }
+  if (description !== undefined) out.description = description;
+  if (Object.keys(out).length > 0) await write(out);
+
+  // Jira's version from now on: what was sent is now in Jira; anything else stays as it was remembered,
+  // so a field edited here and not sent still counts as edited.
+  const remembered = base ?? story;
+  const next = { ...baseOf(remembered) } as Record<JiraField, unknown>;
+  for (const field of JIRA_FIELDS) {
+    if (result.sent.includes(field)) next[field] = story[field];
+    else if (!base && (result.conflicts.includes(field) || result.notAllowed.includes(field) || result.tooLong.includes(field))) next[field] = view[field];
+  }
+  result.base = next as JiraText;
+  return result;
 }
 
 // ---------------------------------------------------------------------------

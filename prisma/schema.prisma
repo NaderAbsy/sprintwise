@@ -117,6 +117,9 @@ model Project {
   shareToken    String?   @unique
   /// The CSV columns picked at the last import (ColumnMapping), so the next file from the same Jira matches.
   importColumns Json      @default("{}")
+  /// Issue keys left unticked at the last Jira import or deleted here since (string[]): Sync doesn't add them.
+  /// Null for projects imported before v2.22, where Sync falls back to "created after the last sync".
+  jiraLeftOut   Json?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   stories       Story[]
@@ -144,6 +147,9 @@ model Story {
   epic               String           @default("")
   /// Priority order in the backlog, lowest first. Fractional so a move changes one row.
   rank               Float            @default(0)
+  /// Title, description, criteria and points as last read from Jira (JiraText), so Sync and Send can tell
+  /// which fields were edited here and which changed in Jira. Null when the story didn't come from Jira.
+  jiraBase           Json?
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
   readiness          ReadinessResult?

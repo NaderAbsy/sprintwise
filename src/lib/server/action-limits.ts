@@ -10,6 +10,7 @@ export const ACTION_LIMITS = {
   jira: { max: 40, windowMs: 10 * 60_000, what: "Jira requests" },
   import: { max: 30, windowMs: 10 * 60_000, what: "imports" },
   rescore: { max: 30, windowMs: 10 * 60_000, what: "rule changes" },
+  snapshot: { max: 40, windowMs: 10 * 60_000, what: "snapshots" },
 } as const;
 export type LimitedAction = keyof typeof ACTION_LIMITS;
 

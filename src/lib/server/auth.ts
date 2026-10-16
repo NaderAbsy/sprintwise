@@ -63,6 +63,18 @@ export const auth = betterAuth({
   // The browser never needs a user's stored provider tokens; the server reads them through auth.api,
   // which these don't affect. Closed so a script injected into a page couldn't fetch them.
   disabledPaths: ["/get-access-token", "/refresh-token", "/account-info"],
+  databaseHooks: {
+    account: {
+      create: {
+        // Reconnecting Jira with another Atlassian account replaces the old connection rather than sitting
+        // beside it: its tokens are deleted, and Sync and Send can only use the new one.
+        after: async (account) => {
+          if (account.providerId !== "atlassian") return;
+          await db.account.deleteMany({ where: { userId: account.userId, providerId: "atlassian", id: { not: account.id } } });
+        },
+      },
+    },
+  },
   hooks: {
     // Atlassian only connects Jira to a signed-in GitHub user; it never signs anyone in.
     before: createAuthMiddleware(async (ctx) => {
