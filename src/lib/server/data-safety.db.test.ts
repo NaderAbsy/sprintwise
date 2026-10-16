@@ -6,6 +6,7 @@ import { overLimit } from "@/lib/server/action-limits";
 import { db } from "@/lib/server/db";
 import { readinessData, refreshStaleScores, settingsOf, writeScores } from "@/lib/server/readiness";
 import { saveStories } from "@/lib/server/save-stories";
+import { lockToken } from "@/lib/server/jira";
 
 /**
  * Against a real Postgres (the local Docker one, or CI's): the locking and merging
@@ -90,6 +91,26 @@ describe("scores", () => {
     await refreshStaleScores([project.id]);
     expect((await row("PAY-1")).readiness).toMatchObject({ rulesVersion: RULES_VERSION });
     expect((await row("PAY-1")).readiness?.score).toBeGreaterThan(0);
+  });
+});
+
+describe("Jira token lock (v2.22.1)", () => {
+  it("can be taken, and makes a second caller wait for the first", async () => {
+    const order: string[] = [];
+    await Promise.all([
+      db.$transaction(async (tx) => {
+        await lockToken(tx, tag);
+        await new Promise((r) => setTimeout(r, 200));
+        order.push("first done");
+      }),
+      new Promise((r) => setTimeout(r, 50)).then(() =>
+        db.$transaction(async (tx) => {
+          await lockToken(tx, tag);
+          order.push("second in");
+        }),
+      ),
+    ]);
+    expect(order).toEqual(["first done", "second in"]);
   });
 });
 

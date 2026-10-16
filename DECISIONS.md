@@ -15,6 +15,10 @@ The second half of the review (see v2.22).
 7. **Sprint page:** stories are sent with their criteria as the list the score reads, on both sides of the snapshot preview's comparison (descriptions stay on the server). Sending criteria only for stories without a saved band was considered, but the snapshot preview compares criteria and would have shown false changes.
 8. **Upkeep:** `engines.node` is `24.x`; database tests (`pnpm test:db`, `*.db.test.ts`) run against Postgres locally and in CI, with a `migrate diff --exit-code` check that the migrations build the schema; shared `JQL_MAX`, `wantedByDefault` (import ticks and Sync), and sample stories saved through `saveStories`; SECURITY.md, README and `.env.example` updated; the repo's CLAUDE.md states the real ownership rule. Not done: splitting `actions.ts` (large, but each action is short and covered by e2e tests; a split is churn without a user benefit now) and sharing the tracked-sprint filter with the nightly sync (they differ on purpose: the nightly sync only runs for sprints that have started).
 
+## 2026-10-16 — v2.22.1: the token lock
+
+v2.22's token lock used `$queryRaw` for `pg_advisory_xact_lock`, which returns `void`, a column Prisma can't read. The error was caught as "The Jira connection has expired", so every Jira action failed on the live site; local e2e tests use the pretend Jira, which never takes the lock. Found within the hour by the planned live check on the real Jira site. Fix: `$executeRaw` (in `lockToken`), and the catch now logs the real error. v2.23 adds a database test that takes the lock.
+
 ## 2026-10-16 — v2.22: data safety and Jira, from a full code review
 
 The user asked for a review of the whole codebase. Six read-only reviewers looked at security, data integrity, scoring logic, Jira, pages and upkeep; every finding was checked (several reproduced) before reporting. No way was found for one account to see or change another's data. The user asked for all fixes, in two releases: this one for anything that can lose or overwrite text, v2.23 for screens, scoring and upkeep.

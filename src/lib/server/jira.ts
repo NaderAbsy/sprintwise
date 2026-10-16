@@ -1,6 +1,7 @@
 import "server-only";
 import { auth } from "@/lib/server/auth";
 import { db } from "@/lib/server/db";
+import type { Prisma } from "@/generated/prisma/client";
 import { EPIC_MAX_LENGTH } from "@/lib/csv/template";
 import { STORY_LIMITS } from "@/lib/stories/form";
 import { cutText } from "@/lib/text";
@@ -71,6 +72,14 @@ export async function jiraAccount(userId: string) {
   return db.account.findFirst({ where: { userId, providerId: "atlassian" }, orderBy: { updatedAt: "desc" }, select: { id: true } });
 }
 
+/**
+ * Holds the account's token lock until the transaction ends. $executeRaw, not
+ * $queryRaw: the lock function returns `void`, a column type Prisma can't read.
+ */
+export async function lockToken(tx: Prisma.TransactionClient, accountId: string) {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`atlassian-token:${accountId}`}))`;
+}
+
 /** A token this close to expiring is refreshed first, so a long Sync or Send doesn't lose it halfway. */
 const REFRESH_AHEAD_MS = 2 * 60_000;
 
@@ -85,7 +94,7 @@ async function accessToken(userId: string): Promise<string> {
     // sync can use it too.
     return await db.$transaction(
       async (tx) => {
-        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`atlassian-token:${account.id}`}))`;
+        await lockToken(tx, account.id);
         const stored = await tx.account.findUnique({ where: { id: account.id }, select: { accessTokenExpiresAt: true } });
         const expires = stored?.accessTokenExpiresAt?.getTime();
         const { accessToken } =
@@ -97,7 +106,9 @@ async function accessToken(userId: string): Promise<string> {
       },
       { timeout: 30_000, maxWait: 30_000 },
     );
-  } catch {
+  } catch (error) {
+    // Logged, so a failure on Sprintwise's side can't hide behind "expired" again.
+    console.error("Jira token unavailable", { error: error instanceof Error ? `${error.name}: ${error.message.slice(0, 200)}` : String(error) });
     throw new JiraError("The Jira connection has expired. Connect Jira again.");
   }
 }
