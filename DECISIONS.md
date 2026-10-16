@@ -2,6 +2,10 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-16 — v2.22.1: the token lock
+
+v2.22's token lock used `$queryRaw` for `pg_advisory_xact_lock`, which returns `void`, a column Prisma can't read. The error was caught as "The Jira connection has expired", so every Jira action failed on the live site; local e2e tests use the pretend Jira, which never takes the lock. Found within the hour by the planned live check on the real Jira site. Fix: `$executeRaw` (in `lockToken`), and the catch now logs the real error. v2.23 adds a database test that takes the lock.
+
 ## 2026-10-16 — v2.22: data safety and Jira, from a full code review
 
 The user asked for a review of the whole codebase. Six read-only reviewers looked at security, data integrity, scoring logic, Jira, pages and upkeep; every finding was checked (several reproduced) before reporting. No way was found for one account to see or change another's data. The user asked for all fixes, in two releases: this one for anything that can lose or overwrite text, v2.23 for screens, scoring and upkeep.
