@@ -24,6 +24,13 @@ export type Release = {
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.22.1",
+    date: "2026-10-16",
+    title: "Jira works again",
+    summary: "A fix for v2.22, which made every Jira action say the connection had expired.",
+    items: ["Sync, Send and Import from Jira work again. Nothing was changed while they failed, so there's nothing to redo."],
+  },
+  {
     version: "v2.22",
     date: "2026-10-16",
     title: "Your text is safe with Jira",
