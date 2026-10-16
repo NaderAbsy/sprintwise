@@ -176,6 +176,16 @@ export function ImportForm({
     () => JSON.stringify(rows.filter((r) => ticked.has(r.row) && r.errors.length === 0).map((r) => ({ ...r.story, epic: r.epic }))),
     [rows, ticked],
   );
+  // The columns this file has: a story already saved keeps whatever the file has no column for.
+  const fileFields = useMemo(
+    () => JSON.stringify(table?.ok ? IMPORT_FIELDS.filter((f) => table.columns[f.field] !== null).map((f) => f.field) : []),
+    [table],
+  );
+  // Issues a Jira search showed and that weren't ticked: Sync leaves them out later too.
+  const leftOut = useMemo(
+    () => JSON.stringify(origin.source === "jira" ? rows.filter((r) => !ticked.has(r.row) && r.story.key).map((r) => r.story.key) : []),
+    [origin.source, rows, ticked],
+  );
   // The server takes up to 4 MB per request; very long descriptions can pass that before 500 stories.
   const tooBig = useMemo(() => new TextEncoder().encode(payload).length > IMPORT_MAX_BYTES, [payload]);
   const headers = table?.headers ?? [];
@@ -201,6 +211,8 @@ export function ImportForm({
         <CsvFileInput id={`${id}-file`} onFile={onFile} />
         <input type="hidden" name="stories" value={payload} />
         <input type="hidden" name="mapping" value={JSON.stringify(mapping)} />
+        <input type="hidden" name="fields" value={fileFields} />
+        <input type="hidden" name="leftOut" value={leftOut} />
         <input type="hidden" name="source" value={origin.source} />
         <input type="hidden" name="searchedAt" value={origin.searchedAt ?? ""} />
         <input type="hidden" name="jiraCloudId" value={origin.cloudId ?? ""} />
@@ -241,14 +253,15 @@ export function ImportForm({
             <div className="rounded-lg bg-needs-work-bg p-4 text-sm text-needs-work">
               <p className="font-medium">
                 {noText.includes("Description")
-                  ? `No ${noText.join(" or ")} column, so every story will score low.`
-                  : "No Acceptance criteria column, so stories score low unless their criteria are in the description."}
+                  ? `No ${noText.join(" or ")} column, so new stories will score low.`
+                  : "No Acceptance criteria column, so new stories score low unless their criteria are in the description."}
               </p>
               <p className="mt-1">
                 The score reads the story text: who wants what and why, and how you&apos;ll know it&apos;s done. Pick the
                 column under Match columns, or show it in Jira&apos;s list view and export again.
                 {!noText.includes("Description") &&
-                  " If your team writes acceptance criteria inside the description, nothing needs to change."}
+                  " If your team writes acceptance criteria inside the description, nothing needs to change."}{" "}
+                Stories already in Sprintwise keep their saved {noText.join(" and ").toLowerCase()}.
               </p>
             </div>
           )}

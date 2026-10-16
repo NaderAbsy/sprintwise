@@ -1,4 +1,4 @@
-import { normalizeKey, splitCriteria, type Story } from "@/lib/stories/types";
+import { criteriaOf, normalizeKey, type Story } from "@/lib/stories/types";
 
 export type ChangeType =
   | "added"
@@ -50,8 +50,10 @@ export function diffSnapshots(from: Story[], to: Story[]): Change[] {
         pointsDelta: points(next) - points(old),
       });
     }
-    const oldCriteria = splitCriteria(old.acceptanceCriteria).join("\n");
-    const newCriteria = splitCriteria(next.acceptanceCriteria).join("\n");
+    // As the score reads them: criteria in the description's "Acceptance criteria" section count too, so
+    // moving them between the description and the criteria field (as Send to Jira can) isn't a change.
+    const oldCriteria = criteriaOf(old).lines.join("\n");
+    const newCriteria = criteriaOf(next).lines.join("\n");
     if (oldCriteria !== newCriteria) {
       changes.push({ key, type: "criteria-changed", oldValue: oldCriteria, newValue: newCriteria, pointsDelta: 0 });
     }

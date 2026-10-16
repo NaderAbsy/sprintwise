@@ -1,19 +1,44 @@
 import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
-import { MAX_SNAPSHOT_ITEMS_PER_ACCOUNT } from "@/lib/limits";
+import { MAX_SNAPSHOT_BYTES_PER_ACCOUNT, MAX_SNAPSHOT_ITEMS_PER_ACCOUNT } from "@/lib/limits";
 import { db } from "@/lib/server/db";
 
 type Tx = Prisma.TransactionClient;
 
-/** How many stories an account keeps across all its sprint snapshots. */
-export function storedSnapshotItems(userId: string, client: Tx | typeof db = db): Promise<number> {
-  return client.snapshotItem.count({ where: { snapshot: { sprint: { project: { userId } } } } });
+/** How many story copies an account keeps across all its sprint snapshots, and how much text they hold. */
+export async function storedSnapshotItems(userId: string, client: Tx | typeof db = db): Promise<{ count: number; bytes: number }> {
+  const [row] = await client.$queryRaw<{ count: bigint; bytes: bigint }[]>`
+    SELECT COUNT(*) AS count,
+           COALESCE(SUM(octet_length(i.title) + octet_length(i.description) + octet_length(i."acceptanceCriteria")), 0) AS bytes
+    FROM snapshot_items i
+    JOIN snapshots s ON s.id = i."snapshotId"
+    JOIN sprints sp ON sp.id = s."sprintId"
+    JOIN projects p ON p.id = sp."projectId"
+    WHERE p."userId" = ${userId}`;
+  return { count: Number(row?.count ?? 0), bytes: Number(row?.bytes ?? 0) };
 }
 
-/** The message when saving `adding` more would pass MAX_SNAPSHOT_ITEMS_PER_ACCOUNT, else null. */
-export async function snapshotRoom(userId: string, adding: number): Promise<string | null> {
-  if ((await storedSnapshotItems(userId)) + adding <= MAX_SNAPSHOT_ITEMS_PER_ACCOUNT) return null;
-  return `Your sprints already keep ${MAX_SNAPSHOT_ITEMS_PER_ACCOUNT.toLocaleString("en")} story copies, the most one account can. Delete old sprints to make room.`;
+const textBytes = (items: { title: string; description: string; acceptanceCriteria: string }[]) =>
+  items.reduce((sum, i) => sum + Buffer.byteLength(i.title) + Buffer.byteLength(i.description) + Buffer.byteLength(i.acceptanceCriteria), 0);
+
+/**
+ * The message when saving `items` would pass the account's snapshot caps, else null.
+ * Call it inside the transaction that saves them, after lockOwner(tx, { user }), so
+ * saves sent together are counted one after the other.
+ */
+export async function snapshotRoom(
+  tx: Tx,
+  userId: string,
+  items: { title: string; description: string; acceptanceCriteria: string }[],
+): Promise<string | null> {
+  const stored = await storedSnapshotItems(userId, tx);
+  if (stored.count + items.length > MAX_SNAPSHOT_ITEMS_PER_ACCOUNT) {
+    return `Your sprints already keep ${MAX_SNAPSHOT_ITEMS_PER_ACCOUNT.toLocaleString("en")} story copies, the most one account can. Delete old sprints to make room.`;
+  }
+  if (stored.bytes + textBytes(items) > MAX_SNAPSHOT_BYTES_PER_ACCOUNT) {
+    return `Your sprints' snapshots already hold ${Math.round(MAX_SNAPSHOT_BYTES_PER_ACCOUNT / 1024 / 1024)} MB of story text, the most one account can. Delete old sprints to make room.`;
+  }
+  return null;
 }
 
 /** A limit reached; `message` says which and what to do. */

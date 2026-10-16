@@ -8,7 +8,8 @@ import { Prisma } from "@/generated/prisma/client";
 import { parseStoriesCsv } from "@/lib/csv/parse";
 import { MAX_ROWS } from "@/lib/csv/template";
 import { MAX_SNAPSHOTS_PER_SPRINT, MAX_SPRINTS_PER_PROJECT } from "@/lib/limits";
-import { LimitError, snapshotRoom, withinLimit } from "@/lib/server/within-limit";
+import { LimitError, lockOwner, snapshotRoom, withinLimit } from "@/lib/server/within-limit";
+import { overLimit } from "@/lib/server/action-limits";
 import type { FormState } from "@/lib/form-state";
 import { validateSnapshotDate, validateSprintDates } from "@/lib/sprint/dates";
 import { diffSnapshots } from "@/lib/sprint/diff";
@@ -96,13 +97,17 @@ export async function lockBaseline(
   if (!date.ok) return { fieldErrors: date.errors };
   const csv = await readSnapshotStories(project.id, formData);
   if (!("stories" in csv)) return csv;
-  const full = await snapshotRoom(project.userId, csv.stories.length);
-  if (full) return { error: full };
+  const limited = await overLimit("snapshot", project.userId);
+  if (limited) return { error: limited };
 
   const tracksBacklog = formData.get("source") === "backlog";
   try {
-    await db.$transaction([
-      db.snapshot.create({
+    const full = await db.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM sprints WHERE id = ${sprint.id} FOR UPDATE`;
+      await lockOwner(tx, { user: project.userId });
+      const full = await snapshotRoom(tx, project.userId, csv.stories);
+      if (full) return full;
+      await tx.snapshot.create({
         data: {
           sprintId: sprint.id,
           asOfDate: date.asOfDate,
@@ -110,10 +115,12 @@ export async function lockBaseline(
           locked: true,
           items: { create: csv.stories },
         },
-      }),
+      });
       // A sprint built from the backlog records later backlog edits by itself.
-      db.sprint.update({ where: { id: sprint.id }, data: { tracksBacklog } }),
-    ]);
+      await tx.sprint.update({ where: { id: sprint.id }, data: { tracksBacklog } });
+      return null;
+    });
+    if (full) return { error: full };
   } catch (error) {
     // The partial unique index allows one baseline per sprint, even under a double submit.
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
@@ -151,8 +158,8 @@ export async function uploadSnapshot(
   if (!date.ok) return { fieldErrors: date.errors };
   const csv = await readSnapshotStories(project.id, formData);
   if (!("stories" in csv)) return csv;
-  const full = await snapshotRoom(project.userId, csv.stories.length);
-  if (full) return { error: full };
+  const limited = await overLimit("snapshot", project.userId);
+  if (limited) return { error: limited };
 
   const changes = defaultReasons(diffSnapshots(previous.items.map(toStory), csv.stories), csv.stories);
   const saved = await db.$transaction(async (tx) => {
@@ -164,6 +171,9 @@ export async function uploadSnapshot(
       select: { id: true },
     });
     if (latest?.id !== previous.id) return false;
+    await lockOwner(tx, { user: project.userId });
+    const full = await snapshotRoom(tx, project.userId, csv.stories);
+    if (full) return full;
     const snapshot = await tx.snapshot.create({
       data: { sprintId: sprint.id, asOfDate: date.asOfDate, locked: true, items: { create: csv.stories } },
     });
@@ -187,6 +197,7 @@ export async function uploadSnapshot(
     return true;
   });
   revalidatePath(sprintPath(project.id, sprint.id));
+  if (typeof saved === "string") return { error: saved };
   if (!saved) return { error: "Another snapshot was saved a moment ago, perhaps in another tab. Check the change log, then save again if something's missing." };
   return {
     message:
@@ -199,12 +210,15 @@ export async function uploadSnapshot(
 /**
  * Takes back a baseline locked by mistake, as long as nothing has been measured
  * against it yet. Once a later snapshot exists the baseline is fixed for good.
- * One statement, so a snapshot saved at the same moment can't slip in between.
+ * The sprint is locked first, as every snapshot save does, so one saved at the
+ * same moment either lands first (and the baseline stays) or waits.
  */
 export async function undoBaseline(projectId: string, sprintId: string) {
   const { project, sprint } = await requireSprint(projectId, sprintId);
-  await db.snapshot.deleteMany({
-    where: { sprintId: sprint.id, isBaseline: true, sprint: { snapshots: { every: { isBaseline: true } } } },
+  await db.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM sprints WHERE id = ${sprint.id} FOR UPDATE`;
+    if ((await tx.snapshot.count({ where: { sprintId: sprint.id, isBaseline: false } })) > 0) return;
+    await tx.snapshot.deleteMany({ where: { sprintId: sprint.id, isBaseline: true } });
   });
   revalidatePath(sprintPath(project.id, sprint.id), "layout");
 }

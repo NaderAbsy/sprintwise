@@ -3,7 +3,7 @@ import { cronAllowed } from "@/lib/server/cron";
 import { runJob } from "@/lib/server/job-runs";
 import { syncJiraProjectsNightly } from "@/lib/server/nightly-sync";
 
-// Vercel allows five minutes; the sync stops starting new projects after four.
+// Vercel allows five minutes; the sync stops starting new projects after two, and each one's Jira requests stop after ninety seconds.
 export const maxDuration = 300;
 
 /** Run every night by Vercel Cron (vercel.json): syncs Jira projects with a running sprint. */

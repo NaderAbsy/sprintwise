@@ -53,18 +53,38 @@ const NEXT_HEADING = /^\s*(?:h[1-6]\.\s|#{1,6}\s|[*_]{1,2}[^*_\n]{1,60}[*_]{1,2}
 /** A code sample, panel, table or rule after the criteria ends the section: it isn't a criterion. */
 const BLOCK_START = /^\s*(?:\{(?:code|noformat|panel|info|note|tip|warning|quote|expand)\b|\|\||-{4,}\s*$)/i;
 
-/** The text under a description's "Acceptance criteria" heading, up to the next heading; "" if there's none. */
+const LIST_LINE = /^\s*(?:[-*\u2022#]+|\d+[.)])\s/;
+
+/**
+ * Where the "Acceptance criteria" section of a description's lines starts (its
+ * heading) and ends (the first line after it): at the next heading; at a code
+ * sample, panel, table or rule; or, once the section has had list items, at a
+ * paragraph after a blank line, such as a note under the list. Reading the
+ * criteria and writing them back both use this, so a send never touches what
+ * the score didn't read as criteria.
+ */
+function criteriaSection(lines: string[]): { start: number; end: number } | null {
+  const start = lines.findIndex(isCriteriaHeading);
+  if (start < 0) return null;
+  let listed = false;
+  let end = start + 1;
+  for (; end < lines.length; end++) {
+    const line = lines[end];
+    if (BLOCK_START.test(line)) break;
+    if (NEXT_HEADING.test(line) && !/^\s*[-*\u2022#]+\s/.test(line)) break;
+    if (listed && lines[end - 1].trim() === "" && line.trim() !== "" && !LIST_LINE.test(line)) break;
+    if (LIST_LINE.test(line)) listed = true;
+  }
+  // Blank lines before what ends the section aren't part of it.
+  while (end > start + 1 && lines[end - 1].trim() === "") end--;
+  return { start, end };
+}
+
+/** The text under a description's "Acceptance criteria" heading, up to where the section ends; "" if there's none. */
 export function criteriaFromDescription(description: string): string {
   const lines = description.split(/\r?\n/);
-  const start = lines.findIndex(isCriteriaHeading);
-  if (start < 0) return "";
-  const section: string[] = [];
-  for (const line of lines.slice(start + 1)) {
-    if (BLOCK_START.test(line)) break;
-    if (NEXT_HEADING.test(line) && !/^\s*[-*•#]+\s/.test(line)) break;
-    section.push(line);
-  }
-  return section.join("\n").trim();
+  const section = criteriaSection(lines);
+  return section ? lines.slice(section.start + 1, section.end).join("\n").trim() : "";
 }
 
 /**
@@ -105,11 +125,10 @@ export function withCriteriaInDescription(description: string, criteria: string)
   const bullets = splitCriteria(criteria).map((c) => `* ${c}`).join("\n");
   if (!bullets) return description;
   const lines = description.split(/\r?\n/);
-  const start = lines.findIndex(isCriteriaHeading);
-  if (start < 0) return `${description.trimEnd()}${description.trim() ? "\n\n" : ""}h3. Acceptance criteria\n${bullets}`;
-  let end = start + 1;
-  while (end < lines.length && !(NEXT_HEADING.test(lines[end]) && !/^\s*[-*•#]+\s/.test(lines[end]))) end++;
-  return [...lines.slice(0, start + 1), bullets, ...(end < lines.length ? ["", ...lines.slice(end)] : [])].join("\n");
+  const section = criteriaSection(lines);
+  if (!section) return `${description.trimEnd()}${description.trim() ? "\n\n" : ""}h3. Acceptance criteria\n${bullets}`;
+  const rest = lines.slice(section.end);
+  return [...lines.slice(0, section.start + 1), bullets, ...(rest.length > 0 ? (rest[0].trim() === "" ? rest : ["", ...rest]) : [])].join("\n");
 }
 
 /** Epics group stories; they're never planned into a sprint, so imports and syncs leave them out unless asked. */

@@ -42,7 +42,7 @@ test("import from Jira, send an edit back, and sync without losing work done her
   await page.getByRole("button", { name: "Save changes" }).click();
   await page.goto(project);
   await page.getByRole("button", { name: "Sync from Jira" }).click();
-  await expect(page.getByText("Synced from Jira: 2 updated, 0 added. 1 edited here was left as it is; send it to Jira first.")).toBeVisible();
+  await expect(page.getByText("Synced from Jira: 3 updated, 0 added. 1 edited here kept its edits (Jira's other changes came in); send it to Jira when ready.")).toBeVisible();
   await expect(page.getByRole("link", { name: /Refund a payment in full or in part/ })).toBeVisible();
 
   // The sent description came back from Jira.

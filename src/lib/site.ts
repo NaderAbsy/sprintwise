@@ -24,6 +24,26 @@ export type Release = {
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.22",
+    date: "2026-10-16",
+    title: "Your text is safe with Jira",
+    summary: "Fixes from a full review of Sprintwise's code: imports and Jira never quietly lose or overwrite anyone's work.",
+    items: [
+      "Importing a file with fewer columns (say, only Key, Summary and Status) leaves the descriptions, criteria and points already saved as they are.",
+      "Send to Jira sends only what you edited here, and never sends a field back over a newer change a teammate made in Jira; if you both changed the same field, it says so instead.",
+      "Writing criteria into a Jira description no longer removes the code, tables, panels or notes that follow them.",
+      "Stories finished in Jira are finished here after a Sync, even when the search leaves finished issues out.",
+      "A story edited here still takes Jira's status and any change to fields you didn't edit; points or criteria Jira won't take on an issue type stay edited, so Sync doesn't undo them.",
+      "Points go to the story points field the issue actually uses, on sites that have two.",
+      "Issues you leave unticked at import, or delete here, stay out of later syncs; older issues that join the search later come in.",
+      "Moving criteria between the description and the criteria field no longer shows as a criteria change in the sprint log.",
+      "The nightly sync records why a project failed, carries on with the others, and can't run past its time.",
+      "Reconnecting Jira with a different Atlassian account replaces the old connection, and two tabs can't break it by refreshing at once.",
+      "Snapshots have a limit per few minutes and on stored text, counted safely when saved together; undoing a baseline can't clash with a snapshot being saved.",
+      "Re-scoring a big project is much quicker, and scores always use the latest rule settings.",
+    ],
+  },
+  {
     version: "v2.21",
     date: "2026-10-13",
     title: "Tested against a real Jira site",

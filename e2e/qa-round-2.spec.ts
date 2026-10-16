@@ -31,7 +31,7 @@ test("sub-tasks are left unticked at import, and criteria in the description are
     "MOB-2,Add the Face ID setting,Sub-task,To Do,,1",
   ].join("\n");
   await page.locator("input[type=file]").setInputFiles({ name: "jira.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
-  await expect(page.getByText("No Acceptance criteria column, so stories score low unless their criteria are in the description.")).toBeVisible();
+  await expect(page.getByText("No Acceptance criteria column, so new stories score low unless their criteria are in the description.")).toBeVisible();
   await expect(page.getByText(/1 sub-task left unticked: sub-tasks are\s+steps inside a story/)).toBeVisible();
   await expect(page.getByRole("checkbox", { name: /MOB-2/ })).not.toBeChecked();
   await expect(page.getByRole("button", { name: "Import 1 story" })).toBeVisible();
