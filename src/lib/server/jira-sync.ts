@@ -10,7 +10,7 @@ import { LimitError } from "@/lib/server/within-limit";
 import { doneStatusesOf } from "@/lib/server/sprint";
 import { recordSprintChanges } from "@/lib/server/tracking";
 import { isDone } from "@/lib/sprint/metrics";
-import { isEpic, isSubtask } from "@/lib/stories/types";
+import { wantedByDefault } from "@/lib/csv/import";
 
 /**
  * A project reads from and writes to one Jira site. Importing from another would make
@@ -110,9 +110,8 @@ export async function syncProjectFromJira(
       return [];
     }
     const current = existing.get(row.story.key);
-    if (!current && isDone(row.story.status, doneStatuses)) return [];
-    // New epics and sub-tasks stay out, as at import; one ticked in at import keeps syncing.
-    if (!current && (isEpic(row.story.issueType) || isSubtask(row.story.issueType))) return [];
+    // New issues that import wouldn't tick (finished, epics, sub-tasks) stay out; one ticked in at import keeps syncing.
+    if (!current && !wantedByDefault(row.story, doneStatuses)) return [];
     if (!current && leftOutOnPurpose(row.story.key)) {
       leftOut++;
       return [];

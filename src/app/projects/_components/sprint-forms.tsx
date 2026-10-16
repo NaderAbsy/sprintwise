@@ -317,6 +317,8 @@ export function SnapshotUploadForm(props: UploadProps) {
           id={`${id}-date`}
           name="asOfDate"
           type="date"
+          // Enter in the date box would submit the form directly, skipping "Lock this baseline?".
+          onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
           defaultValue={defaultDay}
           min={minDay}
           max={endDay}

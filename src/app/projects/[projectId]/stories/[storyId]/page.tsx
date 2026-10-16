@@ -1,3 +1,4 @@
+import { ActionButton } from "@/components/action-button";
 import type { Metadata } from "next";
 import { ArrowRight, Pencil } from "lucide-react";
 import Link from "next/link";
@@ -116,9 +117,9 @@ export default async function StoryPage({ params, searchParams }: PageProps<"/pr
           {jiraLinked && <SendToJiraButton projectId={project.id} storyIds={[row.id]} label="Send to Jira" />}
           <CopyButton text={story.description} label="Copy description" className="btn-secondary btn-sm" />
           <CopyButton text={story.acceptanceCriteria} label="Copy acceptance criteria" className="btn-secondary btn-sm" />
-          <form action={markCopiedToJira.bind(null, project.id, row.id)}>
-            <button className="btn-primary btn-sm">Mark as copied to Jira</button>
-          </form>
+          <ActionButton action={markCopiedToJira.bind(null, project.id, row.id)} className="btn-primary btn-sm">
+            Mark as copied to Jira
+          </ActionButton>
         </section>
       )}
       {finishedStory && (

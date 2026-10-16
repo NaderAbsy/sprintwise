@@ -1,5 +1,6 @@
 "use client";
-import { useId, useRef, useTransition } from "react";
+import { useId, useRef, useState, useTransition } from "react";
+import { attempt } from "@/lib/safe-action";
 
 /** A destructive action behind a confirmation dialog (native <dialog>: focus-trapped, Esc to close). */
 export function ConfirmButton({
@@ -21,6 +22,8 @@ export function ConfirmButton({
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const [pending, startTransition] = useTransition();
+  // Offline or signed out, the action fails: say so here rather than replace the page with an error screen.
+  const [error, setError] = useState<string | null>(null);
   return (
     <>
       <button type="button" className={tone === "danger" ? "btn-danger" : "btn-secondary"} onClick={() => dialog.current?.showModal()}>
@@ -35,6 +38,11 @@ export function ConfirmButton({
           {title}
         </h2>
         <p className="mt-2 text-sm text-muted">{body}</p>
+        {error && (
+          <p role="alert" className="mt-3 text-sm text-not-ready">
+            {error}
+          </p>
+        )}
         <div className="mt-6 flex justify-end gap-3">
           <button type="button" className="btn-secondary" onClick={() => dialog.current?.close()} autoFocus>
             Cancel
@@ -43,7 +51,13 @@ export function ConfirmButton({
             type="button"
             className="btn-danger"
             disabled={pending}
-            onClick={() => startTransition(() => action())}
+            onClick={() => {
+              setError(null);
+              startTransition(async () => {
+                const result = await attempt(action);
+                if (result && typeof result === "object" && "error" in result) setError(result.error);
+              });
+            }}
           >
             {pending ? "Working…" : confirmLabel}
           </button>

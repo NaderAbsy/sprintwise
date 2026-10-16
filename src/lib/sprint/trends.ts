@@ -157,7 +157,9 @@ export function summarizeTrends(allRows: SprintTrendRow[]): TrendSummary {
   if (paired.length >= 3) {
     const sorted = [...paired].sort((a, b) => a.readyAtBaseline! - b.readyAtBaseline!);
     const half = Math.floor(sorted.length / 2);
-    const low = avg((r) => r.completion, sorted.slice(0, half));
+    // Only when the two halves really differ in readiness: with ties, the split would be by date, not readiness.
+    const gap = sorted[sorted.length - half].readyAtBaseline! - sorted[half - 1].readyAtBaseline!;
+    const low = gap >= 0.05 ? avg((r) => r.completion, sorted.slice(0, half)) : null;
     const high = avg((r) => r.completion, sorted.slice(-half));
     if (low !== null && high !== null && Math.round((high - low) * 100) >= 5) {
       insights.push(

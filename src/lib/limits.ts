@@ -16,3 +16,5 @@ export const MAX_SNAPSHOT_ITEMS_PER_ACCOUNT = 100_000;
  * story count's intent many times over.
  */
 export const MAX_SNAPSHOT_BYTES_PER_ACCOUNT = 50 * 1024 * 1024;
+/** The longest Jira search (JQL) a project keeps. */
+export const JQL_MAX = 2000;

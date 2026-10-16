@@ -1,3 +1,4 @@
+import { ActionButton } from "@/components/action-button";
 import { CircleCheck, CircleDashed, CircleX, Download, FileUp, ListChecks, Plus, Sparkles, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -197,12 +198,10 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
           action={
             <div className="flex flex-col items-center gap-3">
               <div className="flex flex-wrap justify-center gap-2">{actions}</div>
-              <form action={addSampleStories.bind(null, project.id)}>
-                <button className="btn-ghost btn-sm">
-                  <Sparkles aria-hidden="true" className="h-4 w-4" />
-                  Or load 12 sample stories to try it out
-                </button>
-              </form>
+              <ActionButton action={addSampleStories.bind(null, project.id)} className="btn-ghost btn-sm">
+                <Sparkles aria-hidden="true" className="h-4 w-4" />
+                Or load 12 sample stories to try it out
+              </ActionButton>
             </div>
           }
         >

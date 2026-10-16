@@ -10,6 +10,7 @@ import { ScoreRing } from "@/components/score-ring";
 import { SecondLookList } from "@/components/second-look";
 import { StoryFields } from "@/components/story-fields";
 import { useLeaveWarning } from "@/components/use-leave-warning";
+import { dropStoryDraft, useStoryDraft } from "@/components/use-story-draft";
 import { emptyFormState } from "@/lib/form-state";
 import { findVagueWords, scoreStory, type Readiness, type RuleSettings } from "@/lib/readiness/rules";
 import { secondLook, type SecondLook } from "@/lib/readiness/second-look";
@@ -93,6 +94,9 @@ export function StoryEditor({
   // Editing: the saved story stays on screen, field by field and as a score, to write the new version against.
   const [before] = useState(() => (story ? { values: storyFieldValues(story), readiness } : null));
   const [current, setCurrent] = useState(() => storyFieldValues(story ?? {}));
+  const [original] = useState(() => storyFieldValues(story ?? {}));
+  const draftKey = `sprintwise-draft:${projectId}:${story?.id ?? "new"}`;
+  const draft = useStoryDraft(draftKey, original, current, dirty, form, state);
   const changedCount = before
     ? (Object.keys(before.values) as StoryFieldName[]).filter((k) => current[k].trim() !== before.values[k].trim()).length
     : 0;
@@ -103,7 +107,10 @@ export function StoryEditor({
   return (
     <form
       action={action}
-      onSubmit={keepValuesOnSubmit(action)}
+      onSubmit={(event) => {
+        dropStoryDraft(draftKey);
+        keepValuesOnSubmit(action)(event);
+      }}
       ref={form}
       onInput={(event) => {
         setDirty(true);
@@ -127,6 +134,17 @@ export function StoryEditor({
       noValidate
     >
       <div className="card space-y-4 p-5">
+        {draft.offer && (
+          <div role="status" className="flex flex-wrap items-center gap-3 rounded-lg bg-needs-work-bg px-4 py-3 text-sm text-needs-work">
+            <span className="min-w-0 flex-1">You have changes to this story that weren&apos;t saved, from earlier in this tab.</span>
+            <button type="button" className="btn-secondary btn-sm" onClick={draft.restore}>
+              Restore them
+            </button>
+            <button type="button" className="btn-ghost btn-sm" onClick={draft.discard}>
+              Discard
+            </button>
+          </div>
+        )}
         <StoryFields
           errors={state.fieldErrors}
           showKey={!story}
@@ -160,6 +178,7 @@ export function StoryEditor({
                 : `/projects/${projectId}`
             }
             className="btn-ghost"
+            onClick={() => dropStoryDraft(draftKey)}
           >
             Cancel
           </Link>

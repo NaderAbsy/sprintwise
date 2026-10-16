@@ -32,8 +32,10 @@ export function ReasonSelect({
       <select
         aria-label={`Why ${storyKey} changed`}
         value={value}
-        disabled={pending}
+        // Not disabled while saving: a disabled select loses keyboard focus.
+        aria-disabled={pending || undefined}
         onChange={(e) => {
+          if (pending) return;
           const next = e.target.value;
           const before = value;
           setValue(next);

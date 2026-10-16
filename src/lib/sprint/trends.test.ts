@@ -62,6 +62,11 @@ describe("summarizeTrends", () => {
     expect(summary.insights.some((i) => i.startsWith("Sprints that started with more Ready stories finished"))).toBe(true);
   });
 
+  it("claims no readiness link when sprints started equally Ready (v2.23)", () => {
+    const summary = summarizeTrends([row(10, 0.5, 0, 0.5), row(14, 0.7, 0, 0.5), row(18, 0.9, 0, 0.5)]);
+    expect(summary.insights.some((i) => i.startsWith("Sprints that started with more Ready stories"))).toBe(false);
+  });
+
   it("ignores sprints that only have a baseline", () => {
     expect(averageVelocity([row(30, 1, 0, 1), { ...row(0, 0, 0, 1), measured: false }])).toMatchObject({ points: 30, sprints: 1 });
   });

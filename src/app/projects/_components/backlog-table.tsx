@@ -201,7 +201,7 @@ export function BacklogTable({
               )}
               <th scope="col" className="w-16 pl-2! pr-2! sm:px-4!">Score</th>
               <th scope="col">Story</th>
-              {/* On phones the score ring's colour shows the band, and points are edited on the story. */}
+              {/* On phones the band is written under the title, and points are edited on the story. */}
               <th scope="col" className="hidden w-32 sm:table-cell">Band</th>
               <th scope="col" className="w-40 pr-2! sm:pr-4!">Status</th>
               <th scope="col" className="hidden w-24 sm:table-cell">Points</th>
@@ -282,6 +282,13 @@ export function BacklogTable({
                     <span className="font-mono text-xs text-subtle">{row.key}</span>{" "}
                     <span className="font-medium group-hover:text-accent group-hover:underline">{row.title}</span>
                   </Link>
+                  {/* Phones hide the Band column: the ring's colour alone can't tell a held-back 85 from a Ready one. */}
+                  {row.band && (
+                    <span className="mt-0.5 block text-xs text-muted sm:hidden">
+                      {row.band}
+                      {row.capNote && ` · ${row.capNote}`}
+                    </span>
+                  )}
                   {(row.epic || row.edited || row.secondLook || (row.issueType && row.issueType.toLowerCase() !== "story")) && (
                     <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
                       {row.issueType && row.issueType.toLowerCase() !== "story" && (

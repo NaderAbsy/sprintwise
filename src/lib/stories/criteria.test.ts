@@ -130,3 +130,26 @@ describe("criteria sections from a real Jira Cloud site", () => {
     expect(r.band).toBe("Ready");
   });
 });
+
+describe("criteria lines (v2.23)", () => {
+  it("keeps a decimal at the start of a criterion", () => {
+    expect(splitCriteria("2.5 MB is the largest upload\n10.30 is the cut-off\n1. One\n2) Two")).toEqual([
+      "2.5 MB is the largest upload",
+      "10.30 is the cut-off",
+      "One",
+      "Two",
+    ]);
+  });
+  it("doesn't count an empty bullet or a rule as a criterion", () => {
+    expect(splitCriteria("-")).toEqual([]);
+    expect(splitCriteria("- \n- \n-\n----\n*\n1.")).toEqual([]);
+    expect(scoreStory({ ...story("As a parent I want to book a slot so that it fits my day."), acceptanceCriteria: "-" }).band).not.toBe("Ready");
+  });
+  it("scores criteria the same wherever they're written (rules v7)", () => {
+    const intro = "As a customer I want my receipts as a PDF so that I can claim expenses.";
+    const own = scoreStory(story(intro, "The PDF loads fast"));
+    const inDescription = scoreStory(story(`${intro}\n\nh3. Acceptance criteria\n* The PDF loads fast`));
+    expect(inDescription.score).toBe(own.score);
+    expect(inDescription.band).toBe(own.band);
+  });
+});

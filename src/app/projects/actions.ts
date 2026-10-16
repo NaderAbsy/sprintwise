@@ -23,7 +23,7 @@ import { planMove } from "@/lib/stories/rank";
 import { isDone } from "@/lib/sprint/metrics";
 import { normalizeKey, parsePoints, type Story } from "@/lib/stories/types";
 import { Prisma } from "@/generated/prisma/client";
-import { MAX_PROJECTS, MAX_STORIES_PER_PROJECT } from "@/lib/limits";
+import { JQL_MAX, MAX_PROJECTS, MAX_STORIES_PER_PROJECT } from "@/lib/limits";
 import { demoBacklog } from "@/demo/backlog";
 import type { RuleSettings } from "@/lib/readiness/rules";
 import { DEFAULT_RULE_SETTINGS, parseCustomChecks, parseDoneStatuses, parseRuleSettings } from "@/lib/readiness/settings";
@@ -223,7 +223,7 @@ export async function importStories(projectId: string, _prev: FormState, formDat
   if (fromJira) {
     const cloudId = String(formData.get("jiraCloudId") ?? "");
     const jql = String(formData.get("jiraJql") ?? "").trim();
-    if (jql === "" || jql.length > 2000) return { error: "Preview the issues from Jira again, then import." };
+    if (jql === "" || jql.length > JQL_MAX) return { error: "Preview the issues from Jira again, then import." };
     const other = otherSite(project, cloudId);
     if (other) return { error: other };
     let site;
@@ -269,20 +269,17 @@ export async function importStories(projectId: string, _prev: FormState, formDat
 /** Loads the invented demo backlog into a project, so a new user can try every screen. Existing keys are kept. */
 export async function addSampleStories(projectId: string) {
   const project = await requireProject(projectId);
-  const settings = settingsOf(project);
   const existing = new Set(
     (await db.story.findMany({ where: { projectId: project.id }, select: { key: true } })).map((s) => s.key),
   );
   const fresh = demoBacklog.filter((s) => !existing.has(s.key));
-  if (existing.size + fresh.length > MAX_STORIES_PER_PROJECT) redirect(`/projects/${project.id}`);
-  const firstRank = await bottomRank(project.id);
-  await db.$transaction(
-    fresh.map((story, i) =>
-      db.story.create({
-        data: { projectId: project.id, rank: firstRank + i, ...story, readiness: { create: readinessData(story, settings) } },
-      }),
-    ),
-  );
+  // Through the same save as an import, so the story limit is counted under the same lock.
+  try {
+    await saveStories(project, fresh.map((s) => ({ ...s, issueType: s.issueType ?? "", epic: "" })), { maxStories: MAX_STORIES_PER_PROJECT });
+  } catch (error) {
+    if (error instanceof LimitError) redirect(`/projects/${project.id}`);
+    throw error;
+  }
   revalidatePath(`/projects/${project.id}`);
   redirect(`/projects/${project.id}?imported=${fresh.length}`);
 }

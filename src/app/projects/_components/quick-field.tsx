@@ -1,7 +1,7 @@
 "use client";
 import { guarded } from "@/lib/safe-action";
 import { Check, LoaderCircle } from "lucide-react";
-import { useActionState, useRef } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { quickUpdateStory } from "@/app/projects/actions";
 import { emptyFormState } from "@/lib/form-state";
 import { keepValuesOnSubmit } from "@/lib/keep-values-on-submit";
@@ -32,18 +32,26 @@ export function QuickField({
     emptyFormState,
   );
   const form = useRef<HTMLFormElement>(null);
+  const control = useRef<HTMLInputElement & HTMLSelectElement>(null);
   const label = field === "status" ? `Status of ${storyKey}` : `Points for ${storyKey}`;
   const errorId = `${field}-${storyId}-error`;
   // The story's own status, spelt as in the list when it's one of them ("in progress" is In Progress).
   const current = options.find((o) => o.toLowerCase() === value.trim().toLowerCase()) ?? value.trim();
   const choices = options.includes(current) ? options : [current, ...options];
+  const stored = field === "status" ? current : value;
+  // After a save (or a change from elsewhere) the page re-renders with the stored value. The field shows it,
+  // unless it's being typed in: re-creating the field instead would drop keyboard focus to the top of the page.
+  useEffect(() => {
+    const el = control.current;
+    if (el && document.activeElement !== el) el.value = stored;
+  }, [stored]);
 
   return (
-    // key: after a save the page re-renders with the stored value, and the input starts from it.
-    <form key={value} ref={form} action={action} onSubmit={keepValuesOnSubmit(action)} className="relative flex items-center gap-1.5">
+    <form ref={form} action={action} onSubmit={keepValuesOnSubmit(action)} className="relative flex items-center gap-1.5">
       <input type="hidden" name="field" value={field} />
       {field === "status" ? (
         <select
+          ref={control}
           name="value"
           aria-label={label}
           defaultValue={current}
@@ -60,6 +68,7 @@ export function QuickField({
         </select>
       ) : (
         <input
+          ref={control}
           name="value"
           aria-label={label}
           defaultValue={value}
