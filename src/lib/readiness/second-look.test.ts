@@ -69,3 +69,18 @@ describe("scoring (rules v4)", () => {
     expect(filler.band).toBe("Ready");
   });
 });
+
+describe("criteria headings aren't AI leftovers (v2.23)", () => {
+  it.each(["**Acceptance criteria**", "## Acceptance criteria", "**Acceptance Criteria:**"])("%s", (heading) => {
+    const looks = secondLook({
+      title: "Book a cleaner",
+      description: `As a parent I want to book a cleaner so that the flat is clean on Friday.\n\n${heading}\n- Slots for 14 days`,
+      acceptanceCriteria: "",
+    });
+    expect(looks.filter((l) => l.kind === "leftover")).toEqual([]);
+  });
+  it("still flags other Markdown bold", () => {
+    const looks = secondLook({ title: "Book", description: "**Great news!** As a parent I want…", acceptanceCriteria: "" });
+    expect(looks.some((l) => l.kind === "leftover")).toBe(true);
+  });
+});

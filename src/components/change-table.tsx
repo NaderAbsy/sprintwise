@@ -69,7 +69,9 @@ export function ChangeTable({
         </thead>
         <tbody>
           {rows.map((change, i) => (
-            <tr key={i}>
+            // By the change's id: new changes arrive at the top, and a row keyed by position would hand its
+            // reason picker (and what it shows) to a different change.
+            <tr key={change.id ?? `${change.key}-${change.type}-${i}`}>
               {dated && <td className={`whitespace-nowrap ${narrow}`}>{change.date}</td>}
               <td className="whitespace-nowrap font-mono text-xs">{change.key}</td>
               <td className="whitespace-nowrap">{LABELS[change.type]}</td>

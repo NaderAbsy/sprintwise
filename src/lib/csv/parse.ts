@@ -147,6 +147,15 @@ export function readCsvTable(
   const [headerRow = [], ...data] = parsed.data;
   const headers = headerRow.map(clean);
   const columns = matchColumns(headers, mapping);
+  // Jira exports often have both "Story Points" and "Story point estimate", one of them empty: unless the
+  // person picked one, use the one with the most values.
+  if (mapping?.story_points === undefined) {
+    const named = headers.flatMap((h, i) => (HEADER_ALIASES[lower(h)] === "story_points" ? [i] : []));
+    if (named.length > 1) {
+      const filled = (i: number) => data.filter((cells) => (cells[i] ?? "").trim() !== "").length;
+      columns.story_points = named.reduce((best, i) => (filled(i) > filled(best) ? i : best), named[0]);
+    }
+  }
 
   const missing = REQUIRED_COLUMNS.filter((c) => columns[c] === null);
   if (missing.length > 0) {
@@ -184,11 +193,15 @@ export function readCsvTable(
     const cell = (field: ImportField) => {
       const column = columns[field];
       // Sprintwise's own exports put an apostrophe before anything a spreadsheet would run as a formula.
-      return column === null ? "" : (cells[column] ?? "").trim().replace(/^'(?=\s*[=+\-@])/, "");
+      return column === null ? "" : (cells[column] ?? "").trim().replace(/^'(?=[\t\r]|\s*[=+\-@])/, "");
     };
     const errors = [...(rowErrors.get(row) ?? [])];
     const warnings: string[] = [];
 
+    // An unquoted comma (as in a decimal comma, 1,5) splits a cell in two and shifts the rest of the row.
+    if (cells.length > headers.length && cells.slice(headers.length).some((c) => c.trim() !== "")) {
+      warnings.push("This row has more cells than the file has columns, so some values may be in the wrong column. Check for a comma that needs quotes.");
+    }
     const rawPoints = cell("story_points");
     const { points, valid } = parsePoints(rawPoints);
     if (!valid) warnings.push(`Story points "${rawPoints}" isn't a number of 0 or more, so it counts as not estimated.`);

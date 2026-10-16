@@ -1,3 +1,4 @@
+import { criteriaOf } from "@/lib/stories/types";
 import type { Metadata } from "next";
 import { FileText, Lock } from "lucide-react";
 import Link from "next/link";
@@ -32,7 +33,6 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
 
   const [{ snapshots, baselineRow: baseline, latestRow: latest, metrics, log }, rows] = await Promise.all([
     loadSprint(sprint, doneStatusesOf(project)),
-    // The picker shows each story's saved band, so descriptions needn't go to the browser.
     db.story.findMany({
       where: { projectId: project.id },
       orderBy: [{ rank: "asc" }, { key: "asc" }],
@@ -40,6 +40,7 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
         id: true,
         key: true,
         title: true,
+        description: true,
         acceptanceCriteria: true,
         storyPoints: true,
         status: true,
@@ -51,7 +52,14 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
   const total = (items: { storyPoints: number | null }[]) => sumPoints(items.map((i) => i.storyPoints ?? 0));
 
   const dayRange = `${formatDay(sprint.startDate)} to ${formatDay(sprint.endDate)}`;
-  const backlog = rows.map(({ id, readiness, ...row }) => ({ id, ...toStory({ ...row, description: "" }), band: readiness?.band as Band | undefined }));
+  // Descriptions stay on the server. Criteria go as the list the score reads (wherever they're written), on
+  // both sides of the snapshot preview's comparison, so it shows the changes the server will record.
+  const criteriaOnly = <T extends { description: string; acceptanceCriteria: string }>(s: T) => ({
+    ...s,
+    description: "",
+    acceptanceCriteria: criteriaOf(s).lines.join("\n"),
+  });
+  const backlog = rows.map(({ id, readiness, ...row }) => ({ id, ...criteriaOnly(toStory(row)), band: readiness?.band as Band | undefined }));
   const settings = settingsOf(project);
   const today = utcToday();
   // A day's leeway at each end, because "today" here is the UTC day and the user may be ahead or behind it.
@@ -246,7 +254,7 @@ export default async function SprintPage({ params }: PageProps<"/projects/[proje
               mode="snapshot"
               {...uploadProps}
               minDay={toDay(latest!.asOfDate)}
-              previous={latest!.items.map((item) => ({ ...toStory(item), description: "" }))}
+              previous={latest!.items.map((item) => criteriaOnly(toStory(item)))}
             />
           </section>
 

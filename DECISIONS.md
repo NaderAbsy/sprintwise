@@ -2,6 +2,19 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-16 — v2.23: screens, scoring and upkeep, from the code review
+
+The second half of the review (see v2.22).
+
+1. **Scoring, rules v7:** `splitCriteria` strips a list number only when a space follows ("2.5 MB" keeps its "2.") and drops lines with no letter or digit (empty bullets, rules). When criteria come from the description, that section is left out of the story text (`withoutCriteriaSection`), so a vague word there fails C3 only, and "I want" in the criteria doesn't fail C8. An "Acceptance criteria" heading (bold, "##") isn't an AI leftover. Caps are named in one order everywhere: not estimated, too big, team checks, then a re-read.
+2. **Trends:** the "more Ready, more done" line needs the two halves to differ by 5+ points in readiness.
+3. **Imports:** the points column with the most values wins when a file has two; points must be digits with an optional decimal; a row with extra cells gets a warning; the export's guard apostrophe before a tab is removed on re-import.
+4. **Screens:** Enter in the import Search box doesn't submit (in the JQL box it previews); change-log rows are keyed by change id; `/refine` always redirects to `?story=`; `SprintDay` uses `useSyncExternalStore` (suppressHydrationWarning kept the server's text); QuickField no longer re-mounts its form after a save, and saving controls use `aria-disabled`, so focus stays; ConfirmButton, ShareLink, the nightly toggle and the two plain forms (`ActionButton`) use `attempt`.
+5. **Back button:** rather than an extra history entry (which fights Next's router state), the editor keeps unsaved typing in `sessionStorage` (`useStoryDraft`) and offers it back while the story is unchanged; saving or Cancel drops it.
+6. **Phones:** the band and cap note are written under the title when the Band column is hidden.
+7. **Sprint page:** stories are sent with their criteria as the list the score reads, on both sides of the snapshot preview's comparison (descriptions stay on the server). Sending criteria only for stories without a saved band was considered, but the snapshot preview compares criteria and would have shown false changes.
+8. **Upkeep:** `engines.node` is `24.x`; database tests (`pnpm test:db`, `*.db.test.ts`) run against Postgres locally and in CI, with a `migrate diff --exit-code` check that the migrations build the schema; shared `JQL_MAX`, `wantedByDefault` (import ticks and Sync), and sample stories saved through `saveStories`; SECURITY.md, README and `.env.example` updated; the repo's CLAUDE.md states the real ownership rule. Not done: splitting `actions.ts` (large, but each action is short and covered by e2e tests; a split is churn without a user benefit now) and sharing the tracked-sprint filter with the nightly sync (they differ on purpose: the nightly sync only runs for sprints that have started).
+
 ## 2026-10-16 — v2.22: data safety and Jira, from a full code review
 
 The user asked for a review of the whole codebase. Six read-only reviewers looked at security, data integrity, scoring logic, Jira, pages and upkeep; every finding was checked (several reproduced) before reporting. No way was found for one account to see or change another's data. The user asked for all fixes, in two releases: this one for anything that can lose or overwrite text, v2.23 for screens, scoring and upkeep.

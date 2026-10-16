@@ -1,5 +1,6 @@
 import { ArrowLeft, ArrowRight, Pencil, Users } from "lucide-react";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { EstimateButtons, RefineKeys } from "@/app/projects/_components/refine-controls";
 import { BandBadge } from "@/components/band-badge";
@@ -90,7 +91,10 @@ export default async function RefinePage({ params, searchParams }: PageProps<"/p
     );
   }
 
-  const index = Math.max(0, list.findIndex((r) => r.id === storyParam));
+  // The story is always named in the address: estimating the first story can make it Ready, which drops it
+  // from "Not ready yet", and the next key press would then size the story that took its place.
+  if (typeof storyParam !== "string" || !list.some((r) => r.id === storyParam)) redirect(href(list[0].id));
+  const index = list.findIndex((r) => r.id === storyParam);
   const row = list[index];
   const story = toStory(row);
   const readiness = scoreStory(story, settingsOf(project));

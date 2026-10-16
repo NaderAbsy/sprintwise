@@ -6,7 +6,7 @@ import { utcToday } from "@/lib/sprint/tracking";
 
 /**
  * Stop starting new projects after this long. The function has five minutes; one sync usually takes
- * seconds, but a slow Jira can take two or three, so this leaves room for the last one to finish.
+ * seconds, and each one's Jira requests stop after PROJECT_BUDGET_MS, so the last one started still finishes.
  */
 const BUDGET_MS = 2 * 60 * 1000;
 /** One project's Jira requests stop paging after this long, so the last one started still ends in time. */

@@ -1,6 +1,7 @@
 "use client";
 import { Check, Copy, Link2, Share2 } from "lucide-react";
 import { useRef, useState, useSyncExternalStore, useTransition } from "react";
+import { attempt } from "@/lib/safe-action";
 /**
  * Owner-only control: create, copy or turn off a read-only link. Used for a
  * sprint report and for the backlog; the actions come bound from the page.
@@ -25,6 +26,15 @@ export function ShareLink({
   const dialog = useRef<HTMLDialogElement>(null);
   const [pending, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
+  // Offline or signed out, turning the link on or off fails: say so in the dialog.
+  const [error, setError] = useState<string | null>(null);
+  const run = (change: () => Promise<void>) => {
+    setError(null);
+    startTransition(async () => {
+      const result = await attempt(change);
+      if (result && typeof result === "object" && "error" in result) setError(result.error);
+    });
+  };
   // The origin is only known in the browser; the server renders without it.
   const origin = useSyncExternalStore(
     () => () => {},
@@ -48,6 +58,11 @@ export function ShareLink({
           {title}
         </h2>
         <p className="mt-2 text-sm text-muted">{description}</p>
+        {error && (
+          <p role="alert" className="mt-3 text-sm text-not-ready">
+            {error}
+          </p>
+        )}
         {token ? (
           <div className="mt-4 space-y-3">
             <label htmlFor="share-url" className="label">
@@ -76,7 +91,7 @@ export function ShareLink({
                 type="button"
                 className="btn-danger"
                 disabled={pending}
-                onClick={() => startTransition(() => disable())}
+                onClick={() => run(disable)}
               >
                 {pending ? "Turning off…" : "Turn off the link"}
               </button>
@@ -94,7 +109,7 @@ export function ShareLink({
               type="button"
               className="btn-primary"
               disabled={pending}
-              onClick={() => startTransition(() => enable())}
+              onClick={() => run(enable)}
             >
               <Link2 aria-hidden="true" className="h-4 w-4" />
               {pending ? "Creating…" : "Create link"}

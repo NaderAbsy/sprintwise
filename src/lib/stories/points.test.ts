@@ -41,3 +41,14 @@ describe("cutText", () => {
     expect(cutText("short", 60)).toBe("short");
   });
 });
+
+describe("parsePoints is strict about what counts as a number (v2.23)", () => {
+  it.each(["0x10", "0b11", "1e3", "Infinity", "+3", "3 pts", "-0"])("%s isn't a number of points", (raw) => {
+    expect(parsePoints(raw)).toEqual({ points: null, valid: false });
+  });
+  it("still reads whole numbers, decimals and a decimal comma", () => {
+    expect(parsePoints(" 8 ").points).toBe(8);
+    expect(parsePoints("0.5").points).toBe(0.5);
+    expect(parsePoints("2,5").points).toBe(2.5);
+  });
+});

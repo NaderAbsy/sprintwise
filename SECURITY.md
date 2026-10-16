@@ -1,6 +1,6 @@
 # Security policy
 
-Sprintwise is a personal portfolio project, maintained by one person. Reports are welcome and taken seriously.
+Sprintwise is a free tool for Product Owners, maintained by one person. Reports are welcome and taken seriously.
 
 ## Reporting a vulnerability
 

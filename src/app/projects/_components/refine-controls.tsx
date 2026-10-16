@@ -24,6 +24,7 @@ export function EstimateButtons({ projectId, storyId, points }: { projectId: str
   }
 
   const save = (value: number) => {
+    if (pending) return;
     setChosen(value);
     setError(null);
     startTransition(async () => {
@@ -48,7 +49,8 @@ export function EstimateButtons({ projectId, storyId, points }: { projectId: str
             type="button"
             data-estimate={value}
             aria-pressed={chosen === value}
-            disabled={pending}
+            // Not disabled while saving: a disabled button drops keyboard focus to the top of the page.
+            aria-disabled={pending || undefined}
             onClick={() => save(value)}
             className={`grid h-11 w-11 place-items-center rounded-lg border text-base font-semibold tabular-nums transition-colors ${
               chosen === value

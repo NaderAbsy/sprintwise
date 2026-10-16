@@ -10,5 +10,7 @@ export default defineConfig({
   },
   test: {
     include: ["src/**/*.test.ts"],
+    // Database tests run on their own: pnpm test:db.
+    exclude: ["src/**/*.db.test.ts", "node_modules/**"],
   },
 });

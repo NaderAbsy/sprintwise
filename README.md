@@ -65,7 +65,7 @@ The calls that shaped v1, with the reasoning in [DECISIONS.md](DECISIONS.md):
 
 - **CSV in v1, Jira in v2.** Jira's sign-in and API setup is where side projects stall. CSV import proves both halves of the product with no integration risk.
 - **Rules set the score; AI never does.** A rule-based score is the same for the same story every time, and every point lost has one reason you can explain.
-- **AI rewrites were built, tested, then switched off.** Suggestions cost about two US cents each on the Claude API. For a portfolio site, I kept the code and tests and moved the live feature to v2, rather than pay ongoing costs or show a half-working button. Setting `ANTHROPIC_API_KEY` turns it on.
+- **AI rewrites were built, tested, then switched off.** Suggestions cost about two US cents each on the Claude API. For a free tool with no budget, I kept the code and tests and moved the live feature to v2, rather than pay ongoing costs or show a half-working button. Setting `ANTHROPIC_API_KEY` turns it on.
 - **An unestimated or oversized story can't be Ready.** Under the first version of the rules, a story with no estimate scored 80 and passed. The fix caps the band rather than changing the score, so every point lost still has exactly one reason.
 - **The baseline can't be edited.** If it could, every scope metric would be meaningless. A baseline locked by mistake can be undone until the first later snapshot is saved; after that, the only way to redo it is to delete the sprint.
 - **Built around a PO's week.** Plan with the team's real velocity and a warning before committing unready stories; tag why scope changed; share the report with stakeholders by link; watch trends across sprints. All rule-based, no AI and no running costs.
@@ -134,7 +134,7 @@ Then open <http://localhost:3000>. The demo at `/demo` works without signing in.
 4. Put its client ID and secret into `ATLASSIAN_CLIENT_ID` and `ATLASSIAN_CLIENT_SECRET` in `.env`.
 5. To let people outside your own Atlassian account connect, turn on **Distribution → Sharing** in the console. It asks for a vendor name, a privacy policy URL (`/privacy`), and whether the app stores personal data: yes, Atlassian account IDs, reported through the personal data reporting API.
 
-Atlassian requires apps that store account IDs to report them weekly. Vercel Cron calls `/api/cron/atlassian-accounts` daily (`vercel.json`); each ID is reported when its cycle is up, and a connection is deleted when Atlassian says its account was closed. On Vercel, set `CRON_SECRET` (any long random string): the route refuses every call without it, and Vercel Cron sends it.
+Atlassian requires apps that store account IDs to report them weekly. Vercel Cron calls `/api/cron/atlassian-accounts` daily (`vercel.json`); each ID is reported when its cycle is up, and a connection is deleted when Atlassian says its account was closed. A second cron, `/api/cron/jira-sync`, syncs each night the projects that have a sprint following the backlog. On Vercel, set `CRON_SECRET` (any long random string): both routes refuse every call without it, and Vercel Cron sends it.
 
 Without these, the Jira parts of the app don't appear. End-to-end tests use a pretend Jira (`JIRA_FAKE`), so they never need a real one.
 

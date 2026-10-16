@@ -11,6 +11,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:db": "vitest run --config vitest.db.config.mts",
     "test:e2e": "playwright test",
     "db:up": "docker compose up -d",
     "db:migrate": "prisma migrate dev",
@@ -54,6 +55,6 @@
   },
   "packageManager": "pnpm@10.34.5",
   "engines": {
-    "node": ">=24"
+    "node": "24.x"
   }
 }

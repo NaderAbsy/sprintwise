@@ -18,6 +18,7 @@ import {
   type ImportField,
 } from "@/lib/csv/template";
 import { emptyFormState } from "@/lib/form-state";
+import { wantedByDefault } from "@/lib/csv/import";
 import { readySummary, scoreStory, type RuleSettings } from "@/lib/readiness/rules";
 import { isDone } from "@/lib/sprint/metrics";
 import { isEpic, isSubtask } from "@/lib/stories/types";
@@ -117,12 +118,7 @@ export function ImportForm({
   if (table?.ok && text !== null && tickedFor !== text) {
     setTickedFor(text);
     const ready = table.rows.filter(
-      (r) =>
-        r.errors.length === 0 &&
-        !isDone(r.story.status, doneStatuses) &&
-        !isEpic(r.story.issueType) &&
-        !isSubtask(r.story.issueType) &&
-        !edited.has(r.story.key),
+      (r) => r.errors.length === 0 && wantedByDefault(r.story, doneStatuses) && !edited.has(r.story.key),
     );
     setTicked(ready.length <= IMPORT_MAX_STORIES ? new Set(ready.map((r) => r.row)) : new Set());
   }
@@ -276,6 +272,8 @@ export function ImportForm({
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
+                // Enter here would submit the form, importing everything ticked; a search box only filters.
+                onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
                 placeholder="Key or title"
                 className="field mt-1"
               />

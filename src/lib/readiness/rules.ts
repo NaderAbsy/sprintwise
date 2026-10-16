@@ -1,8 +1,8 @@
 import { secondLook } from "@/lib/readiness/second-look";
-import { criteriaOf, type Story } from "@/lib/stories/types";
+import { criteriaOf, withoutCriteriaSection, type Story } from "@/lib/stories/types";
 
 /** Bump whenever a rule, weight or default changes, so old scores stay explainable. */
-export const RULES_VERSION = 6;
+export const RULES_VERSION = 7;
 
 export const DEFAULT_MAX_POINTS = 8;
 
@@ -146,8 +146,8 @@ function bandCapFor(rules: RuleResult[]): string | undefined {
  */
 export function capNote(score: number, band: string, failedIds: (string | undefined)[]): string | null {
   if (bandFor(score) !== "Ready" || band === "Ready") return null;
-  if (failedIds.includes("C7")) return "Too big";
   if (failedIds.includes("C6")) return "Not estimated";
+  if (failedIds.includes("C7")) return "Too big";
   if (failedIds.includes("custom")) return "Team check";
   return "Needs a re-read";
 }
@@ -230,9 +230,11 @@ export function isUserStoryType(issueType = ""): boolean {
 
 export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTINGS): Readiness {
   const userStory = isUserStoryType(story.issueType);
-  const storyText = `${story.title}\n${story.description}`;
   // Rules v5: criteria written under an "Acceptance criteria" heading in the description count too.
-  const criteria = criteriaOf(story).lines;
+  const { lines: criteria, fromDescription } = criteriaOf(story);
+  // Rules v7: and then they're criteria only, not story text: a vague word there fails C3, not C5 as well.
+  const description = fromDescription ? withoutCriteriaSection(story.description) : story.description;
+  const storyText = `${story.title}\n${description}`;
   const criteriaText = criteria.join("\n");
 
   const hasCriteria = criteria.length > 0;
@@ -263,7 +265,7 @@ export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTIN
   const andAlso = countPhrase(storyText, "and also") > 0;
   const singleStory = iWantCount <= 1 && !andAlso;
 
-  const descriptionLength = story.description.trim().length;
+  const descriptionLength = description.trim().length;
 
   // A rule that fails only because another did is covered by it: one missing thing, one reason.
   const outcomes: Record<RuleId, { passed: boolean; reason: string; coveredBy?: RuleId }> = {
@@ -338,12 +340,13 @@ export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTIN
   const score = rules.reduce((sum, r) => sum + r.earned, 0);
   // Rules v4: text left over from an AI chat, or a placeholder nobody filled in, means nobody read it through.
   const unread = secondLook(story).find((l) => l.kind === "leftover" || l.kind === "placeholder");
+  // In the order capNote names them in lists, so a list and the story page give the same reason.
   const cap =
     bandCapFor(rules) ??
+    (failedCustom.length > 0 ? `Can't be Ready until it passes your team's checks: ${failedCustom.join(", ")}.` : undefined) ??
     (unread
       ? `Can't be Ready while it has ${unread.kind === "leftover" ? "text left over from an AI chat" : "an unfilled placeholder"}. See "Worth a second look".`
-      : undefined) ??
-    (failedCustom.length > 0 ? `Can't be Ready until it passes your team's checks: ${failedCustom.join(", ")}.` : undefined);
+      : undefined);
   const scoreBand = bandFor(score);
   const typeNote = userStory
     ? undefined

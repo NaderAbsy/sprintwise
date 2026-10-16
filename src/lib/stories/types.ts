@@ -24,10 +24,14 @@ export function normalizeKey(key: string): string {
  * leading "-", "*", "•" or "1." / "1)" stripped and blank lines dropped.
  */
 export function splitCriteria(cell: string): string[] {
-  return cell
-    .split(/\r?\n/)
-    .map((line) => line.replace(/^\s*(?:[-*•#]+(?=\s)|\d+[.)])\s*/, "").trim())
-    .filter((line) => line.length > 0);
+  return (
+    cell
+      .split(/\r?\n/)
+      // A list number needs a space after it, so "2.5 MB is the limit" keeps its "2.".
+      .map((line) => line.replace(/^\s*(?:[-*•#]+|\d+[.)])(?=\s|$)\s*/, "").trim())
+      // An empty bullet ("-", "* ", a "----" rule) isn't a criterion.
+      .filter((line) => /[\p{L}\p{N}]/u.test(line))
+  );
 }
 
 /**
@@ -38,7 +42,7 @@ export function splitCriteria(cell: string): string[] {
  * matched with one big pattern: that pattern, with optional spaces between each
  * part, took minutes on a line of spaces.
  */
-function isCriteriaHeading(line: string): boolean {
+export function isCriteriaHeading(line: string): boolean {
   if (line.length > 200) return false;
   const words = line
     .trim()
@@ -80,6 +84,13 @@ function criteriaSection(lines: string[]): { start: number; end: number } | null
   return { start, end };
 }
 
+/** The description without its "Acceptance criteria" section (heading included), for rules about the story itself. */
+export function withoutCriteriaSection(description: string): string {
+  const lines = description.split(/\r?\n/);
+  const section = criteriaSection(lines);
+  return section ? [...lines.slice(0, section.start), ...lines.slice(section.end)].join("\n") : description;
+}
+
 /** The text under a description's "Acceptance criteria" heading, up to where the section ends; "" if there's none. */
 export function criteriaFromDescription(description: string): string {
   const lines = description.split(/\r?\n/);
@@ -111,8 +122,9 @@ export function parsePoints(raw: string | number | null | undefined): {
   // "1,5" is how much of Europe writes 1.5, and the only decimal key on many phones there.
   const text = String(raw).trim().replace(/^(\d+),(\d+)$/, "$1.$2");
   if (text === "") return { points: null, valid: true };
+  // Digits with one optional decimal point: Number() would also take "0x10", "1e3" and "Infinity".
+  if (!/^\d+(?:\.\d+)?$/.test(text)) return { points: null, valid: false };
   const value = Number(text);
-  if (!Number.isFinite(value) || value < 0) return { points: null, valid: false };
   return { points: value, valid: true };
 }
 

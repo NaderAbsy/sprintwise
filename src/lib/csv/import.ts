@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { storyProblems } from "@/lib/csv/parse";
 import { IMPORT_FIELDS, IMPORT_MAX_STORIES, type ColumnMapping } from "@/lib/csv/template";
-import { normalizeKey, type Story } from "@/lib/stories/types";
+import { isDone } from "@/lib/sprint/metrics";
+import { isEpic, isSubtask, normalizeKey, type Story } from "@/lib/stories/types";
 
 export type ImportStory = Story & { epic: string };
 
@@ -109,4 +110,13 @@ export function readLeftOut(json: unknown): string[] {
   if (!Array.isArray(raw)) return [];
   const keys = raw.filter((k): k is string => typeof k === "string" && k.length <= 60).map(normalizeKey).filter(Boolean);
   return [...new Set(keys)].slice(0, 2000);
+}
+
+/**
+ * Whether a story from a file or Jira starts ticked for import, and whether Sync
+ * adds it when it's new: not finished, and not an epic or a sub-task, which
+ * aren't planned on their own. One rule for both, so they can't drift apart.
+ */
+export function wantedByDefault(story: Pick<Story, "status" | "issueType">, doneStatuses: string[]): boolean {
+  return !isDone(story.status, doneStatuses) && !isEpic(story.issueType) && !isSubtask(story.issueType);
 }

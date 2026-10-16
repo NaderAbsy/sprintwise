@@ -43,11 +43,11 @@ test("a story held below Ready says why in the backlog, and points accept a deci
   await expect(page).toHaveTitle(/^STORY-1 · Story/);
   await page.goto(project);
   const row = page.getByRole("row", { name: /Rebook my last cleaner/ });
-  await expect(row.getByText("Too big")).toBeVisible();
+  await expect(row.getByText("Too big", { exact: true })).toBeVisible();
 
   await row.getByLabel("Points for STORY-1").fill("1,5");
   await row.getByLabel("Points for STORY-1").press("Enter");
-  await expect(row.getByText("Too big")).toHaveCount(0);
+  await expect(row.getByText("Too big", { exact: true })).toHaveCount(0);
   await page.reload();
   await expect(page.getByRole("row", { name: /Rebook my last cleaner/ }).getByLabel("Points for STORY-1")).toHaveValue("1.5");
 });

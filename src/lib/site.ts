@@ -24,6 +24,27 @@ export type Release = {
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.23",
+    date: "2026-10-16",
+    title: "Fairer scores, steadier screens",
+    summary: "The second half of the full code review: scoring mistakes, screens that lost your place, and upkeep.",
+    items: [
+      "A lone dash no longer counts as an acceptance criterion, and \"2.5 MB is the limit\" keeps its 2.",
+      "Criteria in the description score the same as in the criteria field: a vague word there no longer costs points twice.",
+      "A bold or \"##\" Acceptance criteria heading isn't mistaken for text left over from an AI chat.",
+      "Pressing Enter in the import search box filters the list instead of importing everything ticked; in the Jira search box it runs the preview.",
+      "Unsaved story edits survive the browser's Back button: open the story again and Sprintwise offers them back.",
+      "Refinement stays on the story you're estimating after the first estimate.",
+      "The change log's Why tags stay on their own rows when new changes arrive.",
+      "Keyboard focus stays where it was after a quick status or points save.",
+      "Delete, share-link and nightly-sync buttons say when they couldn't save, instead of showing an error page.",
+      "On phones, the band is written under each story's title, not shown by colour alone.",
+      "The sprint day count uses your own date from the moment the page opens.",
+      "Trends no longer claim that more Ready stories meant more done when the sprints started equally Ready.",
+      "Imports read story points from the column that has them, warn about a row with an unquoted comma, and reject values like 1e3.",
+    ],
+  },
+  {
     version: "v2.22",
     date: "2026-10-16",
     title: "Your text is safe with Jira",

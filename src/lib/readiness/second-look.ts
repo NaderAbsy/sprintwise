@@ -1,5 +1,5 @@
 import { hasPlaceholders } from "@/lib/stories/helpers";
-import { criteriaOf, type Story } from "@/lib/stories/types";
+import { criteriaOf, isCriteriaHeading, type Story } from "@/lib/stories/types";
 import { cutText } from "@/lib/text";
 
 /**
@@ -105,8 +105,13 @@ export function secondLook(story: Pick<Story, "title" | "description" | "accepta
   const story_ = `${story.title}\n${story.description}`;
   const out: SecondLook[] = [];
 
-  for (const find of [...LEFTOVERS.map((pattern) => (text: string) => pattern.exec(text)), markdownHeading]) {
-    const m = find(all);
+  // An "Acceptance criteria" heading, in Markdown bold or as "##", is how many teams mark the criteria, not a leftover.
+  const text = all
+    .split("\n")
+    .filter((line) => !isCriteriaHeading(line))
+    .join("\n");
+  for (const find of [...LEFTOVERS.map((pattern) => (t: string) => pattern.exec(t)), markdownHeading]) {
+    const m = find(text);
     if (m) {
       out.push({
         kind: "leftover",

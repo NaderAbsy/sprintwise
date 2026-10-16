@@ -8,9 +8,9 @@ import { issuesAsCsv, JIRA_TITLE_MAX, JiraBusyError, JiraError, jiraSites, jiraW
 import { FIELD_NAMES, JIRA_FIELDS, readBase, sameField, type JiraField } from "@/lib/stories/jira-merge";
 import { toStory } from "@/lib/server/readiness";
 import { overLimit } from "@/lib/server/action-limits";
+import { JQL_MAX } from "@/lib/limits";
 import { jiraFailure, otherSite, syncProjectFromJira } from "@/lib/server/jira-sync";
 
-const JQL_MAX = 2000;
 const SEND_MAX = 50;
 const SEND_BUDGET_MS = 40_000;
 

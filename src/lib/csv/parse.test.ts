@@ -224,3 +224,19 @@ describe("readImportPayload (what the browser sends)", () => {
     expect(readImportPayload("not json", "")).toEqual({ ok: false, error: "Choose a CSV file and tick the stories to import." });
   });
 });
+
+describe("Jira export quirks (v2.23)", () => {
+  it("reads points from the points column that has values", () => {
+    const csv = ["Issue key,Summary,Story Points,Story point estimate", "A-1,One,,5", "A-2,Two,,3"].join("\n");
+    const table = readCsvTable(csv, { maxBytes: 1e6, maxRows: 10 });
+    expect(table.ok && table.rows.map((r) => r.story.storyPoints)).toEqual([5, 3]);
+  });
+  it("warns about a row with more cells than columns", () => {
+    const table = readCsvTable(["key,title,story_points", "A-1,One,1,5"].join("\n"), { maxBytes: 1e6, maxRows: 10 });
+    expect(table.ok && table.rows[0].warnings.join(" ")).toMatch(/more cells than the file has columns/);
+  });
+  it("re-imports an exported cell that starts with a tab without the guard apostrophe", () => {
+    const table = readCsvTable(['key,title,description', 'A-1,One,"\'\tindented"'].join("\n"), { maxBytes: 1e6, maxRows: 10 });
+    expect(table.ok && table.rows[0].story.description).toBe("\tindented");
+  });
+});

@@ -39,6 +39,21 @@ export function JiraSource({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
+  // Enter in the search box runs the preview here; in the import form it would import the old preview instead.
+  const preview = () => {
+    setError(null);
+    startTransition(async () => {
+      const result = await attempt(() => previewFromJira(projectId, cloudId, jql));
+      if ("error" in result) setError(result.error);
+      else
+        onLoaded(
+          result.csv,
+          `${result.count} ${result.count === 1 ? "issue" : "issues"} from Jira${result.truncated ? " (the first 1,000; narrow the search for the rest)" : ""}.`,
+          { searchedAt: result.searchedAt, cloudId: result.cloudId, jql: result.jql },
+        );
+    });
+  };
+
   if (!jira.connected) {
     return (
       <div className="card flex flex-wrap items-center gap-4 p-5">
@@ -94,6 +109,11 @@ export function JiraSource({
                 id={`${id}-jql`}
                 value={jql}
                 onChange={(e) => setJql(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter") return;
+                  e.preventDefault();
+                  if (!pending && cloudId) preview();
+                }}
                 className="field mt-1 font-mono text-xs"
                 aria-describedby={`${id}-jql-hint`}
                 spellCheck={false}
@@ -108,19 +128,7 @@ export function JiraSource({
             type="button"
             className="btn-primary"
             disabled={pending || !cloudId}
-            onClick={() => {
-              setError(null);
-              startTransition(async () => {
-                const result = await attempt(() => previewFromJira(projectId, cloudId, jql));
-                if ("error" in result) setError(result.error);
-                else
-                  onLoaded(
-                    result.csv,
-                    `${result.count} ${result.count === 1 ? "issue" : "issues"} from Jira${result.truncated ? " (the first 1,000; narrow the search for the rest)" : ""}.`,
-                    { searchedAt: result.searchedAt, cloudId: result.cloudId, jql: result.jql },
-                  );
-              });
-            }}
+            onClick={preview}
           >
             {pending ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> : <Search aria-hidden="true" className="h-4 w-4" />}
             {pending ? "Reading Jira…" : "Preview issues"}

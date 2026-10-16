@@ -40,6 +40,9 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm prisma migrate deploy
+      # The migrations must build exactly the schema the code expects.
+      - run: pnpm prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
+      - run: pnpm test:db
       # The browser is kept between runs. A download that hangs (it once stalled a run for 19 minutes)
       # times out after 4 minutes and is tried once more, instead of waiting for the job's limit.
       - id: playwright

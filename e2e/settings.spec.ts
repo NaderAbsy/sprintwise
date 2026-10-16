@@ -36,7 +36,7 @@ test("changing the rule settings re-scores the backlog", async ({ page }) => {
   await page.getByRole("navigation", { name: "Project sections" }).getByRole("link", { name: "Backlog" }).click();
   const row = page.getByRole("row", { name: /Quick invoice export/ });
   await expect(row.getByText("90 out of 100")).toBeVisible();
-  await expect(row.getByText("Needs work")).toBeVisible();
+  await expect(row.getByText("Needs work", { exact: true })).toBeVisible();
 
   // Reset brings the defaults back.
   await page.getByRole("navigation", { name: "Project sections" }).getByRole("link", { name: "Settings" }).click();
