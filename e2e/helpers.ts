@@ -17,6 +17,9 @@ export async function signIn(page: Page) {
 export async function expectAccessible(page: Page) {
   // Scroll reveals start transparent; reduced motion shows everything at once, so contrast is measured as seen.
   await page.emulateMedia({ reducedMotion: "reduce" });
+  // After a client-side navigation (a save that redirects) Next streams the page's title in after its content:
+  // check the page once it's there, as a reader would get it, not in the moment between.
+  await expect(page).toHaveTitle(/\S/);
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
   const serious = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
   expect(serious.map((v) => `${v.id}: ${v.help} (${v.nodes.length})`)).toEqual([]);
