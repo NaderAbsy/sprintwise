@@ -90,6 +90,7 @@ test("invisible characters in a key are dropped, and a long link doesn't widen a
 test("search engines and link previews get the right basics", async ({ page, request }) => {
   await page.goto("/");
   await expect(page).toHaveTitle("Sprintwise: know your stories are ready before the sprint starts");
+  await expect(page.getByRole("contentinfo").getByRole("link", { name: "Nader Absy" })).toHaveAttribute("href", "https://naderabsy.com");
   await page.goto("/demo");
   await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", /invented backlog/);
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /opengraph-image/);
