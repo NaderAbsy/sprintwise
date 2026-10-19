@@ -24,6 +24,16 @@ export type Release = {
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.24",
+    date: "2026-10-19",
+    title: "A new license for the code",
+    summary: "The code stays public to read, but may no longer be used commercially without permission.",
+    items: [
+      "The code is now under the PolyForm Noncommercial license instead of MIT: anyone can read it, learn from it and run it for themselves, but not sell it or use it in a business.",
+      "Using Sprintwise itself doesn't change: it's still free for everyone.",
+    ],
+  },
+  {
     version: "v2.23",
     date: "2026-10-16",
     title: "Fairer scores, steadier screens",

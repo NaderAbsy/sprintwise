@@ -187,4 +187,4 @@ Report security problems privately through [GitHub's vulnerability reporting](ht
 
 ## License
 
-[MIT](LICENSE). Free to use, change and share, with the copyright notice kept.
+[PolyForm Noncommercial 1.0.0](LICENSE). You may read, run and change the code for any noncommercial purpose, such as learning or personal use. Using it in a product or service you sell, or inside a business, needs permission. Copies taken before 19 October 2026 stay under the MIT license they came with.

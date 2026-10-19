@@ -76,7 +76,7 @@ export default function TermsPage() {
           <a href={GITHUB_URL} className={link}>
             GitHub
           </a>{" "}
-          under the MIT license, which covers copying and reusing the code. These terms cover using this site.
+          under the PolyForm Noncommercial license, which allows reading and noncommercial use of the code; commercial use needs permission. These terms cover using this site.
         </p>
       </section>
 

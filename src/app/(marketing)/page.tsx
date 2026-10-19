@@ -75,7 +75,7 @@ const FAQ = [
   },
   {
     q: "Is it free and open source?",
-    a: "Yes. Sprintwise is free to use, and the full code, tests and product decisions are on GitHub under the MIT license.",
+    a: "Yes. Sprintwise is free to use, and the full code, tests and product decisions are on GitHub to read. The code's license allows noncommercial use only.",
   },
 ];
 
