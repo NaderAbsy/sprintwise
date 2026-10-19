@@ -4,7 +4,7 @@ import { Logo } from "@/components/logo";
 import { MarketingNav } from "@/components/shell/marketing-nav";
 import { ThemeToggle } from "@/components/theme";
 import { getSession } from "@/lib/server/dal";
-import { FEEDBACK_URL, GITHUB_URL, MARKETING_LINKS } from "@/lib/site";
+import { FEEDBACK_URL, AUTHOR, GITHUB_URL, MARKETING_LINKS } from "@/lib/site";
 
 /** Public pages: a sticky top bar with the site's tabs, the page, and a footer with every link. */
 export async function MarketingShell({ children }: { children: React.ReactNode }) {
@@ -52,6 +52,12 @@ export async function MarketingShell({ children }: { children: React.ReactNode }
             <p className="max-w-xs text-muted">
               Checks that stories are ready before a sprint, then measures how much the sprint changes. Free to use;
               all sample data is invented.
+            </p>
+            <p className="text-muted">
+              Made by{" "}
+              <a href={AUTHOR.url} className="underline underline-offset-2 hover:text-foreground">
+                {AUTHOR.name}
+              </a>
             </p>
           </div>
           <div>

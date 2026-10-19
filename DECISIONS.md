@@ -2,6 +2,14 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-19 — v2.24: the code's license changes from MIT to PolyForm Noncommercial
+
+The user asked whether the public code could be taken. Under MIT, anyone may copy, change and sell it. Options: make the repository private (stops access, but recruiters can't read the code, and GitHub's free CodeQL scanning and secret scanning are paid for private repositories); change the license and stay public; or both. Chosen: PolyForm Noncommercial 1.0.0 (text from SPDX), so the code stays readable and GitHub's free security checks keep running, while use in a product or business needs permission. Copies taken before the change keep MIT; GitHub showed 0 forks. The product itself stays free to use. Not legal advice: if Sprintwise earns money, a lawyer should check the license and a trademark on the name.
+
+Also: the public footer now says "Made by Nader Absy", linking to naderabsy.com. This reverses the 2026-10-10 choice of no name. The user's name was already public (license, GitHub, the Atlassian app's vendor field), and a named person makes a tool that connects to a company's Jira easier to trust. No email or phone: feedback stays on the GitHub form.
+
+Also: so a Google search for "Sprintwise" finds the site (on 2026-10-19 it wasn't indexed; nothing well known shares the name), the home page carries schema.org JSON-LD (WebSite, SoftwareApplication with a free offer and the author, FAQPage), and the layout can carry Google Search Console's ownership meta tag (`GOOGLE_SITE_VERIFICATION` in site.ts, filled once the user creates the property). Title, canonical, sitemap and robots were already in place (v2.20).
+
 ## 2026-10-16 — v2.23: screens, scoring and upkeep, from the code review
 
 The second half of the review (see v2.22).
