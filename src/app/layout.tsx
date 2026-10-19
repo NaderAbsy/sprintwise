@@ -1,3 +1,4 @@
+import { GOOGLE_SITE_VERIFICATION } from "@/lib/site";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SiteAnalytics } from "@/components/site-analytics";
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
   description: "Sprintwise checks your stories are ready before the sprint starts, then measures how much the sprint changes.",
   openGraph: { siteName: "Sprintwise", type: "website" },
   twitter: { card: "summary_large_image" },
+  ...(GOOGLE_SITE_VERIFICATION ? { verification: { google: GOOGLE_SITE_VERIFICATION } } : {}),
 };
 
 export const viewport: Viewport = {

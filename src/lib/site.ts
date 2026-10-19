@@ -1,5 +1,12 @@
 /** Facts the public pages share, kept in one place so they stay consistent. */
 export const GITHUB_URL = "https://github.com/NaderAbsy/sprintwise";
+/** The live site's address (previews and local builds use their own, from BETTER_AUTH_URL). */
+export const SITE_URL = (process.env.BETTER_AUTH_URL ?? "https://sprintwise-omega.vercel.app").replace(/\/$/, "");
+/**
+ * Google Search Console's ownership code for the live site (the content of its "HTML tag" meta). It isn't a
+ * secret: it's published on every page. Empty until Search Console gives one.
+ */
+export const GOOGLE_SITE_VERIFICATION = "";
 /** Who made Sprintwise: the footer links here. */
 export const AUTHOR = { name: "Nader Absy", url: "https://naderabsy.com" };
 /** A GitHub issue form for ideas and problems. Issues are public, so the form asks for no work data. */
@@ -34,6 +41,7 @@ export const RELEASES: Release[] = [
       "The code is now under the PolyForm Noncommercial license instead of MIT: anyone can read it, learn from it and run it for themselves, but not sell it or use it in a business.",
       "Using Sprintwise itself doesn't change: it's still free for everyone.",
       "The footer says who made Sprintwise.",
+      "Search engines get a clear description of Sprintwise (its name, what it does, that it's free), so a search for it can find the site.",
     ],
   },
   {

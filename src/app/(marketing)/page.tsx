@@ -17,7 +17,8 @@ import { secondLook } from "@/lib/readiness/second-look";
 import { computeMetrics, formatPercent } from "@/lib/sprint/metrics";
 import { compareReadiness, readinessFinding } from "@/lib/sprint/report";
 import { getSession } from "@/lib/server/dal";
-import { GITHUB_URL, RELEASES } from "@/lib/site";
+import { AUTHOR, GITHUB_URL, RELEASES, SITE_URL } from "@/lib/site";
+import { JsonLd } from "@/components/json-ld";
 import { pageMeta } from "@/lib/page-meta";
 
 export const metadata = pageMeta(
@@ -229,6 +230,30 @@ export default async function Home() {
 
   return (
     <>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@graph": [
+            { "@type": "WebSite", "@id": `${SITE_URL}/#website`, name: "Sprintwise", url: `${SITE_URL}/` },
+            {
+              "@type": "SoftwareApplication",
+              name: "Sprintwise",
+              url: `${SITE_URL}/`,
+              applicationCategory: "BusinessApplication",
+              operatingSystem: "Web",
+              description:
+                "A free tool for Product Owners: it scores how ready each user story is before sprint planning, imports from Jira, and measures how much a sprint changes against its day-one plan.",
+              offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+              author: { "@type": "Person", name: AUTHOR.name, url: AUTHOR.url },
+              sameAs: [GITHUB_URL],
+            },
+            {
+              "@type": "FAQPage",
+              mainEntity: FAQ.map(({ q, a }) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })),
+            },
+          ],
+        }}
+      />
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">

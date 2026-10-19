@@ -8,6 +8,8 @@ The user asked whether the public code could be taken. Under MIT, anyone may cop
 
 Also: the public footer now says "Made by Nader Absy", linking to naderabsy.com. This reverses the 2026-10-10 choice of no name. The user's name was already public (license, GitHub, the Atlassian app's vendor field), and a named person makes a tool that connects to a company's Jira easier to trust. No email or phone: feedback stays on the GitHub form.
 
+Also: so a Google search for "Sprintwise" finds the site (on 2026-10-19 it wasn't indexed; nothing well known shares the name), the home page carries schema.org JSON-LD (WebSite, SoftwareApplication with a free offer and the author, FAQPage), and the layout can carry Google Search Console's ownership meta tag (`GOOGLE_SITE_VERIFICATION` in site.ts, filled once the user creates the property). Title, canonical, sitemap and robots were already in place (v2.20).
+
 ## 2026-10-16 — v2.23: screens, scoring and upkeep, from the code review
 
 The second half of the review (see v2.22).
