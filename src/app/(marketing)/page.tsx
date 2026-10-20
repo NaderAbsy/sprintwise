@@ -23,8 +23,8 @@ import { pageMeta } from "@/lib/page-meta";
 
 export const metadata = pageMeta(
   "/",
-  "Sprintwise: know your stories are ready before the sprint starts",
-  "Free for Product Owners: nine fixed rules score every story before planning, then Sprintwise measures how much the sprint changed. No AI reads your tickets.",
+  "Sprintwise: user story readiness checker for Product Owners",
+  "Score every story against a clear Definition of Ready before sprint planning, import straight from Jira, and see how much the sprint changed. Free, and no AI reads your tickets.",
   { absolute: true },
 );
 
@@ -75,7 +75,11 @@ const FAQ = [
     a: "The stories are stored and shown in any language, but the rules read English: the \u201cAs a \u2026 I want \u2026 so that \u2026\u201d check and the vague-word list look for English words, so a story written in another language loses those points. Each project can replace the vague words with its own.",
   },
   {
-    q: "Is it free and open source?",
+    q: "What is a Definition of Ready, and how does Sprintwise check it?",
+    a: "A Definition of Ready is the checklist a story passes before the team plans it: who it's for, what they want and why, testable acceptance criteria, an estimate, and a size the team can finish in one sprint. Sprintwise turns that checklist into nine fixed rules and scores each story out of 100, so the gaps show up before planning, not during the sprint.",
+  },
+  {
+    q: "Is it free? Can I see the code?",
     a: "Yes. Sprintwise is free to use, and the full code, tests and product decisions are on GitHub to read. The code's license allows noncommercial use only.",
   },
 ];

@@ -89,9 +89,10 @@ test("invisible characters in a key are dropped, and a long link doesn't widen a
 
 test("search engines and link previews get the right basics", async ({ page, request }) => {
   await page.goto("/");
-  await expect(page).toHaveTitle("Sprintwise: know your stories are ready before the sprint starts");
+  await expect(page).toHaveTitle("Sprintwise: user story readiness checker for Product Owners");
   const structured = JSON.parse((await page.locator('script[type="application/ld+json"]').textContent()) ?? "{}");
   expect(structured["@graph"].map((n: { "@type": string }) => n["@type"])).toEqual(["WebSite", "SoftwareApplication", "FAQPage"]);
+  expect(JSON.stringify(structured)).toContain("Definition of Ready");
   expect(structured["@graph"][1]).toMatchObject({ name: "Sprintwise", offers: { price: "0" } });
   await expect(page.getByRole("contentinfo").getByRole("link", { name: "Nader Absy" })).toHaveAttribute("href", "https://naderabsy.com");
   await page.goto("/demo");
