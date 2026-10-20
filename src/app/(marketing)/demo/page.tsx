@@ -19,7 +19,7 @@ import { pageMeta } from "@/lib/page-meta";
 // The sample sprint is dated from today (src/demo/sprint.ts), so rebuild the page daily.
 export const revalidate = 86400;
 
-export const metadata: Metadata = pageMeta("/demo", "Demo", "Try Sprintwise with an invented backlog and sprint: scores, scope change and a one-page report. No account, nothing saved.");
+export const metadata: Metadata = pageMeta("/demo", "Demo: score a sample backlog", "Try Sprintwise with an invented backlog and sprint: scores, scope change and a one-page report. No account, nothing saved.");
 
 export default function DemoPage() {
   const scored = demoBacklog

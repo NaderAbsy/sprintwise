@@ -2,6 +2,10 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-20 — v2.25: page titles in the words people search for
+
+A Google search for "sprintwise" (2026-10-20) put our site 6th on page one, below sprintwise.ai (an unrelated sprint services company with the exact-match domain) and several social pages; the GitHub repo was 3rd. TMview found no "Sprintwise" trademark in the US, EU, UK or WIPO registers, so the name stays. Being first for the name alone is unlikely, so titles and descriptions now also target what Product Owners search for: "user story readiness checker", "Definition of Ready", "acceptance criteria", "scope creep", "sprint planning". The user approved the list and asked that it not be repetitive, so each phrase appears once per page's title and description and different pages use different phrases. The home headline is unchanged. A new FAQ answer covers the Definition of Ready. "Open source" became "code you can read on GitHub", since PolyForm Noncommercial isn't an open-source license.
+
 ## 2026-10-19 — v2.24: the code's license changes from MIT to PolyForm Noncommercial
 
 The user asked whether the public code could be taken. Under MIT, anyone may copy, change and sell it. Options: make the repository private (stops access, but recruiters can't read the code, and GitHub's free CodeQL scanning and secret scanning are paid for private repositories); change the license and stay public; or both. Chosen: PolyForm Noncommercial 1.0.0 (text from SPDX), so the code stays readable and GitHub's free security checks keep running, while use in a product or business needs permission. Copies taken before the change keep MIT; GitHub showed 0 forks. The product itself stays free to use. Not legal advice: if Sprintwise earns money, a lawyer should check the license and a trademark on the name.
