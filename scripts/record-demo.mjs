@@ -302,7 +302,7 @@ await click(page.getByRole("button", { name: "Share" }));
 const share = page.getByRole("dialog", { name: "Share this backlog" });
 await click(share.getByRole("button", { name: "Create link" }));
 // Filmed on a local build, so show the address the live site would give.
-await share.getByLabel("Link").evaluate((el, live) => (el.value = el.value.replace(location.origin, live)), "https://sprintwise-omega.vercel.app");
+await share.getByLabel("Link").evaluate((el, live) => (el.value = el.value.replace(location.origin, live)), "https://sprintwise.app");
 await say("share");
 await click(share.getByRole("button", { name: "Done" }));
 

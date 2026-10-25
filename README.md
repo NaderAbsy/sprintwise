@@ -7,11 +7,11 @@ Teams often start sprints with vague stories, and mid-sprint scope changes go un
 
 Paste a story, upload a CSV, or connect Jira Cloud to import, sync and send edits back. Light and dark themes. All sample data is invented.
 
-**Live:** <https://sprintwise-omega.vercel.app> · try the [demo](https://sprintwise-omega.vercel.app/demo) without signing in · watch the [3-minute demo video with voice-over](https://sprintwise-omega.vercel.app/#video) on the home page.
+**Live:** <https://sprintwise.app> · try the [demo](https://sprintwise.app/demo) without signing in · watch the [3-minute demo video with voice-over](https://sprintwise.app/#video) on the home page.
 
 ## Status
 
-**Version 2 is live** (see the [changelog](https://sprintwise-omega.vercel.app/changelog)). Version 1's phases, from the requirements doc:
+**Version 2 is live** (see the [changelog](https://sprintwise.app/changelog)). Version 1's phases, from the requirements doc:
 
 | Phase | Stories | State |
 | --- | --- | --- |
@@ -19,7 +19,7 @@ Paste a story, upload a CSV, or connect Jira Cloud to import, sync and send edit
 | 2 · Readiness rules | R-1 paste a story, R-2 CSV import, R-3 sorted backlog, R-6 rule settings | Done, live |
 | 3 · AI layer | R-4 rewrites, R-5 test scenarios | Built and tested, switched off on the live site; moved to v2 (see below) |
 | 4 · Scope tracking | S-1 to S-4, S-6 | Done, live |
-| 5 · Report and polish | S-5, F-2 demo, L-2 accessibility, F-5 privacy | Done: S-5 report, F-2 demo with a sample sprint, F-5 [privacy](https://sprintwise-omega.vercel.app/privacy) and [terms](https://sprintwise-omega.vercel.app/terms) pages, L-2 accessibility (axe and keyboard tests) |
+| 5 · Report and polish | S-5, F-2 demo, L-2 accessibility, F-5 privacy | Done: S-5 report, F-2 demo with a sample sprint, F-5 [privacy](https://sprintwise.app/privacy) and [terms](https://sprintwise.app/terms) pages, L-2 accessibility (axe and keyboard tests) |
 | 6 · Launch | L-1, L-3 | Done: README, screenshots, demo video and usage counts |
 
 ## Screenshots
@@ -165,7 +165,7 @@ CI runs all of these on every push and pull request (`.github/workflows/ci.yml`)
 
 | Document | Contents |
 | --- | --- |
-| [Demo video script](docs/demo-video-script.md) | A timed shot list; `pnpm record-demo --voice` records it from a local build with a voice-over ([MP4](https://sprintwise-omega.vercel.app/media/sprintwise-demo.mp4), [WebM](https://sprintwise-omega.vercel.app/media/sprintwise-demo.webm)) |
+| [Demo video script](docs/demo-video-script.md) | A timed shot list; `pnpm record-demo --voice` records it from a local build with a voice-over ([MP4](https://sprintwise.app/media/sprintwise-demo.mp4), [WebM](https://sprintwise.app/media/sprintwise-demo.webm)) |
 | [DECISIONS.md](DECISIONS.md) | Every decision with its options and reasons |
 
 **Usage counts (L-3):** `pnpm usage` prints anonymous event counts by month: checks run, imports, reports and AI suggestions. Point it at production with `DATABASE_URL="<Neon connection string>" pnpm usage`. The events table holds only an event type and a time: no user ids and no story text.
@@ -176,7 +176,7 @@ CI runs all of these on every push and pull request (`.github/workflows/ci.yml`)
 
 ## Security
 
-Report security problems privately through [GitHub's vulnerability reporting](https://github.com/NaderAbsy/sprintwise/security/advisories/new), not in a public issue. [SECURITY.md](SECURITY.md) covers scope, response times and safe testing. The live site also serves [`/.well-known/security.txt`](https://sprintwise-omega.vercel.app/.well-known/security.txt).
+Report security problems privately through [GitHub's vulnerability reporting](https://github.com/NaderAbsy/sprintwise/security/advisories/new), not in a public issue. [SECURITY.md](SECURITY.md) covers scope, response times and safe testing. The live site also serves [`/.well-known/security.txt`](https://sprintwise.app/.well-known/security.txt).
 
 ## Known limits
 

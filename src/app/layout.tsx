@@ -1,4 +1,4 @@
-import { GOOGLE_SITE_VERIFICATION } from "@/lib/site";
+import { GOOGLE_SITE_VERIFICATION, SITE_URL } from "@/lib/site";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SiteAnalytics } from "@/components/site-analytics";
@@ -11,7 +11,7 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 
 export const metadata: Metadata = {
   // Link previews need absolute image addresses; previews and local builds use their own.
-  metadataBase: new URL(process.env.BETTER_AUTH_URL ?? "https://sprintwise-omega.vercel.app"),
+  metadataBase: new URL(SITE_URL),
   title: { default: "Sprintwise", template: "%s · Sprintwise" },
   description: "Sprintwise checks your stories are ready before the sprint starts, then measures how much the sprint changes.",
   openGraph: { siteName: "Sprintwise", type: "website" },

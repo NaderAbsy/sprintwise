@@ -2,6 +2,10 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-25 — v2.26: the site moves to sprintwise.app
+
+The user bought sprintwise.app at Dynadot ($8 the first year, $14.50 a year after). Options compared: .app or .dev at Dynadot, .net or .app at GoDaddy (cheaper the first year, about twice the price after), and cheap-first-year endings like .live (over $30 a year after). .app says what Sprintwise is and costs least over three years. The bare address is the main one; www redirects to it. The old vercel.app address sends every page to the same path on the new one with a permanent redirect (vercel.json), so shared links and search results keep working. Two paths are left alone: the nightly jobs (`/api/cron/*`), since Vercel Cron may call the old address and doesn't follow redirects, and the Search Console ownership file, which keeps the old property verified for Google's change-of-address tool. Sessions don't move between addresses, so people sign in once more. The demo video still says the old address; it redirects, so re-recording is optional.
+
 ## 2026-10-20 — v2.25: page titles in the words people search for
 
 A Google search for "sprintwise" (2026-10-20) put our site 6th on page one, below sprintwise.ai (an unrelated sprint services company with the exact-match domain) and several social pages; the GitHub repo was 3rd. TMview found no "Sprintwise" trademark in the US, EU, UK or WIPO registers, so the name stays. Being first for the name alone is unlikely, so titles and descriptions now also target what Product Owners search for: "user story readiness checker", "Definition of Ready", "acceptance criteria", "scope creep", "sprint planning". The user approved the list and asked that it not be repetitive, so each phrase appears once per page's title and description and different pages use different phrases. The home headline is unchanged. A new FAQ answer covers the Definition of Ready. "Open source" became "code you can read on GitHub", since PolyForm Noncommercial isn't an open-source license.
