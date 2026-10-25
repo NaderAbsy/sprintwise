@@ -2,6 +2,10 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-10-25 — v2.27: security updates
+
+GitHub showed six Dependabot alerts, all for Vite (a dev-server library Vitest pulls in, never run in production). `pnpm audit` found more that GitHub hadn't flagged yet: two critical Next.js advisories (remote code execution through the Image Optimization API and through `use cache`) and a denial-of-service one, fixed in 16.4.1, plus a Zod memory-exhaustion advisory (fixed in 4.6.6) and four for the Prisma CLI's fast-uri. Sprintwise uses neither `next/image` nor `use cache`, but Next serves the image endpoint on every site, so the upgrade was treated as urgent. Next and eslint-config-next go to 16.4.3, Zod to 4.6.7, fast-uri gets an override like the other Prisma CLI fixes. Vite is now a direct dev dependency (^8.3.5): Vitest takes it as a peer, and pnpm overrides don't reach auto-installed peers. Audit clean; all unit, database and end-to-end tests pass. Lesson: run `pnpm audit` alongside reading Dependabot, which can lag.
+
 ## 2026-10-25 — v2.26: the site moves to sprintwise.app
 
 The user bought sprintwise.app at Dynadot ($8 the first year, $14.50 a year after). Options compared: .app or .dev at Dynadot, .net or .app at GoDaddy (cheaper the first year, about twice the price after), and cheap-first-year endings like .live (over $30 a year after). .app says what Sprintwise is and costs least over three years. The bare address is the main one; www redirects to it. The old vercel.app address sends every page to the same path on the new one with a permanent redirect (vercel.json), so shared links and search results keep working. Two paths are left alone: the nightly jobs (`/api/cron/*`), since Vercel Cron may call the old address and doesn't follow redirects, and the Search Console ownership file, which keeps the old property verified for Google's change-of-address tool. Sessions don't move between addresses, so people sign in once more. The demo video still says the old address; it redirects, so re-recording is optional.
