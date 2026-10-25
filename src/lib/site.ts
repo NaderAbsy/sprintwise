@@ -33,6 +33,17 @@ export type Release = {
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.27",
+    date: "2026-10-25",
+    title: "Security updates",
+    summary: "Updated the framework Sprintwise runs on, after two critical security fixes were published for it.",
+    items: [
+      "Next.js 16.4.3 closes two critical problems that could let an attacker run code on a server, and one that could slow a site down.",
+      "Zod, which checks everything you submit, is updated so very large submissions can't exhaust the server's memory.",
+      "Tools used only for testing and development are updated too. Nothing changes in how Sprintwise works.",
+    ],
+  },
+  {
     version: "v2.26",
     date: "2026-10-25",
     title: "A new address: sprintwise.app",
