@@ -20,7 +20,7 @@ Only the maintainer can see the report. You'll get a private thread for the foll
 
 ## Supported versions
 
-Only the latest version is supported: the `main` branch and the live site at https://sprintwise-omega.vercel.app. Fixes aren't backported to older releases.
+Only the latest version is supported: the `main` branch and the live site at https://sprintwise.app. Fixes aren't backported to older releases.
 
 ## In scope
 

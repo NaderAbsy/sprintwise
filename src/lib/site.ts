@@ -1,7 +1,7 @@
 /** Facts the public pages share, kept in one place so they stay consistent. */
 export const GITHUB_URL = "https://github.com/NaderAbsy/sprintwise";
 /** The live site's address (previews and local builds use their own, from BETTER_AUTH_URL). */
-export const SITE_URL = (process.env.BETTER_AUTH_URL ?? "https://sprintwise-omega.vercel.app").replace(/\/$/, "");
+export const SITE_URL = (process.env.BETTER_AUTH_URL ?? "https://sprintwise.app").replace(/\/$/, "");
 /**
  * Google Search Console's ownership code for the live site (the content of its "HTML tag" meta). It isn't a
  * secret: it's published on every page. Empty until Search Console gives one.
@@ -32,6 +32,16 @@ export type Release = {
 
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
+  {
+    version: "v2.26",
+    date: "2026-10-25",
+    title: "A new address: sprintwise.app",
+    summary: "Sprintwise now lives at sprintwise.app. The old address still works and takes you there.",
+    items: [
+      "Every page, share link and bookmark on sprintwise-omega.vercel.app now opens the same page on sprintwise.app.",
+      "You'll need to sign in once more on the new address; your projects and Jira connection are unchanged.",
+    ],
+  },
   {
     version: "v2.25",
     date: "2026-10-20",

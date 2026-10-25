@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { redactUrl } from "@/lib/analytics";
 
-const site = "https://sprintwise-omega.vercel.app";
+const site = "https://sprintwise.app";
 
 describe("redactUrl", () => {
   it.each([
