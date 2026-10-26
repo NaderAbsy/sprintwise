@@ -3,11 +3,16 @@ import { SprintReport } from "@/components/sprint-report";
 import { DEMO_PROJECT_NAME } from "@/demo/backlog";
 import { demoLog, demoSprint } from "@/demo/sprint";
 import { DEFAULT_SETTINGS } from "@/lib/readiness/rules";
+import { pageMeta } from "@/lib/page-meta";
 
 // The sample sprint is dated from today (src/demo/sprint.ts), so rebuild the page daily.
 export const revalidate = 86400;
 
-export const metadata: Metadata = { title: "Sample sprint report" };
+export const metadata: Metadata = pageMeta(
+  "/demo/report",
+  "Sample sprint report",
+  "The one-page sprint report Sprintwise prints for a retrospective: scope added and removed, churn, completion and readiness, from an invented sample sprint.",
+);
 
 export default function DemoReportPage() {
   const snapshots = demoSprint.snapshots;

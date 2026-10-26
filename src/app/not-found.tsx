@@ -1,5 +1,6 @@
 import { SearchX } from "lucide-react";
 import Link from "next/link";
+import { SignedInOnly } from "@/components/auth-buttons";
 import { Logo } from "@/components/logo";
 
 export default function NotFound() {
@@ -13,13 +14,18 @@ export default function NotFound() {
           <SearchX aria-hidden="true" className="h-6 w-6" />
         </span>
         <h1 className="mt-4 text-2xl font-semibold tracking-tight">Page not found</h1>
-        <p className="mt-2 text-muted">It may have been deleted, or it belongs to someone else.</p>
-        <div className="mt-6 flex justify-center gap-3">
-          <Link href="/projects" className="btn-primary">
-            Your projects
-          </Link>
+        <p className="mt-2 text-muted">Check the address for a typo. If it was a project or story, it may have been deleted.</p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <SignedInOnly>
+            <Link href="/projects" className="btn-primary">
+              Your projects
+            </Link>
+          </SignedInOnly>
           <Link href="/" className="btn-secondary">
             Home
+          </Link>
+          <Link href="/demo" className="btn-secondary">
+            Try the demo
           </Link>
         </div>
       </div>

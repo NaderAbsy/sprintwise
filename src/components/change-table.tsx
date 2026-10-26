@@ -54,7 +54,7 @@ export function ChangeTable({
   const narrow = typeof reasons === "function" ? "hidden sm:table-cell" : "";
   return (
     // Focusable, so keyboard users can scroll it sideways on narrow screens.
-    <div className="card overflow-x-auto" tabIndex={0} role="region" aria-label={caption}>
+    <div className="card scroll-shadow overflow-x-auto" tabIndex={0} role="region" aria-label={caption}>
       <table className="data-table">
         <caption className="sr-only">{caption}</caption>
         <thead>

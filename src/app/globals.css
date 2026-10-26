@@ -203,6 +203,19 @@ select:not([multiple]) {
   @apply text-xs font-medium tracking-wide text-subtle uppercase;
 }
 
+/* A shadow at the edge of a sideways-scrolling box while there's more to see, so phones know to swipe. */
+@utility scroll-shadow {
+  background-image:
+    linear-gradient(to right, var(--surface) 30%, transparent),
+    linear-gradient(to left, var(--surface) 30%, transparent),
+    radial-gradient(farthest-side at 0 50%, color-mix(in srgb, var(--foreground) 22%, transparent), transparent),
+    radial-gradient(farthest-side at 100% 50%, color-mix(in srgb, var(--foreground) 22%, transparent), transparent);
+  background-position: left center, right center, left center, right center;
+  background-size: 2.5rem 100%, 2.5rem 100%, 0.75rem 100%, 0.75rem 100%;
+  background-repeat: no-repeat;
+  background-attachment: local, local, scroll, scroll;
+}
+
 /* Tables share one look: quiet header, hover rows, tabular numbers. */
 @utility data-table {
   @apply w-full text-sm;
