@@ -14,7 +14,7 @@ export default function TermsPage() {
         <h1 className="text-3xl font-semibold tracking-tight">Terms of use</h1>
         <p className="text-base text-muted">
           Sprintwise is a free, independent tool. These terms cover the site at sprintwise.app (formerly sprintwise-omega.vercel.app).
-          Last updated 25 October 2026.
+          Last updated 26 October 2026.
         </p>
       </header>
 
@@ -62,8 +62,9 @@ export default function TermsPage() {
       <section>
         <h2 className="text-base font-semibold text-foreground">No guarantees</h2>
         <p className="mt-2">
-          Sprintwise is provided as is, without any warranty. It may have bugs, and it may change, pause or shut down,
-          possibly without notice. Keep your own copy of anything that matters: Jira or your CSV files stay the place of
+          Sprintwise is provided as is, without any warranty. It may have bugs, and it may change or pause. If it ever
+          closes for good, the site will say so at least 30 days ahead, so you can export your stories as CSV. Keep your
+          own copy of anything that matters: Jira or your CSV files stay the place of
           record. Scores and metrics are aids to a team&apos;s judgement, not a verdict on anyone&apos;s work. As far as
           the law allows, Sprintwise&apos;s developer isn&apos;t liable for any loss from using the site.
         </p>

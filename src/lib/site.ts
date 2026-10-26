@@ -33,6 +33,20 @@ export type Release = {
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.28",
+    date: "2026-10-26",
+    title: "A clearer, faster public site",
+    summary: "The public pages load from a cache close to you, explain themselves better and always end with a next step.",
+    items: [
+      "The home page, demo and guide are served ready-made instead of being built on every visit, so they open faster, especially far from Europe.",
+      "The demo now ends with a way to sign in and try Sprintwise on your own backlog, also on phones.",
+      "The home page describes sprint tracking as it works today: changes are recorded by themselves, and Jira projects sync each night.",
+      "The Privacy page says where your data lives: in the EU, in Frankfurt. The Terms promise at least 30 days' notice, so you can export your stories, if Sprintwise ever closes.",
+      "The demo video names the new address, sprintwise.app.",
+      "Smaller fixes: demo tabs fit on a phone, wide tables show a shadow when there's more to swipe, bigger footer links, and a friendlier \"page not found\".",
+    ],
+  },
+  {
     version: "v2.27",
     date: "2026-10-25",
     title: "Security updates",
@@ -46,12 +60,13 @@ export const RELEASES: Release[] = [
   {
     version: "v2.26",
     date: "2026-10-25",
-    title: "A new address: sprintwise.app",
+    title: "Our own address: sprintwise.app",
     summary: "Sprintwise now lives at sprintwise.app. The old address still works and takes you there.",
     items: [
       "Every page, share link and bookmark on sprintwise-omega.vercel.app now opens the same page on sprintwise.app.",
       "You'll need to sign in once more on the new address; your projects and Jira connection are unchanged.",
     ],
+    feature: true,
   },
   {
     version: "v2.25",

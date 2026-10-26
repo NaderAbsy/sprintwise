@@ -1,6 +1,6 @@
-import { ArrowRight, Bot, ChevronDown, ClipboardCheck, Code2, Eye, FileSpreadsheet, Lock, Printer } from "lucide-react";
+import { ArrowRight, Bot, ChevronDown, ClipboardCheck, Eye, FileSpreadsheet, Lock, Printer } from "lucide-react";
 import Link from "next/link";
-import { SignInButton } from "@/components/auth-buttons";
+import { AccountButton } from "@/components/auth-buttons";
 import { BandBadge } from "@/components/band-badge";
 import { CountUp } from "@/components/marketing/count-up";
 import { DemoVideo } from "@/components/marketing/demo-video";
@@ -16,7 +16,6 @@ import { DEFAULT_SETTINGS, RULES, scoreStory } from "@/lib/readiness/rules";
 import { secondLook } from "@/lib/readiness/second-look";
 import { computeMetrics, formatPercent } from "@/lib/sprint/metrics";
 import { compareReadiness, readinessFinding } from "@/lib/sprint/report";
-import { getSession } from "@/lib/server/dal";
 import { AUTHOR, GITHUB_URL, RELEASES, SITE_URL } from "@/lib/site";
 import { JsonLd } from "@/components/json-ld";
 import { pageMeta } from "@/lib/page-meta";
@@ -35,17 +34,17 @@ const STEPS = [
   {
     Icon: ClipboardCheck,
     title: "Check every story",
-    text: "Paste a story or import your Jira backlog, AI-drafted or not. Nine fixed rules score each one out of 100, with a reason for every point lost and a flag on common signs of an AI draft nobody re-read.",
+    text: "Paste a story or import your Jira backlog, AI-drafted or not. Each one is scored out of 100, with a reason for every point lost and a flag on common signs of an AI draft nobody re-read.",
   },
   {
     Icon: Lock,
     title: "Lock the baseline",
-    text: "On day one, upload the sprint as committed. It can't be edited, so every later change is measured against it.",
+    text: "On day one, tick the stories the team committed to and lock them. The baseline can't be edited, so every later change is measured against it.",
   },
   {
     Icon: Printer,
     title: "Report what changed",
-    text: "Upload snapshots as the sprint runs. Scope added and removed, churn and completion land on one printable page.",
+    text: "A sprint picked from the backlog records every change by itself, and Jira projects sync each night. Scope added and removed, churn and completion land on one printable page.",
   },
 ];
 
@@ -56,7 +55,7 @@ const FAQ = [
   },
   {
     q: "Does AI decide the score, or read my tickets?",
-    a: "No. The score comes from nine fixed rules, so in a project the same story always gets the same number, and every lost point has a reason you can read. Your tickets are never sent to an AI model. AI rewrites are built but switched off on the live site.",
+    a: "No. The score comes from fixed rules, so in a project the same story always gets the same number, and every lost point has a reason you can read. Your tickets are never sent to an AI model.",
   },
   {
     q: "Do I need to connect Jira?",
@@ -64,11 +63,11 @@ const FAQ = [
   },
   {
     q: "What happens to my data?",
-    a: "The demo runs in your browser and saves nothing. Signed in, your projects are stored so you can come back to them, and deleting your account deletes everything. The privacy page has the details.",
+    a: "The demo runs in your browser and saves nothing. Signed in, your projects are stored in the EU (Frankfurt, Germany) so you can come back to them, and deleting your account deletes everything. The privacy page has the details.",
   },
   {
     q: "Can I change the rules?",
-    a: "The nine rules are the same in every project. Each project sets its own maximum story size and vague-word list, and can add its own Definition of Ready checks (a story that fails one can't be Ready). Saving re-scores every story in the project.",
+    a: "The rules are the same in every project. Each project sets its own maximum story size and vague-word list, and can add its own Definition of Ready checks (a story that fails one can't be Ready). Saving re-scores every story in the project.",
   },
   {
     q: "Does it work for stories in other languages?",
@@ -95,10 +94,7 @@ const AI_DRAFT = {
   status: "To Do",
 };
 
-export default async function Home() {
-  // Signed-in visitors see the home page too (the logo always leads here); their button opens the app.
-  const signedIn = Boolean(await getSession());
-
+export default function Home() {
   // Every preview below uses the same invented demo data and the same rules as the app.
   const scored = demoBacklog.map((story) => ({ story, r: scoreStory(story) })).sort((a, b) => a.r.score - b.r.score);
   const ready = scored.filter((s) => s.r.band === "Ready").length;
@@ -119,7 +115,7 @@ export default async function Home() {
       title: "Know which stories aren't ready, and why",
       body: "Every story gets a score out of 100 and a band. Keep the backlog in priority order, or list the weakest first so refinement time goes where it matters.",
       points: [
-        "Nine fixed rules, from acceptance criteria to vague words",
+        "Checks from acceptance criteria to vague words",
         "A plain-English reason for every point lost",
         "Unestimated or oversized stories can't be Ready",
         "Flags chat leftovers, placeholders and boilerplate from AI drafts",
@@ -151,9 +147,9 @@ export default async function Home() {
       id: "scope",
       label: "Scope tracking",
       title: "See how far the sprint drifted from the plan",
-      body: "Lock the sprint as committed, then upload snapshots as it runs. Stories are matched by key, so a rename isn't counted as removed and added.",
+      body: "Lock the sprint as committed; every later change is recorded against it. Stories are matched by key, so a rename isn't counted as removed and added.",
       points: [
-        "Scope added and removed, net change and churn",
+        "Scope added and removed, net change and churn (work that moved in or out, or changed size)",
         "Completion measured against the original commitment",
         "A dated change log of every edit",
       ],
@@ -283,26 +279,21 @@ export default async function Home() {
               New: {latestRelease.title.charAt(0).toLowerCase() + latestRelease.title.slice(1)}
               <ArrowRight aria-hidden="true" className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
             </Link>
-            <h1 className="mt-6 text-4xl font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl">
+            <p className="eyebrow mt-6">For Product Owners and Scrum teams</p>
+            <h1 className="mt-3 text-4xl font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl">
               Know your stories are ready <span className="text-gradient">before the sprint starts.</span>
             </h1>
             <p className="mt-5 max-w-xl text-lg text-muted text-pretty">
-              Import your backlog, AI-drafted or not. Nine fixed rules score every story before planning and flag what a
-              pasted draft left behind; then Sprintwise measures how much the sprint changed after the team committed.
-              No AI reads your tickets.
+              Import your backlog, AI-drafted or not. Sprintwise scores every story before planning and flags what a
+              pasted draft left behind, then measures how much the sprint changed after the team committed. No AI reads
+              your tickets.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link href="/demo" className="btn-primary h-11 px-5 shadow-lg shadow-accent/25">
                 Try the demo
                 <ArrowRight aria-hidden="true" className="h-4 w-4" />
               </Link>
-              {signedIn ? (
-                <Link href="/projects" className="btn-secondary h-11 px-5">
-                  Open your projects
-                </Link>
-              ) : (
-                <SignInButton className="btn-secondary h-11 px-5" />
-              )}
+              <AccountButton className="btn-secondary h-11 px-5" openLabel="Open your projects" />
             </div>
             <p className="mt-3 text-sm text-subtle">The demo needs no account and saves nothing.</p>
           </div>
@@ -408,7 +399,7 @@ export default async function Home() {
           <Reveal className="mx-auto max-w-2xl text-center">
             <p className="eyebrow">Product</p>
             <h2 id="features-heading" className="mt-2 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-              Two questions, answered with data
+              Were the stories ready? Did the sprint stick to the plan?
             </h2>
             <p className="mt-3 text-muted">Pick a part of the product. Every number is from the invented sample sprint.</p>
           </Reveal>
@@ -530,18 +521,19 @@ export default async function Home() {
           <div className="relative">
             <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">Check the tickets before your team commits to them</h2>
             <p className="mx-auto mt-3 max-w-xl text-accent-foreground/85">
-              Open the demo with an invented backlog and sprint. No account, nothing saved.
+              Try the demo with an invented backlog, or sign in to use it on yours. It&apos;s free.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link href="/demo" className="btn h-11 bg-white px-5 text-zinc-900 hover:bg-white/90">
                 Open the live demo
                 <ArrowRight aria-hidden="true" className="h-4 w-4" />
               </Link>
-              <a href={GITHUB_URL} className="btn h-11 border border-white/30 px-5 text-accent-foreground hover:bg-white/10">
-                <Code2 aria-hidden="true" className="h-4 w-4" />
-                Read the code
-              </a>
+              <AccountButton
+                className="btn h-11 border border-white/30 px-5 text-accent-foreground hover:bg-white/10"
+                openLabel="Open your projects"
+              />
             </div>
+            <p className="mt-4 text-sm text-accent-foreground/85">No GitHub account? Creating one is free and takes a minute.</p>
           </div>
         </Reveal>
       </section>

@@ -62,8 +62,8 @@
     "caption": "Try the demo without an account, or sign in with GitHub to use it on your own backlog. It's free."
   },
   "close": {
-    "caption": "Sprintwise: sprintwise-omega.vercel.app",
-    "spoken": "Sprintwise. Free to use, at sprintwise omega dot vercel dot app.",
+    "caption": "Sprintwise: sprintwise.app",
+    "spoken": "Sprintwise. Free to use, at sprintwise dot app.",
     "minMs": 4500
   }
 }

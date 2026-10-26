@@ -1,6 +1,7 @@
 import { FileText, FlaskConical, Lightbulb } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AccountButton } from "@/components/auth-buttons";
 import { DemoBacklog } from "@/app/(marketing)/demo/demo-backlog";
 import { DemoScorer } from "@/app/(marketing)/demo/demo-scorer";
 import { ChangeTable } from "@/components/change-table";
@@ -34,10 +35,11 @@ export default function DemoPage() {
   const finding = readinessFinding(compareReadiness(baseline, latest, DEFAULT_SETTINGS));
 
   const sections = [
-    { href: "#backlog", label: "Sample backlog" },
-    { href: "#sample-sprint", label: "Sample sprint" },
+    // Short labels, so all four fit on a phone without scrolling.
+    { href: "#backlog", label: "Backlog" },
+    { href: "#sample-sprint", label: "Sprint" },
     { href: "#trends", label: "Trends" },
-    { href: "#try-it", label: "Score your own" },
+    { href: "#try-it", label: "Try your own" },
   ];
 
   return (
@@ -132,6 +134,19 @@ export default function DemoPage() {
             </p>
           </div>
           <DemoScorer />
+        </section>
+
+        <section aria-labelledby="next-heading" className="card space-y-3 p-6 text-center sm:p-8">
+          <h2 id="next-heading" className="text-xl font-semibold tracking-tight">
+            Ready to check your own backlog?
+          </h2>
+          <p className="mx-auto max-w-xl text-sm text-muted">
+            Sign in to import your stories from Jira or a CSV, lock a sprint and get the one-page report. It&apos;s free.
+          </p>
+          <div className="flex justify-center">
+            <AccountButton className="btn-primary h-11 px-5" openLabel="Open your projects" />
+          </div>
+          <p className="text-xs text-subtle">No GitHub account? Creating one is free and takes a minute.</p>
         </section>
       </div>
     </div>

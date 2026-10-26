@@ -46,13 +46,12 @@ export default function AboutPage() {
           </h2>
           <div className="mt-4 space-y-3 text-muted">
             <p>
-              Sprintwise is an independent project. I wrote the requirements, kept the backlog, made the product calls and
-              tested every release, from the first rule to version 1.
+              Sprintwise is an independent project, run like a product: a public backlog, a log of every product decision
+              and why, and automated tests on every release before it goes live.
             </p>
             <p>
-              Version 1 shipped all 18 of its stories. Version 2 added refinement mode, shared backlogs and a live Jira
-              connection. AI rewrites and test scenarios are built but switched off on the live site to avoid running
-              costs.
+              Version 2 added refinement mode, shared backlogs and a live Jira connection with a nightly sync. AI rewrites
+              are built but switched off on the live site, so no story text is ever sent to an AI service.
             </p>
             <p>Every story, number and team name in the demo is invented.</p>
           </div>
@@ -70,7 +69,7 @@ export default function AboutPage() {
         <Reveal delay={100}>
           <dl className="grid grid-cols-2 gap-3">
             {[
-              { value: 18, label: "v1 stories shipped" },
+              { value: 0, label: "cost to use, and no ads" },
               { value: RELEASES.length, label: "releases" },
               { value: 9, label: "readiness rules" },
               { value: 2, label: "themes, both WCAG AA" },

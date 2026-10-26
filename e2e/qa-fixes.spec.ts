@@ -164,7 +164,8 @@ test("a long project name doesn't push the page sideways on a phone", async ({ p
   const project = page.url();
   for (const path of [project, "/projects"]) {
     await page.goto(path);
-    await page.waitForLoadState("networkidle");
+    // Not "networkidle": prefetches of the static public pages are refreshed in the background and never settle locally.
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), path).toBeLessThanOrEqual(0);
   }
 });

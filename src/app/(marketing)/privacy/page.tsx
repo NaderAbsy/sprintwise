@@ -40,6 +40,9 @@ export default function PrivacyPage() {
             Sprintwise sees totals, such as how many accounts have created a project, never who.
           </li>
         </ul>
+        <p className="mt-2">
+          Everything is stored in the EU: the app runs on Vercel and the database on Neon, both in Frankfurt, Germany.
+        </p>
       </section>
 
       <section>

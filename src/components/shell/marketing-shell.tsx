@@ -1,21 +1,15 @@
 import Link from "next/link";
-import { SignInButton } from "@/components/auth-buttons";
+import { HeaderAccount, MenuAccount } from "@/components/auth-buttons";
 import { Logo } from "@/components/logo";
 import { MarketingNav } from "@/components/shell/marketing-nav";
 import { ThemeToggle } from "@/components/theme";
-import { getSession } from "@/lib/server/dal";
 import { FEEDBACK_URL, AUTHOR, GITHUB_URL, MARKETING_LINKS } from "@/lib/site";
 
-/** Public pages: a sticky top bar with the site's tabs, the page, and a footer with every link. */
-export async function MarketingShell({ children }: { children: React.ReactNode }) {
-  const session = await getSession();
-  const account = session ? (
-    <Link href="/projects" className="btn-primary">
-      Open app
-    </Link>
-  ) : (
-    <SignInButton className="btn-primary" />
-  );
+/**
+ * Public pages: a sticky top bar with the site's tabs, the page, and a footer with every link.
+ * Nothing here reads the request (the account button asks in the browser), so the pages are cached.
+ */
+export function MarketingShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="no-print sticky top-0 z-30 border-b border-border bg-background/75 backdrop-blur-lg">
@@ -27,7 +21,7 @@ export async function MarketingShell({ children }: { children: React.ReactNode }
                 <div className="hidden md:block">
                   <ThemeToggle />
                 </div>
-                <div className={session ? "" : "hidden sm:block"}>{account}</div>
+                <HeaderAccount />
               </>
             }
             menuExtras={
@@ -36,7 +30,7 @@ export async function MarketingShell({ children }: { children: React.ReactNode }
                   <span className="text-sm text-muted">Theme</span>
                   <ThemeToggle />
                 </div>
-                {!session && <div className="px-3 sm:hidden">{account}</div>}
+                <MenuAccount />
               </>
             }
           />
@@ -62,10 +56,10 @@ export async function MarketingShell({ children }: { children: React.ReactNode }
           </div>
           <div>
             <p className="font-medium">Site</p>
-            <ul className="mt-3 space-y-2 text-muted">
+            <ul className="mt-2 space-y-0.5 text-muted">
               {MARKETING_LINKS.map(({ href, label }) => (
                 <li key={href}>
-                  <Link href={href} className="hover:text-foreground">
+                  <Link href={href} className="inline-block py-1.5 hover:text-foreground">
                     {label}
                   </Link>
                 </li>
@@ -74,34 +68,34 @@ export async function MarketingShell({ children }: { children: React.ReactNode }
           </div>
           <div>
             <p className="font-medium">More</p>
-            <ul className="mt-3 space-y-2 text-muted">
+            <ul className="mt-2 space-y-0.5 text-muted">
               <li>
-                <a href={GITHUB_URL} className="hover:text-foreground">
+                <a href={GITHUB_URL} className="inline-block py-1.5 hover:text-foreground">
                   Code on GitHub
                 </a>
               </li>
               <li>
-                <a href="/template.csv" className="hover:text-foreground">
+                <a href="/template.csv" className="inline-block py-1.5 hover:text-foreground">
                   CSV template
                 </a>
               </li>
               <li>
-                <Link href="/changelog" className="hover:text-foreground">
+                <Link href="/changelog" className="inline-block py-1.5 hover:text-foreground">
                   Changelog
                 </Link>
               </li>
               <li>
-                <Link href="/privacy" className="hover:text-foreground">
+                <Link href="/privacy" className="inline-block py-1.5 hover:text-foreground">
                   Privacy
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="hover:text-foreground">
+                <Link href="/terms" className="inline-block py-1.5 hover:text-foreground">
                   Terms
                 </Link>
               </li>
               <li>
-                <a href={FEEDBACK_URL} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">
+                <a href={FEEDBACK_URL} target="_blank" rel="noopener noreferrer" className="inline-block py-1.5 hover:text-foreground">
                   Send feedback<span className="sr-only"> (opens GitHub in a new tab)</span>
                 </a>
               </li>

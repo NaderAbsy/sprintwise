@@ -57,7 +57,7 @@ export function Trends({ rows, summary }: { rows: SprintTrendRow[]; summary: Tre
 
       <details className="card p-4 text-sm">
         <summary className="cursor-pointer font-medium">Show the numbers as a table</summary>
-        <div className="mt-3 overflow-x-auto">
+        <div className="scroll-shadow mt-3 overflow-x-auto">
           <table className="data-table">
             <caption className="sr-only">Sprint trends, oldest first</caption>
             <thead>

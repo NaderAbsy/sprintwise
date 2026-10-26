@@ -84,7 +84,7 @@ test("the first click on Sign in with GitHub is handled", async ({ page }) => {
   // Either way one click is enough. Requests to github.com are stubbed so the test never leaves the machine.
   await page.route("https://github.com/**", (route) => route.fulfill({ status: 200, body: "GitHub" }));
   await page.goto("/");
-  await page.getByRole("main").getByRole("button", { name: "Sign in with GitHub" }).click();
+  await page.getByRole("main").getByRole("button", { name: "Sign in with GitHub" }).first().click();
   await expect
     .poll(async () => page.url().startsWith("https://github.com/") || (await page.getByRole("alert").count()) > 0)
     .toBe(true);

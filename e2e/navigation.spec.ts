@@ -57,7 +57,9 @@ test("signed in, the logo leads home from every part of the app, and home links 
 
   // Signed in, home offers the way back into the app instead of sign-in.
   await expect(page.getByRole("main").getByRole("button", { name: "Sign in with GitHub" })).toHaveCount(0);
-  await page.getByRole("main").getByRole("link", { name: "Open your projects" }).click();
+  // The hero and the closing call to action both offer it (the page asks in the browser, so wait for it).
+  await expect(page.getByRole("main").getByRole("link", { name: "Open your projects" })).toHaveCount(2);
+  await page.getByRole("main").getByRole("link", { name: "Open your projects" }).first().click();
   await expect(page).toHaveURL(/\/projects$/);
 });
 
