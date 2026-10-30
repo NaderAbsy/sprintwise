@@ -3,7 +3,7 @@ import { Prisma, type Project } from "@/generated/prisma/client";
 import type { ImportStory } from "@/lib/csv/import";
 import { db } from "@/lib/server/db";
 import { readinessData, settingsOf, toStory } from "@/lib/server/readiness";
-import { LimitError, lockOwner } from "@/lib/server/within-limit";
+import { LimitError, lockOwner, storyRoom } from "@/lib/server/within-limit";
 import { baseOf, mergeEdited, readBase } from "@/lib/stories/jira-merge";
 
 type Tx = Prisma.TransactionClient;
@@ -64,6 +64,8 @@ export async function saveStories(
         throw new LimitError(`This would take the project past ${maxStories} stories. Delete some stories or narrow what you bring in.`);
       }
       if (fresh.length > 0) {
+        const roomLeft = await storyRoom(tx, project.userId, fresh.length);
+        if (roomLeft) throw new LimitError(roomLeft);
         // New stories in two statements, not one each: big imports stay quick.
         const firstRank = await bottomRank(project.id, tx);
         const created = await tx.story.createManyAndReturn({

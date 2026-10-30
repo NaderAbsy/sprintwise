@@ -4,6 +4,7 @@ import { APIError, createAuthMiddleware } from "better-auth/api";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { db } from "@/lib/server/db";
+import { testFlag } from "@/lib/server/local-server";
 
 const github =
   process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
@@ -12,12 +13,9 @@ const github =
 
 /**
  * Email sign-in exists only so end-to-end tests can sign in without GitHub.
- * It must never be on in any Vercel deploy: previews share the live database.
+ * It must never be on in any Vercel deploy (previews share the live database) or on any server that isn't local.
  */
-const testSignIn = process.env.ENABLE_TEST_SIGN_IN === "true";
-if (testSignIn && process.env.VERCEL_ENV) {
-  throw new Error("ENABLE_TEST_SIGN_IN must not be set on a Vercel deploy.");
-}
+const testSignIn = testFlag("ENABLE_TEST_SIGN_IN");
 
 /**
  * Atlassian is for connecting Jira to an existing account, never for signing up:
@@ -62,7 +60,25 @@ export const auth = betterAuth({
   rateLimit: { enabled: testSignIn ? false : undefined, storage: "database" },
   // The browser never needs a user's stored provider tokens; the server reads them through auth.api,
   // which these don't affect. Closed so a script injected into a page couldn't fetch them.
-  disabledPaths: ["/get-access-token", "/refresh-token", "/account-info"],
+  disabledPaths: [
+    "/get-access-token",
+    "/refresh-token",
+    "/account-info",
+    // Sprintwise never changes a profile, email or password (sign-in is GitHub's), lists accounts or sessions, or
+    // unlinks anything through the browser; the app's own actions do what's needed. Closed, so a user can't store
+    // an oversized name or image, or reach anything else the library exposes by default.
+    "/update-user",
+    "/change-email",
+    "/change-password",
+    "/set-password",
+    "/delete-user",
+    "/list-accounts",
+    "/unlink-account",
+    "/list-sessions",
+    "/revoke-session",
+    "/revoke-sessions",
+    "/revoke-other-sessions",
+  ],
   databaseHooks: {
     account: {
       create: {

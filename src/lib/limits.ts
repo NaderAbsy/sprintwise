@@ -2,6 +2,12 @@
 export const MAX_PROJECTS = 10;
 /** Caps that keep one account from filling the database or slowing a re-score. */
 export const MAX_STORIES_PER_PROJECT = 1000;
+/**
+ * Stories across all of an account's projects. Ten projects of 1,000 would be 10,000 stories and, with long text,
+ * about 100 MB: this keeps one account from filling a small database, while a Product Owner with a few
+ * real backlogs never gets near it.
+ */
+export const MAX_STORIES_PER_ACCOUNT = 5000;
 export const MAX_SPRINTS_PER_PROJECT = 50;
 export const MAX_SNAPSHOTS_PER_SPRINT = 30;
 /**

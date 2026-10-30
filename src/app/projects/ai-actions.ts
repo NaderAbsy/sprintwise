@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { Prisma } from "@/generated/prisma/client";
 import { scoreStory } from "@/lib/readiness/rules";
-import { dailyLimit, siteDailyLimit, suggestForStory } from "@/lib/server/ai";
+import { aiConfigured, dailyLimit, siteDailyLimit, suggestForStory } from "@/lib/server/ai";
 import { db } from "@/lib/server/db";
 import { assertId, requireProject, requireUser } from "@/lib/server/dal";
 import { settingsOf, toStory } from "@/lib/server/readiness";
@@ -16,6 +16,8 @@ export async function requestSuggestion(projectId: string, storyId: string, _pre
   const user = await requireUser();
   const project = await requireProject(projectId);
   assertId(storyId);
+  // Switched off (no key): say so before anything is counted, so calls to a disabled feature write nothing.
+  if (!aiConfigured) return { error: "AI suggestions aren't set up on this site yet." };
   const row = await db.story.findFirst({ where: { id: storyId, projectId: project.id } });
   if (!row) return { error: "That story no longer exists." };
 

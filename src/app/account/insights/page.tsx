@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { jobHealth } from "@/lib/insights";
 import { requireUser } from "@/lib/server/dal";
 import { loadInsights } from "@/lib/server/insights";
+import { SECURITY_EVENTS, securityCounts, type SecurityEvent } from "@/lib/server/security-events";
 import { isSiteOwner } from "@/lib/server/site-owner";
 
 export const metadata: Metadata = { title: "Insights" };
@@ -23,7 +24,7 @@ const week = (date: Date) => date.toLocaleDateString("en-GB", { day: "numeric", 
 export default async function InsightsPage() {
   const user = await requireUser();
   if (!(await isSiteOwner(user))) notFound();
-  const { jobs, steps, signals, weeks, months } = await loadInsights(user.id);
+  const [{ jobs, steps, signals, weeks, months }, security] = await Promise.all([loadInsights(user.id), securityCounts(30)]);
   const now = new Date();
   const top = Math.max(steps[0].count, 1);
   const busiestWeek = Math.max(...weeks.map((w) => w.count), 1);
@@ -56,6 +57,27 @@ export default async function InsightsPage() {
               );
             })}
           </ul>
+        </section>
+
+        <section aria-labelledby="security-heading" className="card p-5">
+          <h2 id="security-heading" className="font-semibold">
+            Suspicious activity
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            Requests Sprintwise refused, counted per day: totals for the last 30 days, never who or what. A few are normal (someone
+            retrying); a sudden jump is worth a look in Vercel&apos;s logs within the hour.
+          </p>
+          <dl className="mt-3 grid gap-3 sm:grid-cols-2">
+            {(Object.keys(SECURITY_EVENTS) as SecurityEvent[]).map((kind) => (
+              <div key={kind} className="rounded-lg bg-surface-2 px-4 py-3">
+                <dt className="text-sm text-muted">{SECURITY_EVENTS[kind]}</dt>
+                <dd className="text-2xl font-semibold tabular-nums">
+                  {security.totals[kind]}
+                  <span className="ml-2 text-sm font-normal text-muted">{security.today[kind] ?? 0} today</span>
+                </dd>
+              </div>
+            ))}
+          </dl>
         </section>
 
         <section aria-labelledby="funnel-heading" className="card p-5">

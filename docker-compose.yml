@@ -1,4 +1,5 @@
 # Local Postgres for development and end-to-end tests. Production uses Neon or Supabase.
+# Bound to this machine (127.0.0.1) so nobody else on the network can reach it, even with the default password.
 services:
   db:
     image: postgres:17
@@ -7,7 +8,7 @@ services:
       POSTGRES_PASSWORD: sprintwise
       POSTGRES_DB: sprintwise
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 volumes:

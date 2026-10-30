@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "@/lib/server/db";
 import { jiraAccount, jiraConfigured } from "@/lib/server/jira";
 import { syncProjectFromJira } from "@/lib/server/jira-sync";
+import { errorSummary } from "@/lib/server/log";
 import { utcToday } from "@/lib/sprint/tracking";
 
 /**
@@ -51,7 +52,7 @@ export async function syncJiraProjectsNightly(now = Date.now()): Promise<Nightly
     } catch (cause) {
       console.error("Nightly Jira sync failed for a project", {
         projectId: project.id,
-        error: cause instanceof Error ? `${cause.name}: ${cause.message}` : String(cause),
+        error: errorSummary(cause),
       });
       error = "The sync stopped with an error on Sprintwise's side. Try Sync from Jira on the backlog.";
     }

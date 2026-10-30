@@ -1,5 +1,10 @@
+import "dotenv/config";
 import { defineConfig, devices } from "@playwright/test";
+import { assertLocalDatabase } from "./scripts/local-database.mjs";
 import { BASE_URL as baseURL, PORT } from "./e2e/base-url";
+
+// The tests make accounts and stories: never against a database that isn't on this machine.
+assertLocalDatabase();
 
 /** End-to-end tests run against a production build with test sign-in switched on. */
 export default defineConfig({

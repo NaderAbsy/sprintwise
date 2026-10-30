@@ -43,13 +43,14 @@ function Spans({ nodes }: { nodes: Inline[] }) {
           </code>
         );
       case "link": {
-        // A label that looks like an address but names another site shows where the link really goes.
+        // The text of a link can say anything, and this text may be written by someone else in Jira, so the host the
+        // link really goes to is always shown, unless the label already is that address.
         const shown = hostOf(node.text);
         const real = hostOf(node.href);
         return (
           <a key={i} href={node.href} target="_blank" rel="noopener noreferrer nofollow" className="text-accent underline underline-offset-2">
             {node.text}
-            {shown && real && shown !== real && <span className="text-muted no-underline"> ({real})</span>}
+            {real && shown !== real && <span className="text-muted no-underline"> ({real})</span>}
           </a>
         );
       }

@@ -9,6 +9,8 @@ import { readCsvTable } from "@/lib/csv/parse";
 import { baseOf, JIRA_FIELDS, planSend, type JiraField, type JiraText } from "@/lib/stories/jira-merge";
 import { criteriaFromDescription, withCriteriaInDescription } from "@/lib/stories/types";
 import { FAKE_SITE, fakeChange, fakeIssue, fakeSearch } from "@/lib/server/jira-fake";
+import { testFlag } from "@/lib/server/local-server";
+import { errorSummary } from "@/lib/server/log";
 
 /**
  * Jira Cloud through Atlassian's OAuth 2.0 (3LO). Tokens are stored by Better
@@ -19,10 +21,7 @@ import { FAKE_SITE, fakeChange, fakeIssue, fakeSearch } from "@/lib/server/jira-
  */
 
 /** Pretend Jira for end-to-end tests: invented issues, writes kept in memory. Never on a Vercel deploy. */
-export const jiraFake = process.env.JIRA_FAKE === "true";
-if (jiraFake && process.env.VERCEL_ENV) {
-  throw new Error("JIRA_FAKE must not be set on a Vercel deploy.");
-}
+export const jiraFake = testFlag("JIRA_FAKE");
 
 export const jiraConfigured = jiraFake || Boolean(process.env.ATLASSIAN_CLIENT_ID && process.env.ATLASSIAN_CLIENT_SECRET);
 
@@ -108,7 +107,7 @@ async function accessToken(userId: string): Promise<string> {
     );
   } catch (error) {
     // Logged, so a failure on Sprintwise's side can't hide behind "expired" again.
-    console.error("Jira token unavailable", { error: error instanceof Error ? `${error.name}: ${error.message.slice(0, 200)}` : String(error) });
+    console.error("Jira token unavailable", { error: errorSummary(error) });
     throw new JiraError("The Jira connection has expired. Connect Jira again.");
   }
 }

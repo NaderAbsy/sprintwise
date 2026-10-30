@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { reportAtlassianAccounts } from "@/lib/server/atlassian-privacy";
 import { deleteExpiredAuthData } from "@/lib/server/cleanup";
 import { cronAllowed } from "@/lib/server/cron";
+import { recordSecurityEvent } from "@/lib/server/security-events";
 import { runJob } from "@/lib/server/job-runs";
 
 /**
@@ -10,7 +11,10 @@ import { runJob } from "@/lib/server/job-runs";
  * daily call deletes sign-in data that has expired (see cleanup.ts).
  */
 export async function GET(request: NextRequest) {
-  if (!cronAllowed(request)) return NextResponse.json({ error: "Not allowed." }, { status: 401 });
+  if (!cronAllowed(request)) {
+    await recordSecurityEvent("cron_denied");
+    return NextResponse.json({ error: "Not allowed." }, { status: 401 });
+  }
   const { result, cleanedUp } = await runJob(
     "atlassian-accounts",
     async () => ({ cleanedUp: await deleteExpiredAuthData(), result: await reportAtlassianAccounts() }),

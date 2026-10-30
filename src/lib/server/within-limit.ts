@@ -1,6 +1,6 @@
 import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
-import { MAX_SNAPSHOT_BYTES_PER_ACCOUNT, MAX_SNAPSHOT_ITEMS_PER_ACCOUNT } from "@/lib/limits";
+import { MAX_SNAPSHOT_BYTES_PER_ACCOUNT, MAX_SNAPSHOT_ITEMS_PER_ACCOUNT, MAX_STORIES_PER_ACCOUNT } from "@/lib/limits";
 import { db } from "@/lib/server/db";
 
 type Tx = Prisma.TransactionClient;
@@ -39,6 +39,16 @@ export async function snapshotRoom(
     return `Your sprints' snapshots already hold ${Math.round(MAX_SNAPSHOT_BYTES_PER_ACCOUNT / 1024 / 1024)} MB of story text, the most one account can. Delete old sprints to make room.`;
   }
   return null;
+}
+
+/**
+ * The message when adding `adding` stories would take the account past its story cap, else null. Counted without a
+ * lock across projects, so saves sent at the same moment can overshoot a little; each project's own cap still holds exactly.
+ */
+export async function storyRoom(client: Tx | typeof db, userId: string, adding: number): Promise<string | null> {
+  const stored = await client.story.count({ where: { project: { userId } } });
+  if (stored + adding <= MAX_STORIES_PER_ACCOUNT) return null;
+  return `Your account already holds ${stored.toLocaleString("en")} stories, and the most one account can keep is ${MAX_STORIES_PER_ACCOUNT.toLocaleString("en")}. Delete stories or projects you no longer need to make room.`;
 }
 
 /** A limit reached; `message` says which and what to do. */

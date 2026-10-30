@@ -1,6 +1,7 @@
 // Prints the anonymous usage counts (story L-3).
-// Usage: `pnpm usage` (reads DATABASE_URL from .env), or for production:
-//   DATABASE_URL="<the Neon connection string>" pnpm usage
+// Usage: `pnpm usage` (reads DATABASE_URL from .env). For production, put the Neon connection string in a file
+// that isn't committed (.env.production.local, which .gitignore covers) and run it from there; don't type it on the
+// command line, where it would stay in the shell history.
 // usage_events holds only an event type and a timestamp: no user ids, no story text.
 import pg from "pg";
 

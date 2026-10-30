@@ -31,6 +31,10 @@ const SECURITY_HEADERS = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+  // HTTPS only, for two years (.app domains are also forced to HTTPS by every browser).
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+  // Pages opened from this site, or that open it, can't share a browsing context with it.
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
 ];
 
 const nextConfig: NextConfig = {

@@ -15,7 +15,7 @@ import { validateSnapshotDate, validateSprintDates } from "@/lib/sprint/dates";
 import { diffSnapshots } from "@/lib/sprint/diff";
 import { defaultReasons, isGoalOutcome, isReason } from "@/lib/sprint/reasons";
 import { db } from "@/lib/server/db";
-import { assertId, requireProject, requireSprint } from "@/lib/server/dal";
+import { assertId, requireFreshUser, requireProject, requireSprint } from "@/lib/server/dal";
 import { toStory } from "@/lib/server/readiness";
 import type { Story } from "@/lib/stories/types";
 
@@ -268,6 +268,8 @@ export async function setChangeReason(projectId: string, sprintId: string, chang
  * different from the old one.
  */
 export async function enableReportShare(projectId: string, sprintId: string) {
+  // Makes a report public, so the session is checked against the database, not the five-minute cookie copy.
+  await requireFreshUser();
   const { project, sprint } = await requireSprint(projectId, sprintId);
   if (!sprint.shareToken) {
     await db.sprint.update({ where: { id: sprint.id }, data: { shareToken: randomBytes(32).toString("base64url") } });

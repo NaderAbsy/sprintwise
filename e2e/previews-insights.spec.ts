@@ -49,6 +49,7 @@ test("insights are only for whoever runs the site, and show totals, never who", 
   await page.goto("/account/insights");
   await expect(page.getByRole("heading", { level: 1, name: "Page not found" })).toBeVisible();
   await expect(page.getByText("From sign-up to a tracked sprint")).toHaveCount(0);
+  await expect(page.getByText("Suspicious activity")).toHaveCount(0);
   await page.goto("/account");
   await expect(page.getByRole("link", { name: "Open insights" })).toHaveCount(0);
 
@@ -67,6 +68,10 @@ test("insights are only for whoever runs the site, and show totals, never who", 
   const funnel = owner.getByRole("region", { name: "From sign-up to a tracked sprint" });
   await expect(funnel.getByRole("listitem")).toHaveCount(5);
   await expect(funnel).toContainText("Signed up");
+  // Refusal totals sit beside it: four counts (limits, sign-in refusals, nightly job calls), never who or what.
+  const suspicious = owner.getByRole("region", { name: "Suspicious activity" });
+  await expect(suspicious.getByRole("term")).toHaveCount(4);
+  await expect(suspicious).not.toContainText("@");
 
   // Each nightly job's last run is kept, since the free Vercel plan keeps only an hour of logs.
   for (const job of ["/api/cron/jira-sync", "/api/cron/atlassian-accounts"]) expect((await owner.request.get(job)).ok()).toBe(true);

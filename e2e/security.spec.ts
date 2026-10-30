@@ -11,6 +11,8 @@ test("every response carries the security headers", async ({ request }) => {
     expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
     expect(headers["content-security-policy"]).toContain("frame-ancestors 'none'");
     expect(headers["x-powered-by"]).toBeUndefined();
+    expect(headers["strict-transport-security"]).toContain("includeSubDomains");
+    expect(headers["cross-origin-opener-policy"]).toBe("same-origin");
   }
 });
 
@@ -34,7 +36,13 @@ test("the daily job runs safely when called: with no Jira accounts it reports no
   expect(await response.json()).toEqual({
     reported: 0,
     closed: 0,
-    cleanedUp: { sessions: expect.any(Number), verifications: expect.any(Number), rateLimits: expect.any(Number) },
+    cleanedUp: {
+      sessions: expect.any(Number),
+      verifications: expect.any(Number),
+      rateLimits: expect.any(Number),
+      usageEvents: expect.any(Number),
+      securityCounts: expect.any(Number),
+    },
   });
 });
 
@@ -95,4 +103,44 @@ test("signing in sets only cookies the Privacy page lists", async ({ page }) => 
   const names = (await page.context().cookies()).map((c) => c.name.replace(/^__Secure-/, ""));
   expect(names.length).toBeGreaterThan(0);
   for (const name of names) expect(listed, name).toContain(name);
+});
+
+// Checked against the live site by hand on 2026-10-30; kept here so a change can't quietly undo them.
+test("a request from another site can't act for a signed-in user, and the session survives it", async ({ page }) => {
+  await signIn(page);
+  const forged = await page.request.post("/api/auth/sign-out", { headers: { Origin: "https://evil.example" }, data: {} });
+  expect(forged.status()).toBe(403);
+  const session = await page.request.get("/api/auth/get-session");
+  expect(await session.json()).toMatchObject({ user: { email: expect.stringContaining("@example.test") } });
+  // The same call from this site's own pages works (it is what the Sign out button does).
+  const own = await page.request.post("/api/auth/sign-out", { headers: { Origin: BASE_URL }, data: {} });
+  expect(own.ok()).toBe(true);
+});
+
+test("sign-in can't be sent to another site", async ({ request }) => {
+  const response = await request.post("/api/auth/sign-in/social", {
+    headers: { Origin: BASE_URL },
+    data: { provider: "github", callbackURL: "https://evil.example/steal" },
+  });
+  expect(response.status()).toBe(403);
+  expect(await response.json()).toMatchObject({ code: "INVALID_CALLBACK_URL" });
+});
+
+test("the sign-in library's profile, email, password and session endpoints are closed", async ({ page }) => {
+  await signIn(page);
+  for (const path of ["update-user", "change-email", "change-password", "set-password", "delete-user", "list-accounts", "unlink-account", "list-sessions", "revoke-session", "revoke-sessions", "revoke-other-sessions"]) {
+    const response = await page.request.post(`/api/auth/${path}`, { headers: { Origin: BASE_URL }, data: {} });
+    expect(response.status(), path).toBe(404);
+  }
+  // A user can't store an oversized name or an image address of their choosing.
+  const rename = await page.request.post("/api/auth/update-user", { headers: { Origin: BASE_URL }, data: { name: "x".repeat(10_000), image: "https://evil.example/x.png" } });
+  expect(rename.status()).toBe(404);
+});
+
+test("server actions refuse a caller who isn't signed in", async ({ request }) => {
+  const response = await request.post("/projects", {
+    headers: { "Next-Action": "0".repeat(40), "content-type": "text/plain;charset=UTF-8" },
+    data: "[]",
+  });
+  expect([400, 401, 404]).toContain(response.status());
 });

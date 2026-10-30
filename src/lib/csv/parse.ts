@@ -123,6 +123,10 @@ export function storyProblems(story: Story, epic = ""): string[] {
   tooLong(story.status, STORY_LIMITS.status, "status");
   tooLong(epic, EPIC_MAX_LENGTH, "epic");
   tooLong(story.issueType ?? "", STORY_LIMITS.issueType, "type");
+  // The database can't store a null character, and one would fail the whole import with no way to see why.
+  if ([story.key, story.title, story.description, story.acceptanceCriteria, story.status, epic, story.issueType ?? ""].some((v) => v.includes("\u0000"))) {
+    problems.push("A field contains a null character (an invisible control character); remove it and try again.");
+  }
   if (story.storyPoints !== null && story.storyPoints > STORY_LIMITS.points) {
     problems.push(`Story points can't be more than ${STORY_LIMITS.points}.`);
   }
