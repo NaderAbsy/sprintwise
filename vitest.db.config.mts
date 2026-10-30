@@ -11,7 +11,7 @@ export default defineConfig({
   },
   test: {
     include: ["src/**/*.db.test.ts"],
-    setupFiles: ["dotenv/config"],
+    setupFiles: ["dotenv/config", "./src/test/local-database.ts"],
     fileParallelism: false,
     testTimeout: 30_000,
   },

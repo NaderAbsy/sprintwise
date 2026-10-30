@@ -13,6 +13,8 @@ export function readStoryForm(data: FormData): StoryForm {
   // Forms send line breaks as "\r\n"; stories keep "\n", like text boxes and the importer.
   const text = (name: string) =>
     String(data.get(name) ?? "")
+      // A null character can't be stored in the database and would fail the whole save with no way to fix it.
+      .replace(/\u0000/g, "")
       .replace(/\r\n?/g, "\n")
       .trim();
   const fieldErrors: Record<string, string> = {};

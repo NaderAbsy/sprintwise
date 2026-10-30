@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { storyProblems } from "@/lib/csv/parse";
-import { IMPORT_FIELDS, IMPORT_MAX_STORIES, type ColumnMapping } from "@/lib/csv/template";
+import { IMPORT_FIELDS, IMPORT_MAX_BYTES, IMPORT_MAX_STORIES, type ColumnMapping } from "@/lib/csv/template";
 import { isDone } from "@/lib/sprint/metrics";
 import { isEpic, isSubtask, normalizeKey, type Story } from "@/lib/stories/types";
 
@@ -31,6 +31,10 @@ export function readImportPayload(
 ): { ok: true; stories: ImportStory[]; mapping: ColumnMapping } | { ok: false; error: string } {
   let raw: unknown;
   let rawMapping: unknown;
+  // The browser stops a selection this big, but anything can be sent to a server action: check before reading it.
+  if (typeof storiesJson === "string" && storiesJson.length > IMPORT_MAX_BYTES) {
+    return { ok: false, error: "That selection is too large to import in one go. Tick fewer stories." };
+  }
   try {
     raw = JSON.parse(typeof storiesJson === "string" ? storiesJson : "");
     rawMapping = typeof mappingJson === "string" && mappingJson !== "" ? JSON.parse(mappingJson) : {};

@@ -5,6 +5,7 @@ import type { FormState } from "@/lib/form-state";
 import { MAX_STORIES_PER_PROJECT } from "@/lib/limits";
 import { db } from "@/lib/server/db";
 import { isJiraKey, issuesAsCsv, JIRA_MAX_ISSUES, JiraError, jiraIssuesByKey, searchJira, type JiraIssue } from "@/lib/server/jira";
+import { errorSummary } from "@/lib/server/log";
 import { saveStories } from "@/lib/server/save-stories";
 import { LimitError } from "@/lib/server/within-limit";
 import { doneStatusesOf } from "@/lib/server/sprint";
@@ -32,6 +33,8 @@ export function leftOutKeys(value: unknown): Set<string> | null {
 
 /** At most this many stories the search no longer finds are looked up by key in one sync. */
 const LOOKUP_MAX = 500;
+/** Keys kept out of later syncs after being deleted here: the project can hold 1,000 stories, so this is generous. */
+const LEFT_OUT_MAX = 5000;
 
 /**
  * Runs the project's saved search again with `userId`'s Jira connection: updates
@@ -140,7 +143,7 @@ export async function syncProjectFromJira(
   } catch (error) {
     if (error instanceof LimitError) return { error: error.message };
     // Nothing was saved: the transaction rolled back.
-    console.error("Sync from Jira couldn't save", { projectId: project.id, error: error instanceof Error ? `${error.name}: ${error.message}` : String(error) });
+    console.error("Sync from Jira couldn't save", { projectId: project.id, error: errorSummary(error) });
     return { error: "Jira's issues were read, but saving them failed, so nothing changed. Try again in a minute." };
   }
   await recordSprintChanges(project.id);
@@ -170,7 +173,14 @@ export async function syncProjectFromJira(
  */
 export async function leaveOutOfSync(projectId: string, keys: string[]) {
   if (keys.length === 0) return;
+  // Each key once (its latest position), and at most LEFT_OUT_MAX of them, oldest dropped first: a project that
+  // deletes and re-imports the same stories over and over can't grow this list, which every project page reads.
   await db.$executeRaw`
-    UPDATE projects SET "jiraLeftOut" = "jiraLeftOut" || ${JSON.stringify(keys)}::jsonb
+    UPDATE projects SET "jiraLeftOut" = (
+      SELECT COALESCE(jsonb_agg(k ORDER BY pos), '[]'::jsonb) FROM (
+        SELECT k, max(pos) AS pos FROM jsonb_array_elements("jiraLeftOut" || ${JSON.stringify(keys)}::jsonb) WITH ORDINALITY AS t(k, pos)
+        GROUP BY k ORDER BY max(pos) DESC LIMIT ${LEFT_OUT_MAX}
+      ) newest
+    )
     WHERE id = ${projectId} AND "jiraCloudId" IS NOT NULL AND jsonb_typeof("jiraLeftOut") = 'array'`;
 }

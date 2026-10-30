@@ -15,7 +15,7 @@ import { bottomRank, saveStories } from "@/lib/server/save-stories";
 import { jiraSites } from "@/lib/server/jira";
 import { jiraFailure, leaveOutOfSync, otherSite } from "@/lib/server/jira-sync";
 import { recordSprintChanges } from "@/lib/server/tracking";
-import { LimitError, withinLimit } from "@/lib/server/within-limit";
+import { LimitError, storyRoom, withinLimit } from "@/lib/server/within-limit";
 import { overLimit } from "@/lib/server/action-limits";
 import { recordUsage } from "@/lib/server/usage";
 import { readStoryForm, STORY_LIMITS } from "@/lib/stories/form";
@@ -107,9 +107,13 @@ async function nextStoryKey(projectId: string): Promise<string> {
 /** Paste one story: score it, save it, and open its result. */
 export async function addStory(projectId: string, _prev: FormState, formData: FormData): Promise<FormState> {
   const project = await requireProject(projectId);
+  const limited = await overLimit("edit", project.userId);
+  if (limited) return { error: limited };
   const { story: fields, rawKey, fieldErrors } = readStoryForm(formData);
   const full = `A project can hold up to ${MAX_STORIES_PER_PROJECT} stories. Delete some to make room.`;
   if ((await db.story.count({ where: { projectId: project.id } })) >= MAX_STORIES_PER_PROJECT) return { error: full };
+  const accountFull = await storyRoom(db, project.userId, 1);
+  if (accountFull) return { error: accountFull };
 
   const key = rawKey === "" ? await nextStoryKey(project.id) : normalizeKey(rawKey);
   if (!fieldErrors.key && (await db.story.findUnique({ where: { projectId_key: { projectId: project.id, key } } }))) {
@@ -152,6 +156,8 @@ export async function addStory(projectId: string, _prev: FormState, formData: Fo
 /** Edit a saved story and re-score it. The key stays, because sprints match stories by key. */
 export async function updateStory(projectId: string, storyId: string, _prev: FormState, formData: FormData): Promise<FormState> {
   const project = await requireProject(projectId);
+  const limited = await overLimit("edit", project.userId);
+  if (limited) return { error: limited };
   assertId(storyId);
   const existing = await db.story.findFirst({ where: { id: storyId, projectId: project.id } });
   if (!existing) return { error: "This story no longer exists." };
@@ -287,6 +293,8 @@ export async function addSampleStories(projectId: string) {
 export async function deleteStory(projectId: string, storyId: string) {
   const project = await requireProject(projectId);
   assertId(storyId);
+  // Over the edit limit (a script, not a person): the actions without a message to show do nothing.
+  if (await overLimit("edit", project.userId)) redirect(`/projects/${project.id}`);
   const gone = await db.story.findMany({ where: { id: storyId, projectId: project.id }, select: { key: true } });
   await db.story.deleteMany({ where: { id: storyId, projectId: project.id } });
   await leaveOutOfSync(project.id, gone.map((s) => s.key));
@@ -385,6 +393,8 @@ export async function quickUpdateStory(
 ): Promise<FormState> {
   const project = await requireProject(projectId);
   assertId(storyId);
+  const limited = await overLimit("edit", project.userId);
+  if (limited) return { error: limited };
   const row = await db.story.findFirst({ where: { id: storyId, projectId: project.id } });
   if (!row) return { error: "This story no longer exists." };
 
@@ -426,6 +436,7 @@ export async function quickUpdateStory(
 export async function moveStory(projectId: string, storyId: string, index: number, withFinished = true) {
   const project = await requireProject(projectId);
   assertId(storyId);
+  if (await overLimit("edit", project.userId)) return;
   if (typeof index !== "number" || !Number.isFinite(index)) return;
   const all = await db.story.findMany({
     where: { projectId: project.id },
@@ -450,6 +461,7 @@ export async function moveStory(projectId: string, storyId: string, index: numbe
 export async function markCopiedToJira(projectId: string, storyId: string) {
   const project = await requireProject(projectId);
   assertId(storyId);
+  if (await overLimit("edit", project.userId)) return;
   await db.story.updateMany({ where: { id: storyId, projectId: project.id }, data: { editedAt: null } });
   revalidatePath(`/projects/${project.id}`, "layout");
 }
@@ -460,6 +472,8 @@ export async function markCopiedToJira(projectId: string, storyId: string) {
  * new link is different from the old one.
  */
 export async function enableBacklogShare(projectId: string) {
+  // Makes a project public, so the session is checked against the database, not the five-minute cookie copy.
+  await requireFreshUser();
   const project = await requireProject(projectId);
   if (!project.shareToken) {
     await db.project.update({ where: { id: project.id }, data: { shareToken: randomBytes(32).toString("base64url") } });
@@ -479,6 +493,8 @@ const selectedIds = (ids: string[]) =>
 /** Sets one status on several stories at once, e.g. moving a batch to "Ready for refinement". */
 export async function bulkSetStatus(projectId: string, ids: string[], status: string): Promise<FormState> {
   const project = await requireProject(projectId);
+  const limited = await overLimit("edit", project.userId);
+  if (limited) return { error: limited };
   const value = String(status ?? "").trim();
   if (value.length > STORY_LIMITS.status) return { error: `Keep the status under ${STORY_LIMITS.status} characters.` };
   const { count } = await db.story.updateMany({
@@ -493,6 +509,7 @@ export async function bulkSetStatus(projectId: string, ids: string[], status: st
 /** Deletes several stories. Sprints that include them keep their own copies. */
 export async function bulkDeleteStories(projectId: string, ids: string[]) {
   const project = await requireProject(projectId);
+  if (await overLimit("edit", project.userId)) return;
   const where = { projectId: project.id, id: { in: selectedIds(ids) } };
   const gone = await db.story.findMany({ where, select: { key: true } });
   await db.story.deleteMany({ where });

@@ -36,6 +36,10 @@ export default function PrivacyPage() {
           </li>
           {aiConfigured && <li>A count of how many AI suggestions you asked for each day, to enforce the daily limit.</li>}
           <li>
+            A count per day of requests Sprintwise refused (too many sign-in attempts, a foreign origin, an account over its
+            limits). Only the day and the kind: no IP address, user or detail. Deleted after 90 days.
+          </li>
+          <li>
             Anonymous usage counts (checks run, imports, reports) with no user id or story text. Whoever runs
             Sprintwise sees totals, such as how many accounts have created a project, never who.
           </li>

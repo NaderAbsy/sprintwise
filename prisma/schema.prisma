@@ -311,3 +311,14 @@ model ActionLimit {
 
   @@map("action_limits")
 }
+
+/// Daily counts of refused or rate-limited requests, for the site owner's Insights page. A count per day and kind only:
+/// no IP address, no user id, nothing about the request.
+model SecurityCount {
+  day   String
+  kind  String
+  count Int
+
+  @@id([day, kind])
+  @@map("security_counts")
+}

@@ -3,6 +3,9 @@ import { db } from "@/lib/server/db";
 
 /** Sign-in attempt counts only matter for a minute or so; a day is generous. */
 const RATE_LIMIT_KEEP_MS = 24 * 60 * 60 * 1000;
+/** Insights reads the last five months of usage counts and 30 days of refusals; older rows only take room. */
+const USAGE_KEEP_MS = 190 * 24 * 60 * 60 * 1000;
+const SECURITY_COUNT_KEEP_DAYS = 90;
 
 /**
  * Deletes sign-in data that has done its job: ended sessions (each holds an IP address and browser
@@ -11,12 +14,21 @@ const RATE_LIMIT_KEEP_MS = 24 * 60 * 60 * 1000;
  * this catches the rest. Run daily by the cron route.
  */
 export async function deleteExpiredAuthData(now = new Date()) {
-  const [sessions, verifications, rateLimits] = await db.$transaction([
+  const [sessions, verifications, rateLimits, , usage, security] = await db.$transaction([
     db.session.deleteMany({ where: { expiresAt: { lt: now } } }),
     db.verification.deleteMany({ where: { expiresAt: { lt: now } } }),
     db.rateLimit.deleteMany({ where: { lastRequest: { lt: BigInt(now.getTime() - RATE_LIMIT_KEEP_MS) } } }),
     // Per-account action counts (see action-limits.ts) only cover the last few minutes.
     db.actionLimit.deleteMany({ where: { windowStart: { lt: new Date(now.getTime() - RATE_LIMIT_KEEP_MS) } } }),
+    // Anonymous usage counts and refusal counts: kept as long as Insights shows them, then dropped.
+    db.usageEvent.deleteMany({ where: { createdAt: { lt: new Date(now.getTime() - USAGE_KEEP_MS) } } }),
+    db.securityCount.deleteMany({ where: { day: { lt: new Date(now.getTime() - SECURITY_COUNT_KEEP_DAYS * 86_400_000).toISOString().slice(0, 10) } } }),
   ]);
-  return { sessions: sessions.count, verifications: verifications.count, rateLimits: rateLimits.count };
+  return {
+    sessions: sessions.count,
+    verifications: verifications.count,
+    rateLimits: rateLimits.count,
+    usageEvents: usage.count,
+    securityCounts: security.count,
+  };
 }

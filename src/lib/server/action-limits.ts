@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/server/db";
+import { recordSecurityEvent } from "@/lib/server/security-events";
 
 /**
  * How many times one account may do each heavy action per window. Generous for a
@@ -11,6 +12,8 @@ export const ACTION_LIMITS = {
   import: { max: 30, windowMs: 10 * 60_000, what: "imports" },
   rescore: { max: 30, windowMs: 10 * 60_000, what: "rule changes" },
   snapshot: { max: 40, windowMs: 10 * 60_000, what: "snapshots" },
+  // Saving, moving or deleting stories, one at a time or in a batch: a script, not a person, does more than this.
+  edit: { max: 600, windowMs: 10 * 60_000, what: "edits" },
 } as const;
 export type LimitedAction = keyof typeof ACTION_LIMITS;
 
@@ -27,5 +30,8 @@ export async function overLimit(action: LimitedAction, userId: string, now = new
       count = CASE WHEN action_limits."windowStart" < ${since} THEN 1 ELSE action_limits.count + 1 END,
       "windowStart" = CASE WHEN action_limits."windowStart" < ${since} THEN ${now} ELSE action_limits."windowStart" END
     RETURNING count`;
-  return row.count > max ? `That's a lot of ${what} in a few minutes. Wait ${Math.round(windowMs / 60_000)} minutes, then try again.` : null;
+  if (row.count <= max) return null;
+  // Counted once per refusal for the owner's Insights page (no user, no detail).
+  await recordSecurityEvent("limit_hit");
+  return `That's a lot of ${what} in a few minutes. Wait ${Math.round(windowMs / 60_000)} minutes, then try again.`;
 }

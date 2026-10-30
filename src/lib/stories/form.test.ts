@@ -52,3 +52,15 @@ describe("line breaks", () => {
     expect(storyFieldValues({ acceptanceCriteria: "- One\r\n- Two", description: "a\r\nb" })).toMatchObject({ acceptanceCriteria: "- One\n- Two", description: "a\nb" });
   });
 });
+
+describe("null characters", () => {
+  it("are removed from pasted text, since the database can't store them", () => {
+    const data = new FormData();
+    data.set("title", "Pay\u0000 by card");
+    data.set("description", "As a shopper\u0000 I want to pay");
+    const { story, fieldErrors } = readStoryForm(data);
+    expect(story.title).toBe("Pay by card");
+    expect(story.description).toBe("As a shopper I want to pay");
+    expect(fieldErrors.title).toBeUndefined();
+  });
+});

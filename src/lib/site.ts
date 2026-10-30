@@ -33,6 +33,21 @@ export type Release = {
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.29",
+    date: "2026-10-30",
+    title: "Security hardening",
+    summary: "A full security review of Sprintwise, and every gap it found closed.",
+    items: [
+      "Test-only settings can no longer be switched on for any real server, so a copy of the code run elsewhere can't be left open by mistake.",
+      "Sign-in library features Sprintwise doesn't use (changing a profile, email or password, listing sessions) are closed.",
+      "Saving, moving and deleting stories now have a rate limit like imports and Jira calls, and one account can hold up to 5,000 stories.",
+      "Links in text written by other people in Jira always show the address they really go to.",
+      "A hidden character that could make a save or import fail with no explanation is now removed or reported.",
+      "The site owner's Insights page counts refused requests per day (no IP addresses or personal details); the Privacy page says so.",
+      "The sign-in library is updated, with tighter cookie settings, and the site sends stricter browser headers.",
+    ],
+  },
+  {
     version: "v2.28",
     date: "2026-10-26",
     title: "A clearer, faster public site",

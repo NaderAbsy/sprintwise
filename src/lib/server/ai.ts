@@ -9,6 +9,7 @@ import {
   type Suggestion,
 } from "@/lib/ai/suggestion";
 import { splitCriteria, type Story } from "@/lib/stories/types";
+import { testFlag } from "@/lib/server/local-server";
 
 /**
  * The Claude API is called only from the server (requirements doc, "AI layer
@@ -20,10 +21,7 @@ export const DEFAULT_MODEL = "claude-opus-5-5";
 const TIMEOUT_MS = 15_000;
 
 /** Canned replies for end-to-end tests; never allowed in production. */
-const fakeResponses = process.env.AI_FAKE_RESPONSES === "true";
-if (fakeResponses && process.env.VERCEL_ENV) {
-  throw new Error("AI_FAKE_RESPONSES must not be set on a Vercel deploy.");
-}
+const fakeResponses = testFlag("AI_FAKE_RESPONSES");
 
 export const aiConfigured = fakeResponses || Boolean(process.env.ANTHROPIC_API_KEY);
 

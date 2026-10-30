@@ -34,6 +34,31 @@ function migrate(attempts = 4) {
   }
 }
 
+/**
+ * A production deploy with a missing or weak setting would start but be unsafe or half-broken: without CRON_SECRET the
+ * nightly jobs are refused, with a localhost BETTER_AUTH_URL sign-in redirects go to the wrong place. Stops the deploy
+ * (the live site keeps running the previous one) and names the problem; never prints a value.
+ */
+function checkProductionEnvironment() {
+  const env = process.env;
+  const problems = [];
+  for (const name of ["DATABASE_URL", "BETTER_AUTH_SECRET", "BETTER_AUTH_URL", "GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET", "CRON_SECRET"]) {
+    if (!env[name]) problems.push(`${name} is not set`);
+  }
+  if (env.BETTER_AUTH_SECRET && env.BETTER_AUTH_SECRET.length < 32) problems.push("BETTER_AUTH_SECRET is shorter than 32 characters");
+  if (env.CRON_SECRET && env.CRON_SECRET.length < 16) problems.push("CRON_SECRET is shorter than 16 characters");
+  if (env.BETTER_AUTH_URL && !/^https:\/\/(?!localhost|127\.|\[::1\])/.test(env.BETTER_AUTH_URL)) problems.push("BETTER_AUTH_URL must be an https:// address that isn't localhost");
+  for (const name of ["ENABLE_TEST_SIGN_IN", "JIRA_FAKE", "AI_FAKE_RESPONSES"]) {
+    if (env[name]) problems.push(`${name} is a test-only setting and must not be set`);
+  }
+  if (problems.length > 0) {
+    console.error(`\nThe production environment isn't safe to deploy:\n${problems.map((p) => `  - ${p}`).join("\n")}\nFix them in Vercel (Settings → Environment Variables → Production), then redeploy.\n`);
+    process.exit(1);
+  }
+}
+
+if (process.env.VERCEL_ENV === "production") checkProductionEnvironment();
+
 if (process.env.VERCEL_ENV === "production" || process.env.VERCEL_ENV === "preview") {
   migrate();
 } else if (process.env.VERCEL_ENV) {
