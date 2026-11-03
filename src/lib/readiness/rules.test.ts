@@ -5,6 +5,7 @@ import {
   capNote,
   criteriaNeeded,
   DEFAULT_VAGUE_WORDS,
+  FULL_SCORE_NOTE,
   findVagueWords,
   isUserStoryType,
   readySummary,
@@ -21,6 +22,12 @@ const rule = (s: ReturnType<typeof scoreStory>, id: RuleId) => s.rules.find((r) 
 describe("rules table", () => {
   it("weights total 100", () => {
     expect(RULES.reduce((sum, r) => sum + r.points, 0)).toBe(100);
+  });
+
+  it("has the nine checks the full-score note talks about", () => {
+    expect(RULES).toHaveLength(9);
+    expect(FULL_SCORE_NOTE).toMatch(/all nine checks passed/);
+    expect(FULL_SCORE_NOTE).toMatch(/doesn't mean the story is clear or ready for the team/);
   });
 });
 
@@ -270,6 +277,24 @@ describe("findings: one reason per missing thing", () => {
   it('folds a missing benefit into the story format when there\'s no "so that"', () => {
     const result = scoreStory(story({ description: "As a finance admin I want to export an invoice as a PDF" }));
     expect(result.findings).toEqual([expect.objectContaining({ id: "C2", points: 25, reason: expect.stringMatching(/no benefit/) })]);
+  });
+
+  it('says a reason given another way is not counted as a benefit, instead of saying none is stated', () => {
+    for (const reason of ["because refunds are slow", "in order to get paid back", "so I can get paid back"]) {
+      const result = scoreStory(story({ description: `As a finance admin I want to export an invoice as a PDF ${reason}` }));
+      const [finding] = result.findings;
+      // The score is the same as without any reason: the wording changes, the rules don't.
+      expect(result.findings.map((f) => [f.id, f.points])).toEqual([["C2", 25]]);
+      expect(finding.reason).toMatch(/does give a reason/);
+      expect(finding.reason).toMatch(/"so that …"/);
+      expect(finding.reason).not.toMatch(/no benefit/);
+    }
+  });
+
+  it('still says no benefit is stated when there\'s no reason at all, and never when "so that" is there', () => {
+    expect(scoreStory(story({ description: "As a finance admin I want to export an invoice as a PDF" })).findings[0].reason).toMatch(/no benefit is stated/);
+    const withSoThat = scoreStory(story({ description: "I want to export an invoice as a PDF so that I can email it" }));
+    expect(withSoThat.findings.map((f) => f.reason).join(" ")).not.toMatch(/benefit/);
   });
 
   it('keeps an empty "so that" as its own finding', () => {

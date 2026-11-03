@@ -126,6 +126,10 @@ export const RULES: ReadonlyArray<{ id: RuleId; check: string; points: number }>
   { id: "C9", check: "Has a description", points: 5 },
 ];
 
+/** Shown beside a full score: the rules can only see the wording, not whether the team understands the story. */
+export const FULL_SCORE_NOTE =
+  "100 means all nine checks passed. It doesn't mean the story is clear or ready for the team: read it aloud together before you commit to it.";
+
 /**
  * Blockers (rules v2): a story that isn't estimated (C6) or is too big (C7)
  * can't be Ready, whatever its score, because the team can't commit to it.
@@ -179,6 +183,12 @@ function countPhrase(text: string, phrase: string): number {
 
 const STORY_FORMAT = new RegExp(
   `${phrasePattern("as a").source}|${phrasePattern("as an").source}`,
+  "iu",
+);
+
+/** Ways of giving a reason that C4 doesn't count (only "so that …" is a benefit): used to word the feedback, never to score. */
+const OTHER_REASON = new RegExp(
+  ["because", "in order to", "so i can", "so we can", "so they can"].map((phrase) => phrasePattern(phrase).source).join("|"),
   "iu",
 );
 
@@ -280,7 +290,9 @@ export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTIN
       reason: !followsFormat
         ? soThat
           ? 'Doesn\'t follow "As a … I want … so that …" in the title or description.'
-          : 'Doesn\'t follow "As a … I want … so that …", so no benefit is stated either.'
+          : OTHER_REASON.test(storyText)
+            ? 'Doesn\'t follow "As a … I want … so that …". It does give a reason, but Sprintwise counts a benefit only when it\'s written as "so that …": say it that way.'
+            : 'Doesn\'t follow "As a … I want … so that …", so no benefit is stated either.'
         : `"As a ${role || "…"}" could be anyone. Name who it's for, such as "As a returning customer" or "As a support agent".`,
     },
     C3: {

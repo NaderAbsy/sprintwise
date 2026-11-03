@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { diffSnapshots } from "@/lib/sprint/diff";
-import { computeMetrics, formatPercent, formatPoints, isDone, reestimateNote, statusChoices, sumPoints } from "@/lib/sprint/metrics";
+import { computeMetrics, explainMetrics, formatPercent, formatPoints, isDone, reestimateNote, statusChoices, sumPoints } from "@/lib/sprint/metrics";
 import { story } from "@/test/story";
 import { baseline, latest } from "@/test/worked-example";
 
@@ -203,5 +203,28 @@ describe("criteria moving between the description and the criteria field (v2.22)
     const before = story("Intro.\nh3. Acceptance criteria\n* One", "");
     const after = story("Intro.\nh3. Acceptance criteria\n* One\n* Two", "");
     expect(diffSnapshots([before], [after]).map((c) => c.type)).toEqual(["criteria-changed"]);
+  });
+});
+
+describe("explainMetrics", () => {
+  it("shows how added, removed and re-estimated points make the net change, and what completion divides by", () => {
+    const lines = explainMetrics(computeMetrics(baseline, latest))!;
+    expect(lines.net).toBe("Net change: +5 pts added, −3 pts removed, +3 pts re-estimated = +5 pts (30 → 35 pts). +5 pts ÷ 30 pts baseline = +16.7%.");
+    expect(lines.churn).toBe("Churn: 5 pts added + 3 pts removed + 3 pts re-estimated (up or down both count) = 11 pts ÷ 30 pts baseline = 36.7%.");
+    expect(lines.completion).toContain("21 pts of the 30 pts committed on day one are done = 70.0%.");
+    expect(lines.completion).toContain("work added later isn't counted");
+  });
+
+  it("keeps the signs straight when re-estimates cancel out and the sprint shrinks", () => {
+    const before = [story({ key: "A-1", storyPoints: 3 }), story({ key: "A-2", storyPoints: 5 }), story({ key: "A-3", storyPoints: 2 })];
+    const after = [story({ key: "A-1", storyPoints: 5 }), story({ key: "A-2", storyPoints: 3 })];
+    const lines = explainMetrics(computeMetrics(before, after))!;
+    expect(lines.net).toContain("0 pts added, −2 pts removed, 0 pts re-estimated = −2 pts (10 → 8 pts). −2 pts ÷ 10 pts baseline = −20.0%.");
+    // Up and down both count towards churn, even though they cancel in the net.
+    expect(lines.churn).toContain("2 pts removed + 4 pts re-estimated (up or down both count) = 6 pts ÷ 10 pts baseline = 60.0%.");
+  });
+
+  it("says nothing when the baseline has no points to divide by", () => {
+    expect(explainMetrics(computeMetrics([story({ storyPoints: null })], [story({ storyPoints: 3 })]))).toBeNull();
   });
 });

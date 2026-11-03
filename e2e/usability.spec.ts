@@ -74,7 +74,7 @@ test("a new user can run a whole sprint without a CSV, guided by the checklist",
 
   await page.goto(sprintUrl);
   await expect(page.getByRole("region", { name: "Change log" })).toContainText("TIDY-102");
-  await expect(page.getByRole("region", { name: "Sprint metrics" }).getByText("30.0%")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Sprint metrics" }).getByText("30.0%", { exact: true })).toBeVisible();
 
   // Adding a story still goes through "Add or remove stories".
   await expect(page.getByRole("checkbox", { name: /TIDY-102/ })).toBeChecked();

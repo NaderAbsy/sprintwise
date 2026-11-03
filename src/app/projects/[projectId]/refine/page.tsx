@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/empty-state";
 import { JiraInline, JiraText } from "@/components/jira-text";
 import { ScoreRing } from "@/components/score-ring";
 import { SecondLookList } from "@/components/second-look";
-import { scoreStory } from "@/lib/readiness/rules";
+import { FULL_SCORE_NOTE, scoreStory } from "@/lib/readiness/rules";
 import { secondLook } from "@/lib/readiness/second-look";
 import { db } from "@/lib/server/db";
 import { requireProject } from "@/lib/server/dal";
@@ -166,6 +166,7 @@ export default async function RefinePage({ params, searchParams }: PageProps<"/p
               </div>
             </div>
             {readiness.bandCap && <p className="text-sm text-needs-work">{readiness.bandCap}</p>}
+            {readiness.findings.length === 0 && <p className="text-xs text-muted">{FULL_SCORE_NOTE}</p>}
             {readiness.findings.length > 0 && (
               <ul className="space-y-1.5 text-sm">
                 {readiness.findings.map((f) => (

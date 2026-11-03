@@ -51,9 +51,12 @@ test("F-2: the demo includes a sample sprint and its one-page report", async ({ 
   await expect(
     sprint.getByText("Stories that changed scored 40 points lower at the baseline than those that didn't."),
   ).toBeVisible();
-  await expect(sprint.getByText("+18.8%")).toBeVisible();
-  await expect(sprint.getByText("50.0%")).toBeVisible();
-  await expect(sprint.getByText("37.5%")).toBeVisible();
+  await expect(sprint.getByText("+18.8%", { exact: true })).toBeVisible();
+  // The sums behind the tiles, worked out from the sample sprint's own figures.
+  await expect(sprint.getByText("+3 pts added, −5 pts removed, +8 pts re-estimated = +6 pts (32 → 38 pts)")).toBeVisible();
+  await expect(sprint.getByText(/12 pts of the 32 pts committed on day one are done = 37\.5%/)).toBeVisible();
+  await expect(sprint.getByText("50.0%", { exact: true })).toBeVisible();
+  await expect(sprint.getByText("37.5%", { exact: true })).toBeVisible();
 
   await sprint.getByRole("link", { name: "Open the sprint report" }).click();
   await expect(page).toHaveURL(/\/demo\/report$/);
@@ -96,6 +99,7 @@ test("the home page scores a story live as you type", async ({ page }) => {
   await expect(scorer.getByText("Not ready")).toBeVisible();
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await expect(scorer.getByText("Every check passed")).toBeVisible();
+  await expect(scorer.getByText(/100 means all nine checks passed. It doesn't mean the story is clear or ready for the team/)).toBeVisible();
   await page.getByLabel("Story title").fill("Make it fast");
   await expect(scorer.getByText("No vague words in the story: failed")).toBeAttached();
 });

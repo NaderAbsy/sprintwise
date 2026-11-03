@@ -1,4 +1,23 @@
-import { formatPercent, formatPoints, reestimateNote, unestimatedNote, type SprintMetrics } from "@/lib/sprint/metrics";
+import { explainMetrics, formatPercent, formatPoints, reestimateNote, unestimatedNote, type SprintMetrics } from "@/lib/sprint/metrics";
+
+/**
+ * The sums behind Net change, Churn and Completion, so nobody has to work out why 3 added and 5 removed make +18.8%.
+ * Compact (the printed report) drops the heading and the churn line: the report has to stay one A4 page.
+ */
+export function MetricsArithmetic({ metrics, compact = false }: { metrics: SprintMetrics; compact?: boolean }) {
+  const lines = explainMetrics(metrics);
+  if (!lines) return null;
+  return (
+    <div className={compact ? "text-xs leading-tight text-muted" : "text-xs text-muted"}>
+      {!compact && <p className="font-medium">How these add up</p>}
+      <ul className={compact ? "space-y-0.5" : "mt-1 space-y-1"}>
+        <li>{lines.net}</li>
+        {!compact && <li>{lines.churn}</li>}
+        <li>{lines.completion}</li>
+      </ul>
+    </div>
+  );
+}
 
 /** S-4: the five metrics from the requirements doc, plus the two totals they are based on. */
 export function SprintMetricsPanel({ metrics }: { metrics: SprintMetrics }) {
@@ -40,6 +59,7 @@ export function SprintMetricsPanel({ metrics }: { metrics: SprintMetrics }) {
           </div>
         ))}
       </dl>
+      <MetricsArithmetic metrics={metrics} />
       {metrics.baselineTotal === 0 && (
         <p className="text-sm text-needs-work">The baseline has 0 points, so percentages can&apos;t be calculated.</p>
       )}

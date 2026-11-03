@@ -12,7 +12,7 @@ import { StoryFields } from "@/components/story-fields";
 import { useLeaveWarning } from "@/components/use-leave-warning";
 import { dropStoryDraft, useStoryDraft } from "@/components/use-story-draft";
 import { emptyFormState } from "@/lib/form-state";
-import { findVagueWords, scoreStory, type Readiness, type RuleSettings } from "@/lib/readiness/rules";
+import { FULL_SCORE_NOTE, findVagueWords, scoreStory, type Readiness, type RuleSettings } from "@/lib/readiness/rules";
 import { secondLook, type SecondLook } from "@/lib/readiness/second-look";
 import { hasPlaceholders, SCENARIO_TEMPLATE, SPLIT_PATTERNS, STORY_TEMPLATE, vagueWordTips } from "@/lib/stories/helpers";
 import { storyFieldValues, type StoryDefaults, type StoryFieldName } from "@/lib/stories/compare";
@@ -218,10 +218,13 @@ export function StoryEditor({
           </p>
         )}
         {failed.length === 0 && failedCustom.length === 0 ? (
-          <p className="flex items-center gap-2 text-sm text-ready">
-            <Check aria-hidden="true" className="h-4 w-4" />
-            Every check passed.
-          </p>
+          <div className="space-y-1">
+            <p className="flex items-center gap-2 text-sm text-ready">
+              <Check aria-hidden="true" className="h-4 w-4" />
+              Every check passed.
+            </p>
+            <p className="text-xs text-muted">{FULL_SCORE_NOTE}</p>
+          </div>
         ) : (
           <div>
             <p className="text-sm font-medium">To raise the score</p>

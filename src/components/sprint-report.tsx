@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BurnupChart } from "@/components/burnup-chart";
 import { ChangeTable } from "@/components/change-table";
 import { PrintButton } from "@/components/print-button";
+import { MetricsArithmetic } from "@/components/sprint-metrics";
 import type { RuleSettings } from "@/lib/readiness/rules";
 import { burnupSeries } from "@/lib/sprint/burnup";
 import { formatDay } from "@/lib/sprint/dates";
@@ -86,7 +87,7 @@ export function SprintReport({
   ];
 
   return (
-    <article className="report mx-auto max-w-3xl space-y-6">
+    <article className="report mx-auto max-w-3xl space-y-6 print:space-y-4">
       <div className="no-print flex flex-wrap items-center justify-between gap-3">
         {back ? (
           <Link href={back.href} className="text-sm text-muted hover:underline">
@@ -143,6 +144,9 @@ export function SprintReport({
             </div>
           ))}
         </dl>
+        <div className="mt-2">
+          <MetricsArithmetic metrics={metrics} compact />
+        </div>
         {metrics.unestimatedKeys.length > 0 && (
           <p className="mt-2 text-xs text-muted">
             Counted as 0 points because they have no estimate: {metrics.unestimatedKeys.join(", ")}.
