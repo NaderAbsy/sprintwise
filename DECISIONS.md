@@ -2,6 +2,19 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-11-03 — v2.30: three wording fixes from a product-owner review
+
+A skeptical product-owner review of the live site and a second opinion on it left three low-risk, certain findings, all about what the product says, not how it scores. Nothing in the rules, weights, thresholds or settings changed (`RULES_VERSION` stays 7), so no existing score moves.
+
+- **A full score says what it means.** "Every check passed" next to a 100 invited reading it as "this story is clear". The score card (story page, refinement, editor, home and demo checkers) now adds one line: 100 means all nine checks passed, not that the story is clear or ready for the team. The rules read wording; they can't see whether a team understands the story.
+- **The report shows its sums.** Added 3, removed 5 and net +18.8% only reconcile through re-estimates, which sat in small print. The metrics panel and the report now print, from the same figures as the tiles, how added, removed and re-estimated points make the net change, what churn adds up (re-estimates count whether up or down), and that completion is divided by the day-one baseline, so work added later isn't counted even when it's done (the burn-up chart does show it).
+- **The benefit message no longer overclaims.** Only "so that …" counts as a benefit (C4). A story saying "because …", "in order to …" or "so I can …" was told "no benefit is stated". It now says it gives a reason but Sprintwise counts a benefit only when written as "so that …". The score is unchanged.
+
+- **The one-page report, re-measured.** Adding the sums first pushed the printed report's footer onto a second page, and measuring showed the promise was already thinner than it looked: with a goal, reasons and the readiness comparison all present, the sample report fitted 6 scope-change rows and spilled at 7, so the cap of 10 rows was only safe for a sparse report. Rows and section gaps are now tighter on paper (print only), the report lists 8 rows (the sample fits 10, and a worst case of 80-character names, a 300-character goal, reasons and an unestimated-story note fits 8), and the printed sums leave out the churn line. A test prints the sample report with a full log.
+- **Old saved explanations need no refresh.** A story's saved result keeps the explanation text it was scored with, but nothing reads it back: the story, refinement and shared pages score live, the backlog list reads only the rule ids, and the CSV export carries only the check names. Checked by planting the old wording in a saved result and looking at each page and the export.
+
+Considered and not done: counting "because" or "so I can" as a benefit, or accepting job-story wording. That changes every project's scores and needs a rules version; it waits for evidence of how many real backlogs write stories that way. Also left alone: exempting small tickets from criteria, per-rule switches, and scoring a CSV on the demo page without sign-in.
+
 ## 2026-10-30 — v2.29: a security review, and the gaps it found
 
 The user asked for 27 security measures "so hackers can't get into my vibe-coded app". Most already existed, so the work was an audit: prove each measure's status (live probes against sprintwise.app that read only and create nothing, plus three read-only code reviews: access control, injection and uploads, supply chain and secrets), fix only confirmed gaps, then test every protection. Result: no way found for one user or a visitor to reach someone else's data or the owner's page; no real secret in the code, history or the browser bundle (GitHub secret scanning: 0 alerts); `pnpm audit` clean.

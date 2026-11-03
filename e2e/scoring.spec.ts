@@ -28,6 +28,7 @@ test("rules v3: a story with the right shape but vague content isn't Ready, with
   await page.getByRole("button", { name: "Score and save" }).click();
   await expect(page.getByRole("heading", { level: 1, name: /Failed payments dashboard/ })).toBeVisible();
   await expect(page.getByRole("region", { name: "Readiness score" })).toContainText("Every check passed.");
+  await expect(page.getByRole("region", { name: "Readiness score" })).toContainText("100 means all nine checks passed. It doesn't mean the story is clear");
 
   // A bare story: seven checks fail, but there are four things to fix.
   await page.goto(page.url().replace(/\/stories\/.*$/, "/stories/new"));

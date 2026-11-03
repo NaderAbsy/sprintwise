@@ -2,7 +2,7 @@ import { formatDay } from "@/lib/sprint/dates";
 import { describe, expect, it } from "vitest";
 import { demoSprint, demoSprintDates } from "@/demo/sprint";
 import { DEFAULT_SETTINGS } from "@/lib/readiness/rules";
-import { computeMetrics, formatPercent } from "@/lib/sprint/metrics";
+import { computeMetrics, explainMetrics, formatPercent } from "@/lib/sprint/metrics";
 import { changeLog, compareReadiness, readinessFinding } from "@/lib/sprint/report";
 
 // The demo is what recruiters see first, so its story is pinned down here.
@@ -16,6 +16,12 @@ describe("demo sprint", () => {
     expect(formatPercent(m.netChange, { signed: true })).toBe("+18.8%");
     expect(formatPercent(m.churn)).toBe("50.0%");
     expect(formatPercent(m.completion)).toBe("37.5%");
+  });
+
+  it("explains its numbers from its own data", () => {
+    const lines = explainMetrics(computeMetrics(baseline, latest))!;
+    expect(lines.net).toBe("Net change: +3 pts added, −5 pts removed, +8 pts re-estimated = +6 pts (32 → 38 pts). +6 pts ÷ 32 pts baseline = +18.8%.");
+    expect(lines.completion).toContain("12 pts of the 32 pts committed on day one are done = 37.5%.");
   });
 
   it("shows that the stories that changed scored lower at the baseline", () => {

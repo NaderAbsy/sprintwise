@@ -109,6 +109,35 @@ export function reestimateNote(m: Pick<SprintMetrics, "latestTotal" | "baselineT
   return `Re-estimates: ${net > 0 ? "+" : "−"}${formatPoints(Math.abs(net))}`;
 }
 
+/** 5 → "+5 pts", -3 → "−3 pts", 0 → "0 pts". */
+function signedPoints(value: number): string {
+  return value === 0 ? "0 pts" : `${value > 0 ? "+" : "−"}${formatPoints(Math.abs(value))}`;
+}
+
+/**
+ * The sums behind the Net change, Churn and Completion tiles, in words and from the same figures: which
+ * points were added, removed or re-estimated, and what each percentage is divided by. Null when the
+ * baseline has 0 points, since there is nothing to divide by.
+ */
+export function explainMetrics(m: SprintMetrics): { net: string; churn: string; completion: string } | null {
+  if (m.baselineTotal === 0) return null;
+  const baseline = formatPoints(m.baselineTotal);
+  // What the re-estimates came to once up and down cancel: the part of Net change that isn't added or removed work.
+  const reestimateNet = sumPoints([m.latestTotal - m.baselineTotal - m.scopeAdded + m.scopeRemoved]);
+  const net = sumPoints([m.latestTotal - m.baselineTotal]);
+  return {
+    net:
+      `Net change: ${signedPoints(m.scopeAdded)} added, ${signedPoints(-m.scopeRemoved)} removed, ${signedPoints(reestimateNet)} re-estimated` +
+      ` = ${signedPoints(net)} (${m.baselineTotal} → ${m.latestTotal} pts). ${signedPoints(net)} ÷ ${baseline} baseline = ${formatPercent(m.netChange, { signed: true })}.`,
+    churn:
+      `Churn: ${formatPoints(m.scopeAdded)} added + ${formatPoints(m.scopeRemoved)} removed + ${formatPoints(m.reestimateTotal)} re-estimated (up or down both count)` +
+      ` = ${formatPoints(sumPoints([m.scopeAdded, m.scopeRemoved, m.reestimateTotal]))} ÷ ${baseline} baseline = ${formatPercent(m.churn)}.`,
+    completion:
+      `Completion: ${formatPoints(m.donePoints)} of the ${baseline} committed on day one are done = ${formatPercent(m.completion)}.` +
+      ` The baseline is the divisor, so work added later isn't counted, even when it's done.`,
+  };
+}
+
 /** "+2 with no estimate" for the Scope added tile, or "" when every added story has points. */
 export function unestimatedNote(count: number): string {
   return count === 0 ? "" : `plus ${count} ${count === 1 ? "story" : "stories"} with no estimate`;

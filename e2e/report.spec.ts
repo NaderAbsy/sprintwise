@@ -82,6 +82,6 @@ test("a long change log still prints on one page", async ({ page }) => {
   await uploadSnapshot(page, csv(stories.slice(0, 5)), "2026-09-25");
 
   await page.getByRole("link", { name: "Open sprint report" }).click();
-  await expect(page.getByText(/Showing the 10 most recent of 25/)).toBeVisible();
+  await expect(page.getByText(/Showing the 8 most recent of 25/)).toBeVisible();
   expect(await printedPages(page)).toBe(1);
 });

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { BandBadge } from "@/components/band-badge";
 import { ScoreRing } from "@/components/score-ring";
-import { scoreStory } from "@/lib/readiness/rules";
+import { FULL_SCORE_NOTE, scoreStory } from "@/lib/readiness/rules";
 
 const EXAMPLES = [
   {
@@ -155,6 +155,7 @@ export function HeroScorer() {
               </li>
             ))}
           </ul>
+          {failed.length === 0 && <p className="mt-3 text-xs text-muted">{FULL_SCORE_NOTE}</p>}
           <Link href="/demo#try-it" className="mt-auto inline-flex items-center gap-1.5 pt-4 text-xs font-medium text-accent hover:underline">
             <Sparkles aria-hidden="true" className="h-3.5 w-3.5" />
             See every reason in the demo

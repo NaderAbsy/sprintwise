@@ -412,4 +412,13 @@ select:not([multiple]) {
   .report tr {
     break-inside: avoid;
   }
+  /* Tighter rows on paper: the report promises one page, and ten log rows beside a goal, reasons and readiness need the room. */
+  .report .data-table thead th {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+  .report .data-table tbody td {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
 }

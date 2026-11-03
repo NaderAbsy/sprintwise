@@ -1,7 +1,7 @@
 import { Check, X } from "lucide-react";
 import { BandBadge } from "@/components/band-badge";
 import { ScoreRing } from "@/components/score-ring";
-import type { Readiness } from "@/lib/readiness/rules";
+import { FULL_SCORE_NOTE, type Readiness } from "@/lib/readiness/rules";
 
 /** Score, band and every rule: what to fix and why first (one line per missing thing), then the checks that passed. */
 export function ReadinessBreakdown({ readiness }: { readiness: Readiness }) {
@@ -28,6 +28,7 @@ export function ReadinessBreakdown({ readiness }: { readiness: Readiness }) {
         </p>
       )}
       {readiness.typeNote && <p className="mt-4 rounded-lg bg-surface-2 px-3 py-2 text-sm text-muted">{readiness.typeNote}</p>}
+      {failed.length === 0 && <p className="mt-4 text-sm text-muted">{FULL_SCORE_NOTE}</p>}
       {failed.length > 0 && (
         <ul className="mt-5 space-y-3 border-t border-border pt-4">
           {failed.map((rule) => (

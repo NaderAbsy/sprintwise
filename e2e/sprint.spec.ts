@@ -78,9 +78,12 @@ test("a sprint reproduces the worked example from baseline to metrics", async ({
   await expect(metrics.getByText("3 pts", { exact: true })).toBeVisible();
   // The +16.7% comes partly from re-estimates, and the tile says how much.
   await expect(metrics.getByText("Re-estimates: +3 pts")).toBeVisible();
-  await expect(metrics.getByText("+16.7%")).toBeVisible();
-  await expect(metrics.getByText("36.7%")).toBeVisible();
-  await expect(metrics.getByText("70.0%")).toBeVisible();
+  await expect(metrics.getByText("+16.7%", { exact: true })).toBeVisible();
+  await expect(metrics.getByText("36.7%", { exact: true })).toBeVisible();
+  await expect(metrics.getByText("70.0%", { exact: true })).toBeVisible();
+  // And the sums behind them: 5 added, 3 removed and 3 re-estimated make +5 pts on a baseline of 30.
+  await expect(metrics.getByText("+5 pts added, −3 pts removed, +3 pts re-estimated = +5 pts (30 → 35 pts)")).toBeVisible();
+  await expect(metrics.getByText(/21 pts of the 30 pts committed on day one are done = 70\.0%/)).toBeVisible();
 
   const log = page.getByRole("region", { name: "Change log" });
   await expect(log.getByRole("row", { name: /8 Oct 2026 A Re-estimated 5 → 8 pts \+3/ })).toBeVisible();

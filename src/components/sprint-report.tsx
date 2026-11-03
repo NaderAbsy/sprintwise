@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BurnupChart } from "@/components/burnup-chart";
 import { ChangeTable } from "@/components/change-table";
 import { PrintButton } from "@/components/print-button";
+import { MetricsArithmetic } from "@/components/sprint-metrics";
 import type { RuleSettings } from "@/lib/readiness/rules";
 import { burnupSeries } from "@/lib/sprint/burnup";
 import { formatDay } from "@/lib/sprint/dates";
@@ -11,8 +12,11 @@ import { GOAL_OUTCOMES, reasonFinding, summarizeReasons } from "@/lib/sprint/rea
 import { utcToday } from "@/lib/sprint/tracking";
 import type { Story } from "@/lib/stories/types";
 
-/** Rows that still fit one A4 page alongside the metrics and the chart; the sprint page has the full log. */
-const MAX_LOG_ROWS = 10;
+/**
+ * Rows that still fit one A4 page alongside the goal, metrics, chart, readiness and reasons; the sprint page has the full log.
+ * Measured on the sample report: nine fit, ten don't, so this leaves a row or so for a longer goal.
+ */
+const MAX_LOG_ROWS = 8;
 
 /** The report's one-line summary; while the sprint runs it reads as "so far", not as a final result. */
 function headline(m: SprintMetrics, running: boolean): string {
@@ -86,7 +90,7 @@ export function SprintReport({
   ];
 
   return (
-    <article className="report mx-auto max-w-3xl space-y-6">
+    <article className="report mx-auto max-w-3xl space-y-6 print:space-y-3">
       <div className="no-print flex flex-wrap items-center justify-between gap-3">
         {back ? (
           <Link href={back.href} className="text-sm text-muted hover:underline">
@@ -143,6 +147,9 @@ export function SprintReport({
             </div>
           ))}
         </dl>
+        <div className="mt-2">
+          <MetricsArithmetic metrics={metrics} compact />
+        </div>
         {metrics.unestimatedKeys.length > 0 && (
           <p className="mt-2 text-xs text-muted">
             Counted as 0 points because they have no estimate: {metrics.unestimatedKeys.join(", ")}.
