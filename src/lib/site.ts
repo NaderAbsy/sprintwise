@@ -41,6 +41,7 @@ export const RELEASES: Release[] = [
       "A full score now says what it means: all nine checks passed, which doesn't mean the story is clear or ready for the team. Read it aloud together before you commit.",
       "The sprint metrics and the report show the sums: added, removed and re-estimated points make the net change, and completion is divided by the day-one baseline, so work added later isn't counted.",
       "A story that gives its reason with \"because\" or \"so I can\" is no longer told it states no benefit: the feedback says Sprintwise counts a benefit only when written as \"so that …\".",
+      "The printed report keeps to one page more reliably: tighter rows and spacing on paper, and it lists the 8 most recent scope changes (it was 10; the sprint page still has the full log).",
     ],
   },
   {

@@ -67,6 +67,18 @@ test("F-2: the demo includes a sample sprint and its one-page report", async ({ 
   expect(pdf.toString("latin1").match(/\/Type\s*\/Page(?!s)/g)?.length).toBe(1);
 });
 
+test("the sample report still prints on one page with a full log", async ({ page }) => {
+  await page.goto("/demo/report");
+  // The sample has 6 scope changes; the report lists up to 8, beside the goal, reasons and readiness.
+  await page.evaluate((count) => {
+    const body = document.querySelector("tbody")!;
+    const rows = [...body.querySelectorAll("tr")];
+    while (body.querySelectorAll("tr").length < count) body.appendChild(rows[body.querySelectorAll("tr").length % rows.length].cloneNode(true));
+  }, 8);
+  const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
+  expect(pdf.toString("latin1").match(/\/Type\s*\/Page(?!s)/g)?.length).toBe(1);
+});
+
 test("the demo shows scope reasons and trends across sprints", async ({ page }) => {
   await page.goto("/demo#trends");
   const trends = page.getByRole("region", { name: "Trends across sprints" });
