@@ -5,10 +5,10 @@ import { SecondLookList } from "@/components/second-look";
 import { StoryFields } from "@/components/story-fields";
 import { scoreStory, type Readiness } from "@/lib/readiness/rules";
 import { secondLook, type SecondLook } from "@/lib/readiness/second-look";
-import { parsePoints, type Story } from "@/lib/stories/types";
+import { parsePoints, STORY_TYPE_CHOICES, type Story } from "@/lib/stories/types";
 
-/** The types the checker offers. A Bug or Task is scored as in the app: the story-format checks count as passed. */
-const TYPES = ["Story", "Bug", "Task"];
+/** The types the checker offers, the same as a project's editor. A Bug or Task is scored as in the app: the story-format checks count as passed. */
+const TYPES: readonly string[] = STORY_TYPE_CHOICES;
 
 /** Rules-only scoring in the browser: no AI call, no request, nothing saved. */
 export function DemoScorer() {

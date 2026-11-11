@@ -62,6 +62,14 @@ test("weakest first lists a held-back story before the Ready ones, whatever its 
   await page.getByLabel("Order").selectOption("weakest");
   // W-3 isn't ready; W-2 (chat leftover) and W-4 (a placeholder with a capital) score 100 but are held at Needs work; W-1 is Ready.
   await expect(keys).toHaveText(["W-3", "W-2", "W-4", "W-1"]);
+
+  // The shared backlog, which scores live, lists them in the same order.
+  await page.getByRole("button", { name: "Share" }).click();
+  const dialog = page.getByRole("dialog", { name: "Share this backlog" });
+  await dialog.getByRole("button", { name: "Create link" }).click();
+  const link = await dialog.getByLabel("Link").inputValue();
+  await page.goto(`${link}?sort=weakest`);
+  await expect(page.locator("main details summary .font-mono")).toHaveText(["W-3", "W-2", "W-4", "W-1"]);
 });
 
 test("the home page badge names the newest release, so it can't fall behind", async ({ page }) => {

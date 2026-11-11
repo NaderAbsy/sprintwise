@@ -5,6 +5,7 @@ import { FieldError } from "@/components/form-feedback";
 import { JiraText } from "@/components/jira-text";
 import { looksLikeJira } from "@/lib/stories/jira-markup";
 import type { StoryCompare, StoryDefaults, StoryFieldName } from "@/lib/stories/compare";
+import { STORY_TYPE_CHOICES } from "@/lib/stories/types";
 
 /** Grows a text box to fit its text, so long stories don't hide in a scrolling box. Never shrinks below its rows. */
 function fitHeight(el: HTMLTextAreaElement | null) {
@@ -287,9 +288,9 @@ export function StoryFields({
               aria-describedby={[describedBy("issueType"), "issueType-hint"].join(" ")}
             />
             <datalist id="type-options">
-              <option value="Story" />
-              <option value="Bug" />
-              <option value="Task" />
+              {STORY_TYPE_CHOICES.map((type) => (
+                <option key={type} value={type} />
+              ))}
             </datalist>
             <p id="issueType-hint" className="mt-1 max-w-48 text-xs text-muted">
               Bugs and tasks skip the &ldquo;As a &hellip; I want &hellip;&rdquo; checks.

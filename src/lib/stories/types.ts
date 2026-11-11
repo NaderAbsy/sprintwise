@@ -166,6 +166,9 @@ export function withCriteriaInDescription(description: string, criteria: string)
   return [...lines.slice(0, section.start + 1), bullets, ...(rest.length > 0 ? (rest[0].trim() === "" ? rest : ["", ...rest]) : [])].join("\n");
 }
 
+/** The types offered when a story is typed in, here and in the public checker. Anything but Story skips the story-format checks. */
+export const STORY_TYPE_CHOICES = ["Story", "Bug", "Task"] as const;
+
 /** Epics group stories; they're never planned into a sprint, so imports and syncs leave them out unless asked. */
 export function isEpic(issueType: string | undefined): boolean {
   return issueType?.trim().toLowerCase() === "epic";
