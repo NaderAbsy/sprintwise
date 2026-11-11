@@ -25,13 +25,12 @@ export type NightlyResult = { synced: string[]; failed: number; leftForTomorrow:
  */
 export async function syncJiraProjectsNightly(now = Date.now()): Promise<NightlyResult> {
   if (!jiraConfigured) return { synced: [], failed: 0, leftForTomorrow: 0 };
-  const { startsBy, endsFrom } = runningSprintWindow(utcToday());
   const projects = await db.project.findMany({
     where: {
       jiraCloudId: { not: null },
       jiraJql: { not: null },
       nightlySync: true,
-      sprints: { some: { tracksBacklog: true, startDate: { lte: startsBy }, endDate: { gte: endsFrom } } },
+      sprints: { some: { tracksBacklog: true, ...runningSprintWindow(utcToday()) } },
     },
     // The longest-waiting first, so a project skipped one night goes early the next.
     orderBy: { jiraSyncedAt: { sort: "asc", nulls: "first" } },

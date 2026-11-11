@@ -24,10 +24,15 @@ describe("utcToday and daysBetween", () => {
 });
 
 describe("runningSprintWindow (which sprints the nightly sync covers)", () => {
+  // Applies the filter as the database does: startDate <= lte and endDate >= gte.
   const running = (start: string, end: string, now: string) => {
-    const { startsBy, endsFrom } = runningSprintWindow(utcToday(new Date(now)));
-    return day(start) <= startsBy && day(end) >= endsFrom;
+    const where = runningSprintWindow(utcToday(new Date(now)));
+    return day(start) <= where.startDate.lte && day(end) >= where.endDate.gte;
   };
+
+  it("is a filter on both dates, a day either side of today", () => {
+    expect(runningSprintWindow(day("2026-11-11"))).toEqual({ startDate: { lte: day("2026-11-12") }, endDate: { gte: day("2026-11-10") } });
+  });
 
   it("covers a sprint that started today where its owner is, though UTC is still on yesterday", () => {
     // 00:30 on 12 Nov in a UTC+3 zone is 21:30 UTC on the 11th; the 22:00 UTC run is 01:00 on the sprint's first day.

@@ -4,7 +4,7 @@ import { lockOwner, snapshotRoom } from "@/lib/server/within-limit";
 import { db } from "@/lib/server/db";
 import { toStory } from "@/lib/server/readiness";
 import { defaultReasons } from "@/lib/sprint/reasons";
-import { carryReasons, planTracking, utcToday } from "@/lib/sprint/tracking";
+import { carryReasons, planTracking, runningSprintWindow, utcToday } from "@/lib/sprint/tracking";
 
 /**
  * Records backlog edits in every sprint of the project that follows the
@@ -13,9 +13,10 @@ import { carryReasons, planTracking, utcToday } from "@/lib/sprint/tracking";
  * Callers check ownership first.
  */
 export async function recordSprintChanges(projectId: string, today = utcToday()) {
-  const dayBefore = new Date(today.getTime() - 86_400_000);
+  // Only the end matters here: an edit before the sprint's first day still counts against a locked baseline.
+  const { endDate } = runningSprintWindow(today);
   const sprints = await db.sprint.findMany({
-    where: { projectId, tracksBacklog: true, endDate: { gte: dayBefore } },
+    where: { projectId, tracksBacklog: true, endDate },
     select: { id: true },
   });
   for (const { id } of sprints) await recordSprint(projectId, id, today);

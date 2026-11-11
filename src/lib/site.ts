@@ -34,10 +34,10 @@ export const RELEASES: Release[] = [
     version: "v2.34",
     date: "2026-11-12",
     title: "The home page checker has a type too",
-    summary: "Two leftovers from the evaluation: the small checker on the home page, and the nightly Jira sync on a sprint's first night.",
+    summary: "Two leftovers from the evaluation: the small checker on the home page, and the nightly Jira sync at the start of a sprint.",
     items: [
       "The live checker on the home page has the same Type choice as the demo's (Story, Bug or Task), says why a held-back story is held back, and shows the \"Worth a second look\" notes for a pasted draft.",
-      "The nightly Jira sync no longer skips a sprint's first night for people whose day starts before UTC's. A sprint starting today in Dubai, Delhi or Sydney is synced that night, not the next.",
+      "The nightly Jira sync runs at 22:00 UTC, which east of UTC is already the next morning. The run that falls at the start of a sprint's first day there (in Dubai, Delhi or Sydney, say) used to be skipped; it now happens, so the sprint starts with Jira's latest statuses.",
       "The home page says it as it is: a Jira project syncs each night while its sprint is running.",
     ],
   },
