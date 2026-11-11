@@ -149,7 +149,7 @@ export const RELEASES: Release[] = [
     title: "A new license for the code",
     summary: "The code stays public to read, but may no longer be used commercially without permission.",
     items: [
-      "The code is now under the PolyForm Noncommercial license instead of MIT: anyone can read it, learn from it and run it for themselves, but not sell it or use it in a business.",
+      "The code is now under the PolyForm Noncommercial license instead of MIT: anyone can read it, learn from it and run it for themselves, but not sell it or run their own copy in a business. (Using sprintwise.app itself is free, at work too.)",
       "Using Sprintwise itself doesn't change: it's still free for everyone.",
       "The footer says who made Sprintwise.",
       "Search engines get a clear description of Sprintwise (its name, what it does, that it's free), so a search for it can find the site.",
