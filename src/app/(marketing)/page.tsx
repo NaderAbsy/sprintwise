@@ -45,7 +45,7 @@ const STEPS = [
   {
     Icon: Printer,
     title: "Report what changed",
-    text: "A sprint picked from the backlog records every change by itself, and Jira projects sync each night. Scope added and removed, churn and completion land on one printable page.",
+    text: "A sprint picked from the backlog records every change by itself, and a Jira project syncs each night while its sprint is running. Scope added and removed, churn and completion land on one printable page.",
   },
 ];
 

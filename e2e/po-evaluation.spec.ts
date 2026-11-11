@@ -88,3 +88,36 @@ test("the home page badge names the newest release, so it can't fall behind", as
   expect((await badge.boundingBox())!.height).toBeLessThan(40);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
+
+test("the home page checker scores a bug as a project does, and shows what's worth a second look", async ({ page }) => {
+  await page.goto("/");
+  const main = page.getByRole("main");
+  await main.getByLabel("Story title").fill("Checkout shows a blank screen with an empty basket");
+  await main.getByLabel("Description").fill("Open checkout with nothing in the basket. The app shows a blank screen.");
+  await main.getByLabel(/Acceptance criteria/).fill("- An empty basket shows the message \"Your basket is empty\"");
+  const result = main.locator("[aria-live=polite]").first();
+
+  // Story by default: the story-format check fails.
+  await expect(main.getByLabel("Type")).toHaveValue("Story");
+  await expect(result).toContainText("1 thing to fix");
+  await expect(result).toContainText("Follows story format for a named user: failed");
+  await main.getByLabel("Type").selectOption("Bug");
+  await expect(result).toContainText("Every check passed");
+  await expect(result).toContainText("A Bug doesn't need the");
+
+  // An example puts the type back to Story.
+  await main.getByRole("button", { name: "Ready", exact: true }).click();
+  await expect(main.getByLabel("Type")).toHaveValue("Story");
+
+  // A pasted draft: held back, with the reason and the notes on the page.
+  await main.getByLabel("Description").fill("Certainly! Here's a user story for refunds:\n\nAs a support agent I want to refund a payment so that the customer gets their money back");
+  await expect(result).toContainText("Can't be Ready while it has text left over from an AI chat.");
+  // The checker's own notes, not the sample AI draft further down the page.
+  await expect(main.locator("section[aria-labelledby=hero-second-look]")).toContainText("looks left over from an AI chat");
+  await expectAccessible(page);
+
+  // Still fits a phone.
+  await page.setViewportSize({ width: 375, height: 812 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+

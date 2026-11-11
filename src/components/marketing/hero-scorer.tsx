@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { BandBadge } from "@/components/band-badge";
 import { ScoreRing } from "@/components/score-ring";
+import { SecondLookList } from "@/components/second-look";
 import { FULL_SCORE_NOTE, scoreStory } from "@/lib/readiness/rules";
+import { secondLook } from "@/lib/readiness/second-look";
+import { STORY_TYPE_CHOICES } from "@/lib/stories/types";
 
 const EXAMPLES = [
   {
@@ -35,20 +38,14 @@ export function HeroScorer() {
   const [title, setTitle] = useState(EXAMPLES[0].title);
   const [description, setDescription] = useState(EXAMPLES[0].description);
   const [criteria, setCriteria] = useState(EXAMPLES[0].criteria);
+  // Story unless the visitor says otherwise: a Bug or Task is scored as in a project, without the story-format checks.
+  const [type, setType] = useState<string>(STORY_TYPE_CHOICES[0]);
   const [example, setExample] = useState<number | null>(0);
 
-  const readiness = useMemo(
-    () =>
-      scoreStory({
-        key: "LIVE",
-        title: title.trim() || " ",
-        description,
-        acceptanceCriteria: criteria,
-        storyPoints: 3,
-        status: "",
-      }),
-    [title, description, criteria],
-  );
+  const { readiness, looks } = useMemo(() => {
+    const story = { key: "LIVE", title: title.trim() || " ", description, acceptanceCriteria: criteria, storyPoints: 3, status: "", issueType: type };
+    return { readiness: scoreStory(story), looks: secondLook(story) };
+  }, [title, description, criteria, type]);
   const failed = readiness.findings;
 
   return (
@@ -75,20 +72,41 @@ export function HeroScorer() {
                   setTitle(ex.title);
                   setDescription(ex.description);
                   setCriteria(ex.criteria);
+                  setType(STORY_TYPE_CHOICES[0]);
                 }}
               >
                 {ex.label}
               </button>
             ))}
           </div>
-          <div>
-            <label htmlFor="hero-title" className="text-xs font-medium text-muted">
-              Story title
-            </label>
-            <input id="hero-title" value={title} onChange={(e) => {
-                setExample(null);
-                setTitle(e.target.value);
-              }} className="field mt-1" />
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3">
+            <div>
+              <label htmlFor="hero-title" className="text-xs font-medium text-muted">
+                Story title
+              </label>
+              <input id="hero-title" value={title} onChange={(e) => {
+                  setExample(null);
+                  setTitle(e.target.value);
+                }} className="field mt-1" />
+            </div>
+            <div>
+              <label htmlFor="hero-type" className="text-xs font-medium text-muted">
+                Type
+              </label>
+              <select
+                id="hero-type"
+                value={type}
+                onChange={(e) => {
+                  setExample(null);
+                  setType(e.target.value);
+                }}
+                className="field mt-1 w-24"
+              >
+                {STORY_TYPE_CHOICES.map((choice) => (
+                  <option key={choice}>{choice}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div>
             <label htmlFor="hero-description" className="text-xs font-medium text-muted">
@@ -155,12 +173,22 @@ export function HeroScorer() {
               </li>
             ))}
           </ul>
+          {readiness.typeNote && <p className="mt-3 text-xs text-muted">{readiness.typeNote}</p>}
+          {readiness.bandCap && <p className="mt-3 text-xs text-needs-work">{readiness.bandCap}</p>}
           {failed.length === 0 && <p className="mt-3 text-xs text-muted">{FULL_SCORE_NOTE}</p>}
           <Link href="/demo#try-it" className="mt-auto inline-flex items-center gap-1.5 pt-4 text-xs font-medium text-accent hover:underline">
             <Sparkles aria-hidden="true" className="h-3.5 w-3.5" />
             See every reason in the demo
           </Link>
         </div>
+      </div>
+      {/* Only for a pasted draft: the notes a held-back story's card points to, as on the demo page. */}
+      <div aria-live="polite">
+        {looks.length > 0 && (
+          <div className="border-t border-border p-4">
+            <SecondLookList items={looks} compact id="hero-second-look" />
+          </div>
+        )}
       </div>
     </div>
   );
