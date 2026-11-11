@@ -2,6 +2,14 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-11-12 — v2.34: the home checker's type, and the nightly sync's first night
+
+Two items left open after v2.33; the user said "do both".
+
+- **The home page's live checker** has the Type choice too (the shared Story / Bug / Task list), shows the type note and the reason a story is held back, and lists "Worth a second look" under the card when a pasted draft has any. v2.33 left it out as a design question: it is a small three-field card. The type sits beside the title, and the notes only appear for a draft that has them, so the card looks the same for the three examples. Picking an example puts the type back to Story.
+- **Nightly Jira sync, first night.** The job synced projects with a sprint whose start date was on or before UTC's today. Sprint dates are the owner's own calendar days, and the job runs at 22:00 UTC, which is already the next day east of UTC+2: a sprint starting "today" there was skipped until the following night. The end of a sprint already had a day of grace for owners behind UTC; the start now has one too (`runningSprintWindow`). A sync a day early for someone west of UTC only refreshes the backlog, as pressing Sync would. Found because the end-to-end test for the nightly sync fails on a machine in UTC+3 between midnight and 03:00; it passes at any hour now.
+- The home page said "Jira projects sync each night"; it's "a Jira project syncs each night while its sprint is running", which is what the job does (a connected project with no running sprint keeps its last manual sync).
+
 ## 2026-11-12 — v2.33: four confirmed fixes from an end-to-end evaluation (rules v10)
 
 An evaluation as a first-time Product Owner walked the live site signed out and a whole sprint on a local copy with an invented backlog. It left a list of confirmed problems and a list of ideas that need real users; the user asked for the four confirmed, small ones.

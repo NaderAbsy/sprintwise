@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { carryReasons, daysBetween, planTracking, utcToday, type TrackedSnapshot } from "@/lib/sprint/tracking";
+import { carryReasons, daysBetween, planTracking, runningSprintWindow, utcToday, type TrackedSnapshot } from "@/lib/sprint/tracking";
 import { story } from "@/test/story";
 
 const day = (text: string) => new Date(`${text}T00:00:00Z`);
@@ -20,6 +20,29 @@ describe("utcToday and daysBetween", () => {
   it("uses the UTC calendar day", () => {
     expect(utcToday(new Date("2026-10-05T23:30:00Z"))).toEqual(day("2026-10-05"));
     expect(daysBetween(day("2026-10-05"), day("2026-10-09"))).toBe(4);
+  });
+});
+
+describe("runningSprintWindow (which sprints the nightly sync covers)", () => {
+  const running = (start: string, end: string, now: string) => {
+    const { startsBy, endsFrom } = runningSprintWindow(utcToday(new Date(now)));
+    return day(start) <= startsBy && day(end) >= endsFrom;
+  };
+
+  it("covers a sprint that started today where its owner is, though UTC is still on yesterday", () => {
+    // 00:30 on 12 Nov in a UTC+3 zone is 21:30 UTC on the 11th; the 22:00 UTC run is 01:00 on the sprint's first day.
+    expect(running("2026-11-12", "2026-11-25", "2026-11-11T21:30:00Z")).toBe(true);
+    expect(running("2026-11-12", "2026-11-25", "2026-11-11T22:00:00Z")).toBe(true);
+  });
+
+  it("covers a sprint on its last day where the owner is behind UTC, and every day in between", () => {
+    expect(running("2026-11-02", "2026-11-13", "2026-11-14T03:00:00Z")).toBe(true);
+    expect(running("2026-11-02", "2026-11-13", "2026-11-08T22:00:00Z")).toBe(true);
+  });
+
+  it("leaves out a sprint that starts in two days or ended two days ago", () => {
+    expect(running("2026-11-13", "2026-11-26", "2026-11-11T22:00:00Z")).toBe(false);
+    expect(running("2026-11-02", "2026-11-13", "2026-11-15T22:00:00Z")).toBe(false);
   });
 });
 

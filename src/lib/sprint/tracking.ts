@@ -8,6 +8,17 @@ export function utcToday(now = new Date()): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }
 
+/**
+ * The sprints that count as running on `today` (a UTC day) for the nightly Jira sync: started by tomorrow and
+ * ended no earlier than yesterday. Sprint dates are the owner's own calendar days, and at any moment the
+ * owner's day can be one ahead of UTC's or one behind it. Without the day of grace at the start, a sprint
+ * starting "today" for someone east of UTC was skipped on its first night: the job runs at 22:00 UTC, which is
+ * already the next day there.
+ */
+export function runningSprintWindow(today: Date): { startsBy: Date; endsFrom: Date } {
+  return { startsBy: new Date(today.getTime() + DAY_MS), endsFrom: new Date(today.getTime() - DAY_MS) };
+}
+
 /** Whole days from `from` to `to` (both UTC-midnight days). */
 export function daysBetween(from: Date, to: Date): number {
   return Math.round((to.getTime() - from.getTime()) / DAY_MS);

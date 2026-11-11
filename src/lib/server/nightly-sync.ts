@@ -3,7 +3,7 @@ import { db } from "@/lib/server/db";
 import { jiraAccount, jiraConfigured } from "@/lib/server/jira";
 import { syncProjectFromJira } from "@/lib/server/jira-sync";
 import { errorSummary } from "@/lib/server/log";
-import { utcToday } from "@/lib/sprint/tracking";
+import { runningSprintWindow, utcToday } from "@/lib/sprint/tracking";
 
 /**
  * Stop starting new projects after this long. The function has five minutes; one sync usually takes
@@ -17,21 +17,21 @@ export type NightlyResult = { synced: string[]; failed: number; leftForTomorrow:
 
 /**
  * Syncs every project that has a Jira search, has nightly sync on, and has a
- * sprint that follows the backlog running today (or that ended yesterday, as
- * it may still be the last day where the owner is). Each uses its owner's own
+ * sprint that follows the backlog running today, give or take a day at each
+ * end: it may already be the first day, or still the last, where the owner is
+ * (see runningSprintWindow). Each uses its owner's own
  * Jira connection. A sync that can't run leaves its reason on the project for
  * the backlog to show; the others carry on.
  */
 export async function syncJiraProjectsNightly(now = Date.now()): Promise<NightlyResult> {
   if (!jiraConfigured) return { synced: [], failed: 0, leftForTomorrow: 0 };
-  const today = utcToday();
-  const dayBefore = new Date(today.getTime() - 86_400_000);
+  const { startsBy, endsFrom } = runningSprintWindow(utcToday());
   const projects = await db.project.findMany({
     where: {
       jiraCloudId: { not: null },
       jiraJql: { not: null },
       nightlySync: true,
-      sprints: { some: { tracksBacklog: true, startDate: { lte: today }, endDate: { gte: dayBefore } } },
+      sprints: { some: { tracksBacklog: true, startDate: { lte: startsBy }, endDate: { gte: endsFrom } } },
     },
     // The longest-waiting first, so a project skipped one night goes early the next.
     orderBy: { jiraSyncedAt: { sort: "asc", nulls: "first" } },
