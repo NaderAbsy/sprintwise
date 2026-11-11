@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { demoBacklog } from "@/demo/backlog";
 import {
   bandFor,
+  byWeakest,
   capNote,
   criteriaNeeded,
   DEFAULT_VAGUE_WORDS,
@@ -380,5 +381,34 @@ describe("capNote", () => {
   it("says nothing when the band matches the score", () => {
     expect(capNote(85, "Ready", [])).toBeNull();
     expect(capNote(65, "Needs work", ["C7"])).toBeNull();
+  });
+});
+
+describe("byWeakest (the order of weakest first)", () => {
+  it("lists by band before score, lowest score first within a band", () => {
+    const stories = [
+      { key: "ready-100", score: 100, band: "Ready" },
+      { key: "held-100", score: 100, band: "Needs work" },
+      { key: "ready-85", score: 85, band: "Ready" },
+      { key: "needs-60", score: 60, band: "Needs work" },
+      { key: "held-90", score: 90, band: "Needs work" },
+      { key: "not-15", score: 15, band: "Not ready" },
+      { key: "not-45", score: 45, band: "Not ready" },
+    ];
+    expect(stories.sort(byWeakest).map((s) => s.key)).toEqual(["not-15", "not-45", "needs-60", "held-90", "held-100", "ready-85", "ready-100"]);
+  });
+
+  it("puts a story with no score yet first, and ties compare equal so the caller's order decides", () => {
+    expect([{ score: 15, band: "Not ready" }, null].sort(byWeakest)).toEqual([null, { score: 15, band: "Not ready" }]);
+    expect(byWeakest({ score: 80, band: "Ready" }, { score: 80, band: "Ready" })).toBe(0);
+  });
+
+  it("agrees with the scorer: a full score held back for chat leftovers sorts before a Ready story", () => {
+    const base = { key: "A-1", title: "Refund an order", storyPoints: 3, status: "To Do", acceptanceCriteria: "- The refund shows on the order page" };
+    const description = "As a support agent, I want to refund an order so that the customer gets their money back.";
+    const ready = scoreStory({ ...base, description });
+    const held = scoreStory({ ...base, description: `Certainly! Here's a user story for refunds:\n\n${description}` });
+    expect([ready.band, held.band, held.score]).toEqual(["Ready", "Needs work", 100]);
+    expect(byWeakest(held, ready)).toBeLessThan(0);
   });
 });

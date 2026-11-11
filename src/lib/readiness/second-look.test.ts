@@ -32,6 +32,18 @@ describe("secondLook", () => {
     expect(kinds({ title: "Refund for <payment method name>" })).toEqual(["placeholder"]);
   });
 
+  it("spots them whatever their case, as a draft usually writes them (v2.33)", () => {
+    for (const text of ["- [Add criteria here]", "- [ADD CRITERIA HERE]", "- [Insert acceptance criteria]", "- [Your benefit]", "- [TODO: limits]", "Lorem Ipsum dolor"]) {
+      expect(kinds({ acceptanceCriteria: `- Refunds show on the order page\n${text}` }), text).toEqual(["placeholder"]);
+    }
+    expect(kinds({ title: "Refund for <Payment Method Name>" })).toEqual(["placeholder"]);
+    expect(secondLook({ ...clean, acceptanceCriteria: "- [ADD CRITERIA HERE]" })[0].message).toBe("“[ADD CRITERIA HERE]” looks like a placeholder that was never filled in.");
+    // On their own, TBD and TODO still count only in capitals: "todo" is a plain word too.
+    expect(kinds({ description: "As a student I want a todo list for the week so that I can plan, tbd by me." })).toEqual([]);
+    // Brackets that aren't a placeholder stay out of it.
+    expect(kinds({ acceptanceCriteria: "- The [Save] button is disabled until the form is valid" })).toEqual([]);
+  });
+
   it("flags each criterion that would fit any story", () => {
     const looks = secondLook({ ...clean, acceptanceCriteria: "- Refunds show on the order page\n- All edge cases are handled\n- Unit tests are written" });
     expect(looks.map((l) => [l.kind, l.found])).toEqual([

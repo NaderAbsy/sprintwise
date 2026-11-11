@@ -35,7 +35,13 @@ function markdownHeading(text: string): RegExpExecArray | null {
   return i < 0 ? null : /^\s{0,3}#{1,6}\s+\S[^\n]{0,40}/.exec(lines[i]);
 }
 
-const PLACEHOLDERS = /\[(?:insert|add|your|placeholder|tbd|todo)\b[^\]\n]{0,40}\]|<[a-z]+(?: [a-z]+){1,4}>|\bTBD\b|\bTODO\b|\blorem ipsum\b/;
+/**
+ * Brackets nobody filled in, in any case: "[add criteria here]", "[Add criteria here]", "[INSERT USER TYPE]",
+ * "<Payment Method Name>". A draft's placeholders usually start with a capital, which the first version missed.
+ */
+const PLACEHOLDERS = /\[(?:insert|add|your|placeholder|tbd|todo)\b[^\]\n]{0,40}\]|<[a-z]+(?: [a-z]+){1,4}>|\blorem ipsum\b/i;
+/** On their own these count only in capitals: "todo" is also a plain word, as in a story about a to-do list. */
+const PLACEHOLDER_WORDS = /\bTBD\b|\bTODO\b/;
 
 /** Criteria that would fit any story: they belong in the team's Definition of Done. */
 const BOILERPLATE = [
@@ -122,7 +128,7 @@ export function secondLook(story: Pick<Story, "title" | "description" | "accepta
     }
   }
 
-  const placeholder = PLACEHOLDERS.exec(all);
+  const placeholder = PLACEHOLDERS.exec(all) ?? PLACEHOLDER_WORDS.exec(all);
   if (placeholder) {
     out.push({ kind: "placeholder", found: placeholder[0], message: `${quote(placeholder[0])} looks like a placeholder that was never filled in.` });
   } else if (hasPlaceholders(all)) {

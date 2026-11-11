@@ -22,7 +22,7 @@ export function DemoBacklog({ scored }: { scored: { story: Story; readiness: Rea
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
       <div className="card overflow-x-auto">
         <table className="data-table">
-          <caption className="sr-only">Sample stories sorted by readiness score, lowest first</caption>
+          <caption className="sr-only">Sample stories, weakest first: not ready, then needs work, then ready, lowest score first in each</caption>
           <thead>
             <tr>
               <th scope="col" className="w-16">Score</th>

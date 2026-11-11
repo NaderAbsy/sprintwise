@@ -26,12 +26,23 @@ export type Release = {
   title: string;
   summary: string;
   items: string[];
-  /** Adds something a visitor would want to hear about; the home page's "New:" badge shows the latest of these, not fix releases. */
-  feature?: boolean;
 };
 
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
+  {
+    version: "v2.33",
+    date: "2026-11-12",
+    title: "The public checker matches the app",
+    summary: "Four small fixes from an end-to-end evaluation as a first-time Product Owner.",
+    items: [
+      "The checker on the demo page has a Type choice (Story, Bug or Task). A bug or task is scored as it is in a project: the \"As a … I want … so that …\" checks count as passed. It used to be told to follow the story format.",
+      "The same checker now shows the \"Worth a second look\" notes it points to, such as chat leftovers and unfilled placeholders.",
+      "Unfilled placeholders are spotted whatever their case: \"[Add criteria here]\" and \"[INSERT USER TYPE]\" used to slip through and leave a story Ready. Projects are re-scored once.",
+      "\"Weakest first\" lists by band before score: not ready, then needs work, then ready. A story held back at a high score no longer hides among the Ready ones.",
+      "The badge at the top of the home page always names the newest release. It had been stuck on v2.26.",
+    ],
+  },
   {
     version: "v2.32",
     date: "2026-11-11",
@@ -130,7 +141,6 @@ export const RELEASES: Release[] = [
       "Every page, share link and bookmark on sprintwise-omega.vercel.app now opens the same page on sprintwise.app.",
       "You'll need to sign in once more on the new address; your projects and Jira connection are unchanged.",
     ],
-    feature: true,
   },
   {
     version: "v2.25",
@@ -282,7 +292,6 @@ export const RELEASES: Release[] = [
     version: "v2.17",
     date: "2026-10-10",
     title: "Nightly Jira sync",
-    feature: true,
     summary: "While a sprint is running, Sprintwise syncs from Jira every night, so the burn-up fills in by itself.",
     items: [
       "Projects connected to Jira with a sprint built from the backlog sync between 22:00 and 23:00 UTC, using your own Jira connection.",
@@ -354,7 +363,6 @@ export const RELEASES: Release[] = [
     version: "v2.11",
     date: "2026-10-09",
     title: "Honest about unplanned work",
-    feature: true,
     summary: "Bugs added mid-sprint are tagged by themselves and counted even without points, and planning explains the room velocity already leaves.",
     items: [
       "Work of type Bug, Defect, Incident or Hotfix added mid-sprint is tagged \"Bug or incident\" by itself. A reason you choose is never replaced.",
@@ -466,7 +474,6 @@ export const RELEASES: Release[] = [
     version: "v2.2",
     date: "2026-10-07",
     title: "Connect Jira",
-    feature: true,
     summary: "Import straight from a Jira search, sync with one click, and send your edits back. No CSV needed.",
     items: [
       "Connect your Atlassian account once from a project's Import page; tokens are stored encrypted.",
@@ -480,7 +487,6 @@ export const RELEASES: Release[] = [
     version: "v2.1",
     date: "2026-10-07",
     title: "Refinement mode",
-    feature: true,
     summary: "A meeting screen for refinement: one story at a time, what's missing, and the team's estimate in one click.",
     items: [
       "Refinement walks the unfinished stories that aren't Ready yet (or all unfinished ones), in priority order.",
@@ -494,7 +500,6 @@ export const RELEASES: Release[] = [
     version: "v2.0",
     date: "2026-10-07",
     title: "Share the backlog",
-    feature: true,
     summary: "A first way to share with the team: a read-only backlog link for refinement, and a home page for the AI era.",
     items: [
       "Share a read-only link to the backlog: the team sees every unfinished story, its score and what to fix, without an account.",
@@ -507,7 +512,6 @@ export const RELEASES: Release[] = [
     version: "v1.14",
     date: "2026-10-07",
     title: "Worth a second look",
-    feature: true,
     summary: "AI writes the ticket; Sprintwise spots the signs nobody read it through.",
     items: [
       "A \"Worth a second look\" list on each story and live while editing: text left over from an AI chat, unfilled placeholders, criteria that would fit any story, filler words, and results promised with a made-up-looking figure.",
