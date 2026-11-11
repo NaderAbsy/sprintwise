@@ -1,5 +1,6 @@
 "use client";
 import { guarded } from "@/lib/safe-action";
+import Link from "next/link";
 import { useActionState, useRef, useState } from "react";
 import { createSprint, lockBaseline, uploadSnapshot } from "@/app/projects/sprint-actions";
 import { ChangeTable } from "@/components/change-table";
@@ -243,7 +244,15 @@ export function SnapshotUploadForm(props: UploadProps) {
       {source === "backlog" ? (
         backlog.length === 0 ? (
           <p className="rounded-lg bg-surface-2 p-4 text-sm text-muted">
-            This project&apos;s backlog is empty. Add or import stories first, or upload a CSV instead.
+            This project&apos;s backlog is empty.{" "}
+            <Link href={`/projects/${projectId}/import`} className="font-medium text-accent underline underline-offset-2">
+              Import stories
+            </Link>{" "}
+            or{" "}
+            <Link href={`/projects/${projectId}/stories/new`} className="font-medium text-accent underline underline-offset-2">
+              score one
+            </Link>{" "}
+            first, or upload a CSV instead.
           </p>
         ) : (
           <div className="space-y-2">

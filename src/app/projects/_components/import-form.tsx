@@ -155,6 +155,7 @@ export function ImportForm({
         (c): c is string => Boolean(c),
       )
     : [];
+  const noPoints = table?.ok === true && table.columns.story_points === null;
   const filtered = shown.length !== rows.length;
   const tooMany = picked.length > IMPORT_MAX_STORIES;
 
@@ -258,6 +259,17 @@ export function ImportForm({
                 {!noText.includes("Description") &&
                   " If your team writes acceptance criteria inside the description, nothing needs to change."}{" "}
                 Stories already in Sprintwise keep their saved {noText.join(" and ").toLowerCase()}.
+              </p>
+            </div>
+          )}
+
+          {noPoints && (
+            <div className="rounded-lg bg-needs-work-bg p-4 text-sm text-needs-work">
+              <p className="font-medium">No Story points column, so every new story counts as not estimated and can&apos;t be Ready.</p>
+              <p className="mt-1">
+                If the file has the estimates under another name, pick that column under Match columns. Otherwise show Story
+                Points (or Story point estimate) in Jira&apos;s list view and export again, or add points here after the
+                import.
               </p>
             </div>
           )}
@@ -407,9 +419,10 @@ export function ImportForm({
                     {epics.length > 0 && <td className="hidden text-sm text-muted md:table-cell">{r.epic}</td>}
                     <td className="hidden text-sm whitespace-nowrap text-muted sm:table-cell">{r.story.status}</td>
                     <td className="hidden text-right tabular-nums sm:table-cell">{r.story.storyPoints ?? "—"}</td>
-                    <td className="whitespace-nowrap">
+                    <td className="sm:whitespace-nowrap">
                       <span className="mr-2 tabular-nums">{r.readiness.score}</span>
-                      <span className="hidden sm:inline">
+                      {/* Under the number on a phone: a bare 65 doesn't say whether that's Ready. */}
+                      <span className="block sm:inline">
                         <BandBadge band={r.readiness.band} />
                       </span>
                     </td>

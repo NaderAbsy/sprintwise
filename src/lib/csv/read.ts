@@ -28,8 +28,9 @@ export function spreadsheetKind(bytes: Uint8Array): keyof typeof SAVE_AS_CSV | n
 /**
  * Reads a chosen CSV file as text. Excel's "Unicode text" saves are UTF-16 with
  * a byte-order mark, which File.text() would garble, so those are decoded as
- * UTF-16; everything else is read as UTF-8. A spreadsheet saved with a .csv
- * name is turned away with how to export a real CSV.
+ * UTF-16; everything else is read as UTF-8, or, when it isn't valid UTF-8, as
+ * Windows Western European (Excel's plain CSV). A spreadsheet saved with a
+ * .csv name is turned away with how to export a real CSV.
  */
 export async function readCsvFile(file: Blob & { name?: string }): Promise<{ ok: true; text: string } | { ok: false; message: string }> {
   const bytes = new Uint8Array(await file.arrayBuffer());
@@ -37,5 +38,12 @@ export async function readCsvFile(file: Blob & { name?: string }): Promise<{ ok:
   if (kind) return { ok: false, message: `${file.name ?? "This file"} isn't a CSV, even if its name ends in .csv: it's ${SAVE_AS_CSV[kind]}` };
   const encoding =
     bytes[0] === 0xff && bytes[1] === 0xfe ? "utf-16le" : bytes[0] === 0xfe && bytes[1] === 0xff ? "utf-16be" : "utf-8";
-  return { ok: true, text: new TextDecoder(encoding).decode(bytes) };
+  if (encoding !== "utf-8") return { ok: true, text: new TextDecoder(encoding).decode(bytes) };
+  try {
+    return { ok: true, text: new TextDecoder("utf-8", { fatal: true }).decode(bytes) };
+  } catch {
+    // Not UTF-8: Excel's plain "CSV (Comma delimited)" on Windows saves in the Western European code page,
+    // which read as UTF-8 turns "é", "–" and curly quotes into "�".
+    return { ok: true, text: new TextDecoder("windows-1252").decode(bytes) };
+  }
 }

@@ -13,8 +13,8 @@ import {
   type ImportField,
 } from "@/lib/csv/template";
 import { STORY_LIMITS } from "@/lib/stories/form";
-import { isSubtask, normalizeKey, parsePoints, type Story } from "@/lib/stories/types";
-import { cutText } from "@/lib/text";
+import { criteriaFromDescription, isSubtask, normalizeKey, parsePoints, type Story } from "@/lib/stories/types";
+import { cutText, FILE_CUT } from "@/lib/text";
 
 export type CsvIssue = {
   /** 1-based data row (the header is row 0); absent for file-level problems. */
@@ -108,6 +108,11 @@ export function matchColumns(headers: string[], mapping: ColumnMapping = {}): Re
   return columns;
 }
 
+/** `text` if it fits, or its start with a note that it was cut short. Never longer than `limit`. */
+function fit(text: string, limit: number): string {
+  return text.length <= limit ? text : cutText(text, limit - FILE_CUT.length) + FILE_CUT;
+}
+
 /** The checks a story must pass wherever it comes from: a CSV row, or the browser's pick sent to the server. */
 export function storyProblems(story: Story, epic = ""): string[] {
   const problems: string[] = [];
@@ -152,12 +157,15 @@ export function readCsvTable(
   const headers = headerRow.map(clean);
   const columns = matchColumns(headers, mapping);
   // Jira exports often have both "Story Points" and "Story point estimate", one of them empty: unless the
-  // person picked one, use the one with the most values.
+  // person picked one, use the one with the most values. A site with both kinds of project fills one column
+  // for some rows and the other for the rest, so a row with nothing in the chosen column reads the others.
+  let otherPointColumns: number[] = [];
   if (mapping?.story_points === undefined) {
     const named = headers.flatMap((h, i) => (HEADER_ALIASES[lower(h)] === "story_points" ? [i] : []));
     if (named.length > 1) {
       const filled = (i: number) => data.filter((cells) => (cells[i] ?? "").trim() !== "").length;
       columns.story_points = named.reduce((best, i) => (filled(i) > filled(best) ? i : best), named[0]);
+      otherPointColumns = named.filter((i) => i !== columns.story_points);
     }
   }
 
@@ -206,15 +214,33 @@ export function readCsvTable(
     if (cells.length > headers.length && cells.slice(headers.length).some((c) => c.trim() !== "")) {
       warnings.push("This row has more cells than the file has columns, so some values may be in the wrong column. Check for a comma that needs quotes.");
     }
-    const rawPoints = cell("story_points");
+    const rawPoints = cell("story_points") || otherPointColumns.map((i) => (cells[i] ?? "").trim()).find(Boolean) || "";
     const { points, valid } = parsePoints(rawPoints);
     if (!valid) warnings.push(`Story points "${rawPoints}" isn't a number of 0 or more, so it counts as not estimated.`);
+
+    // Text too long to keep is cut short, with a note, as an import straight from Jira does: refusing the
+    // row would keep a story out over a long description.
+    let description = cell("description");
+    let acceptanceCriteria = cell("acceptance_criteria");
+    if (description.length > STORY_LIMITS.description) {
+      // Its criteria may sit at the end, past the cut: they move to their own field first, so they still count.
+      const moved = acceptanceCriteria === "" ? criteriaFromDescription(description) : "";
+      if (moved) acceptanceCriteria = moved;
+      description = fit(description, STORY_LIMITS.description);
+      warnings.push(
+        `The description is longer than ${STORY_LIMITS.description.toLocaleString("en")} characters, so it's cut short here.${moved ? " Its acceptance criteria are kept in their own field." : ""}`,
+      );
+    }
+    if (acceptanceCriteria.length > STORY_LIMITS.acceptanceCriteria) {
+      acceptanceCriteria = fit(acceptanceCriteria, STORY_LIMITS.acceptanceCriteria);
+      warnings.push(`The acceptance criteria are longer than ${STORY_LIMITS.acceptanceCriteria.toLocaleString("en")} characters, so they're cut short here.`);
+    }
 
     const story: Story = {
       key: normalizeKey(cell("key")),
       title: cell("title"),
-      description: cell("description"),
-      acceptanceCriteria: cell("acceptance_criteria"),
+      description,
+      acceptanceCriteria,
       storyPoints: points,
       status: cell("status"),
       ...(cell("issue_type") && { issueType: cell("issue_type") }),

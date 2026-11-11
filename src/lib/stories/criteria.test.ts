@@ -22,6 +22,30 @@ describe("criteria written inside the description", () => {
     expect(criteriaOf(story(description))).toEqual({ lines: ["Slots for 14 days", "Confirms in 5 seconds"], fromDescription: true });
   });
 
+  it.each(["ACs:", "A/C:", "Acceptance Criteria (AC):", "+Acceptance Criteria+", "- Acceptance criteria", "Acceptance criterion:"])(
+    "finds them under %s (rules v8)",
+    (heading) => {
+      const description = `As a parent I want to book a slot so that it fits my day.\n\n${heading}\n- Slots for 14 days\n- Confirms in 5 seconds`;
+      expect(criteriaOf(story(description))).toEqual({ lines: ["Slots for 14 days", "Confirms in 5 seconds"], fromDescription: true });
+    },
+  );
+
+  it("doesn't take other lines for the heading", () => {
+    for (const line of ["AC-12 is blocked", "Accessibility:", "Acceptance testing notes"]) {
+      expect(criteriaOf(story(`As a parent I want to book a slot so that it fits my day.\n${line}\n- Slots for 14 days`)).lines).toEqual([]);
+    }
+  });
+
+  it("reads through scenario labels instead of stopping at them, and doesn't count them (rules v8)", () => {
+    const description = "As a shopper I want to pay so that I get my order.\n\nAC:\nScenario 1:\nGiven a cart\nWhen I pay\nThen I get a receipt\n\n*Scenario: card declined*\nGiven a cart\nThen I see why\n\nNotes:\nAsk Sam.";
+    expect(criteriaOf(story(description)).lines).toEqual(["Given a cart", "When I pay", "Then I get a receipt", "Given a cart", "Then I see why"]);
+    // A rule or example with text after it is a criterion, not a label.
+    expect(criteriaOf(story("AC:\nRule: customers must be over 18\nExample 2:\n- A 17-year-old is refused")).lines).toEqual([
+      "Rule: customers must be over 18",
+      "A 17-year-old is refused",
+    ]);
+  });
+
   it("ends a list at a paragraph after a blank line, but not plain criteria with blank lines (rules v6)", () => {
     expect(criteriaFromDescription("h3. Acceptance criteria\n* One\n* Two\n\nDesign notes are in Figma.")).toBe("* One\n* Two");
     expect(criteriaFromDescription("h3. Acceptance criteria\n* One\n\n* Two")).toBe("* One\n\n* Two");

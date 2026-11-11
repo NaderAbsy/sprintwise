@@ -33,6 +33,21 @@ export type Release = {
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.31",
+    date: "2026-11-11",
+    title: "Bringing your own Jira export, also on a phone",
+    summary: "Fixes from a round as a brand-new user importing a real-shaped Jira export. Three change how stories are scored, so every project is re-scored once; scores can only go up.",
+    items: [
+      "On a phone, the backlog shows each title at full width with its status underneath, the story's points, and arrows to move it up or down in priority. Titles used to break mid-word.",
+      "Acceptance criteria written in the description are found under more headings (\"ACs:\", \"A/C:\", \"Acceptance Criteria (AC):\"), and a \"Scenario 1:\" line no longer hides the criteria under it.",
+      "A title that repeats the story sentence from the description no longer counts as two stories, and a vague word inside a web address no longer costs points.",
+      "Jira exports with two story-points columns: each story's points are read from whichever column holds them.",
+      "A file with no story-points column now says so before you import, and a description over 5,000 characters is cut short with a note instead of keeping the story out.",
+      "A CSV saved by Excel on Windows keeps its accents, dashes and quotes.",
+      "The import page says how to export a CSV from Jira, the import preview shows Ready or Needs work on a phone, and an empty backlog's new-sprint page links to where stories come from.",
+    ],
+  },
+  {
     version: "v2.30",
     date: "2026-11-03",
     title: "Clearer score and report wording",

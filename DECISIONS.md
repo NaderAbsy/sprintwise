@@ -2,6 +2,27 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-11-11 — v2.31: a brand-new user's own Jira export, also on a phone (rules v8)
+
+A fifth QA round took the one path the product-owner review couldn't test: a new account importing a real-shaped Jira export (100-odd columns in spirit: repeated headers, wiki markup, two points columns, epics and sub-tasks mixed in), then using the backlog on a phone. A read-only code review ran alongside; every finding was reproduced by hand before it was reported, and the ones only suspected (older Jira Server epic columns, bold markup around the role) were left out. The user said "do the recommendation": all eight bugs and four tweaks as one release.
+
+Scoring (rules v8, every project re-scored once on its next visit; scores can only rise):
+- **Criteria in the description, more headings.** "ACs:", "A/C:", "Acceptance Criteria (AC):", "+Acceptance Criteria+" and "Acceptance criterion" now start the section. The import page already promised "if your team writes acceptance criteria inside the description, nothing needs to change"; these lost 35 points with "No acceptance criteria".
+- **Scenario labels.** "Scenario 1:" or "*Scenario: card declined*" under the heading used to end the section at once (a capitalised line ending in a colon reads as the next heading), leaving no criteria. They are now read through and not counted as criteria. "Rule: …" and "Example: …" with text after them stay criteria; only "Example 2:" style labels are skipped. Not done: treating any heading straight after the criteria heading as a sub-heading, since an empty criteria section followed by "Notes:" would then swallow the notes.
+- **One want said twice.** "I want" is counted in the title and the description apiece, not across both: a Jira summary often repeats the sentence that opens the description. Two wants inside the description still fail. A second, different want split between title and description now passes; that is rarer than the repeat.
+- **Web addresses.** Vague words inside a web address (bare or a Jira link's target) don't count.
+- Left alone: one Given/When/Then scenario counts as three criteria. Tightening it would lower existing scores.
+
+Import:
+- **Two points columns.** The fuller of "Story Points" and "Story point estimate" is still the main one, but a row with nothing there reads the other (a site with both kinds of project fills one per project). A column the person picked is used as it is.
+- **No points column** gets a warning like the ones for description and criteria; every story would otherwise lose 20 points and be held below Ready with only the collapsed column summary as a clue.
+- **Long text is cut short, not refused**, as the Jira connection already did: over 5,000 characters ends with "… [cut short here; the full text is in your file]", and criteria past the cut move to their own field first. Both notes start the same way, and a field carrying either is never sent back to Jira over the full text.
+- **Excel's plain CSV.** A file that isn't valid UTF-8 is read as Windows Western European instead of turning "é" into "�".
+
+Phone backlog: the title had about 55px beside a 160px status list. Each row is now a small grid on phones (tick box and score on the left; title, band and points, then the status and move arrows under it). The status list is not rendered twice (the tests and screen readers find it by its label), so the table itself is laid out as blocks, with the table roles written out so it is still read as a table. Phones had no way to reorder (a touch on a drag handle scrolls the page): up and down arrows move a story one step.
+
+Tweaks: "An Epic doesn't need…"; the import page and guide say how to export from Jira; the import preview shows the band on phones; the empty-backlog new-sprint message links to Import and Score a story.
+
 ## 2026-11-03 — v2.30: three wording fixes from a product-owner review
 
 A skeptical product-owner review of the live site and a second opinion on it left three low-risk, certain findings, all about what the product says, not how it scores. Nothing in the rules, weights, thresholds or settings changed (`RULES_VERSION` stays 7), so no existing score moves.
