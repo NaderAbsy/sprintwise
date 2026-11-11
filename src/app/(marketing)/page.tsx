@@ -278,8 +278,14 @@ export default function Home() {
               className="group inline-flex items-center gap-2 rounded-full border border-border bg-surface/80 py-1 pr-3 pl-1 text-xs font-medium text-muted backdrop-blur transition-colors hover:border-accent hover:text-foreground"
             >
               <span className="rounded-full bg-accent px-2 py-0.5 text-accent-foreground">{latestRelease.version}</span>
-              Updated <time dateTime={latestRelease.date}>{formatDay(new Date(`${latestRelease.date}T00:00:00Z`))}</time>: see
-              what&apos;s new
+              {/* One span: the link spaces its children apart, which split this sentence around the date. */}
+              <span className="whitespace-nowrap">
+                {/* The date is left out on the narrowest phones, where the full sentence would wrap inside the pill. */}
+                <span className="max-[359px]:hidden">
+                  Updated <time dateTime={latestRelease.date}>{formatDay(new Date(`${latestRelease.date}T00:00:00Z`))}</time>:{" "}
+                </span>
+                see what&apos;s new
+              </span>
               <ArrowRight aria-hidden="true" className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <p className="eyebrow mt-6">For Product Owners and Scrum teams</p>

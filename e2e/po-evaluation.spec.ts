@@ -79,4 +79,12 @@ test("the home page badge names the newest release, so it can't fall behind", as
   const badge = page.getByRole("main").getByRole("link", { name: /see what's new/ });
   await expect(badge).toContainText(newest);
   await expect(badge).toHaveAttribute("href", "/changelog");
+  // One sentence in one piece: the link spaces its children apart, and once split this around the date.
+  await expect(badge.locator(":scope > span").nth(1)).toHaveText(/^Updated \d{1,2} \w{3} \d{4}: see what's new$/);
+  await expect(badge.locator("time")).toBeVisible();
+  // On the narrowest phones it drops the date instead of wrapping, and the page still doesn't scroll sideways.
+  await page.setViewportSize({ width: 320, height: 700 });
+  await expect(badge.locator("time")).toBeHidden();
+  expect((await badge.boundingBox())!.height).toBeLessThan(40);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
