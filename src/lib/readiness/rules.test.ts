@@ -350,6 +350,10 @@ describe("issue types", () => {
     expect(scoreStory({ ...bug, issueType: " task " }).score).toBe(100);
     expect(scoreStory({ ...bug, issueType: "Epic" }).typeNote).toMatch(/^An Epic doesn't need/);
     expect(scoreStory({ ...bug, issueType: "improvement" }).typeNote).toMatch(/^An improvement doesn't need/);
+    // A "u" that sounds like "you" takes "A".
+    expect(scoreStory({ ...bug, issueType: "User task" }).typeNote).toMatch(/^A User task doesn't need/);
+    expect(scoreStory({ ...bug, issueType: "UX review" }).typeNote).toMatch(/^A UX review doesn't need/);
+    expect(scoreStory({ ...bug, issueType: "Upgrade" }).typeNote).toMatch(/^An Upgrade doesn't need/);
   });
 
   it("still checks everything else on a bug", () => {

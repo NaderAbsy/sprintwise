@@ -330,18 +330,19 @@ export function BacklogTable({
                       <button
                         type="button"
                         aria-label={`Move ${row.key} up`}
-                        disabled={i === 0}
-                        onClick={() => move(row.id, i - 1)}
-                        className="grid h-8 w-8 place-items-center rounded-md border border-border text-muted hover:bg-surface-2 hover:text-foreground disabled:opacity-40"
+                        // Not `disabled`: that drops keyboard focus to the top of the page the moment a story reaches the end.
+                        aria-disabled={i === 0}
+                        onClick={() => i > 0 && move(row.id, i - 1)}
+                        className="grid h-8 w-8 place-items-center rounded-md border border-border text-muted hover:bg-surface-2 hover:text-foreground aria-disabled:opacity-40"
                       >
                         <ChevronUp aria-hidden="true" className="h-4 w-4" />
                       </button>
                       <button
                         type="button"
                         aria-label={`Move ${row.key} down`}
-                        disabled={i === rows.length - 1}
-                        onClick={() => move(row.id, i + 1)}
-                        className="grid h-8 w-8 place-items-center rounded-md border border-border text-muted hover:bg-surface-2 hover:text-foreground disabled:opacity-40"
+                        aria-disabled={i === rows.length - 1}
+                        onClick={() => i < rows.length - 1 && move(row.id, i + 1)}
+                        className="grid h-8 w-8 place-items-center rounded-md border border-border text-muted hover:bg-surface-2 hover:text-foreground aria-disabled:opacity-40"
                       >
                         <ChevronDown aria-hidden="true" className="h-4 w-4" />
                       </button>

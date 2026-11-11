@@ -18,3 +18,8 @@ export function cutText(text: string, max: number): string {
 export const CUT_MARK = "… [cut short here; ";
 /** Ends a description or criteria cell from a file that was too long to keep whole. */
 export const FILE_CUT = `${CUT_MARK}the full text is in your file]`;
+
+/** `text` if it fits in `limit`, or its start followed by `note` (a "cut short" note). Never longer than `limit`. */
+export function fitText(text: string, limit: number, note: string): string {
+  return text.length <= limit ? text : cutText(text, limit - note.length) + note;
+}

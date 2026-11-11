@@ -44,9 +44,9 @@ export default async function ImportPage({ params }: PageProps<"/projects/[proje
           Jira&apos;s Issue Type, Parent or Epic, and Labels columns are read too.
         </p>
         <p className="text-sm text-muted">
-          <span className="font-medium text-foreground">To get a file from Jira:</span> open a search of your work items (under
-          Filters), switch to the list view, then choose Export → Export CSV (all fields). Sprintwise picks out the columns it
-          needs.
+          <span className="font-medium text-foreground">To get a file from Jira:</span> open Filters → Search work items and
+          run your search. Then open the ⋯ menu at the top right and choose Export → CSV - all fields. Sprintwise picks out
+          the columns it needs. (&quot;CSV - my defaults&quot; leaves out the description and the story points.)
         </p>
         <ImportForm
           projectId={project.id}
