@@ -38,19 +38,40 @@ export function splitCriteria(cell: string): string[] {
  * Whether a line starts an acceptance-criteria section inside a description, as
  * teams without a separate Jira field write it: "h3. Acceptance criteria",
  * "*Acceptance criteria*", "**Acceptance Criteria:**", "## Acceptance criteria",
- * "Acceptance criteria:" or "AC:". The line is tidied and compared rather than
- * matched with one big pattern: that pattern, with optional spaces between each
- * part, took minutes on a line of spaces.
+ * "Acceptance criteria:", "Acceptance Criteria (AC):", "AC:", "ACs:" or "A/C:".
+ * The line is tidied and compared rather than matched with one big pattern:
+ * that pattern, with optional spaces between each part, took minutes on a line
+ * of spaces.
  */
+const CRITERIA_HEADINGS = new Set(["acceptance criteria", "acceptance criterion", "ac", "acs", "acceptance criteria ac", "acceptance criteria acs"]);
+
 export function isCriteriaHeading(line: string): boolean {
   if (line.length > 200) return false;
   const words = line
     .trim()
     .replace(/^(?:h[1-6]\.|#{1,6})/i, "")
-    .replace(/[\s:*_]+/g, " ")
+    // "A/C" is "AC"; brackets, Jira's +underline+ and a leading bullet are only decoration.
+    .replace(/\//g, "")
+    .replace(/[\s:*_+()\-]+/g, " ")
     .trim()
     .toLowerCase();
-  return words === "acceptance criteria" || words === "ac";
+  return CRITERIA_HEADINGS.has(words);
+}
+
+/**
+ * A label inside the criteria, such as "Scenario 1:", "*Scenario: paying by card*" or "Example 2:". It names
+ * the lines under it, so it neither ends the section (it used to, leaving a story with no criteria at all)
+ * nor counts as a criterion itself.
+ */
+export function isScenarioLabel(line: string): boolean {
+  if (line.length > 200) return false;
+  const words = line.trim().replace(/^(?:h[1-6]\.|#{1,6})/i, "").replace(/^[\s*_+-]+|[\s*_+:]+$/g, "");
+  // "Scenario: paying by card" names what follows. "Rule: customers must be over 18" is a criterion, so the
+  // looser words only count as labels when nothing but a number follows them.
+  return (
+    /^(?:scenario(?: outline)?|background)\b(?:\s*\d+)?\s*(?::.{0,120})?$/i.test(words) ||
+    /^(?:examples?|test cases?|cases?|rules?)\s*\d*$/i.test(words)
+  );
 }
 /** The heading of the next section, which ends the criteria. Bullets ("* item") don't count. */
 const NEXT_HEADING = /^\s*(?:h[1-6]\.\s|#{1,6}\s|[*_]{1,2}[^*_\n]{1,60}[*_]{1,2}\s*:?\s*$|[A-Z][^.\n]{0,40}:\s*$)/;
@@ -75,6 +96,7 @@ function criteriaSection(lines: string[]): { start: number; end: number } | null
   for (; end < lines.length; end++) {
     const line = lines[end];
     if (BLOCK_START.test(line)) break;
+    if (isScenarioLabel(line)) continue;
     if (NEXT_HEADING.test(line) && !/^\s*[-*\u2022#]+\s/.test(line)) break;
     if (listed && lines[end - 1].trim() === "" && line.trim() !== "" && !LIST_LINE.test(line)) break;
     if (LIST_LINE.test(line)) listed = true;
@@ -95,7 +117,13 @@ export function withoutCriteriaSection(description: string): string {
 export function criteriaFromDescription(description: string): string {
   const lines = description.split(/\r?\n/);
   const section = criteriaSection(lines);
-  return section ? lines.slice(section.start + 1, section.end).join("\n").trim() : "";
+  return section
+    ? lines
+        .slice(section.start + 1, section.end)
+        .filter((line) => !isScenarioLabel(line))
+        .join("\n")
+        .trim()
+    : "";
 }
 
 /**

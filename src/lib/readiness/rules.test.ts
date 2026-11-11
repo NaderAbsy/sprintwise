@@ -83,6 +83,9 @@ describe("scoreStory", () => {
   it("C5 matches whole words, ignoring case", () => {
     expect(findVagueWords("Make it FAST", ["fast"])).toEqual(["fast"]);
     expect(findVagueWords("Breakfast menu", ["fast"])).toEqual([]);
+    // Rules v8: a web address isn't the story's wording, bare or as a Jira link's target.
+    expect(findVagueWords("See https://fast.example.test/easy-spec for the design", ["fast", "easy"])).toEqual([]);
+    expect(findVagueWords("See [the fast path|https://example.test/easy] or www.better.example.test", ["fast", "easy", "better"])).toEqual(["fast"]);
     expect(findVagueWords("A user-friendly form, etc.", ["user-friendly", "etc", "friendly"])).toEqual([
       "user-friendly",
       "etc",
@@ -111,6 +114,17 @@ describe("scoreStory", () => {
     expect(failed(scoreStory(twoWants))).toEqual(["C8"]);
     const andAlso = story({ description: "As an admin I want to export PDFs and also email them so that clients get invoices" });
     expect(rule(scoreStory(andAlso), "C8").reason).toMatch(/and also/);
+  });
+
+  it("C8 passes when the title repeats the story sentence that opens the description (rules v8)", () => {
+    const repeated = story({
+      title: "As a finance admin I want to export an invoice as a PDF",
+      description: "As a finance admin, I want to export an invoice as a PDF so that I can email it to a client",
+    });
+    expect(failed(scoreStory(repeated))).toEqual([]);
+    // Two wants inside the description are still two stories.
+    const two = story({ title: "As an admin I want exports", description: "As an admin I want to export PDFs and I want to email them so that clients get invoices" });
+    expect(failed(scoreStory(two))).toEqual(["C8"]);
   });
 
   it("C9 needs a description of at least 20 characters", () => {
@@ -334,6 +348,8 @@ describe("issue types", () => {
     expect(asBug.score).toBe(100);
     expect(asBug.typeNote).toBe('A Bug doesn\'t need the "As a … I want … so that …" format, so those checks count as passed.');
     expect(scoreStory({ ...bug, issueType: " task " }).score).toBe(100);
+    expect(scoreStory({ ...bug, issueType: "Epic" }).typeNote).toMatch(/^An Epic doesn't need/);
+    expect(scoreStory({ ...bug, issueType: "improvement" }).typeNote).toMatch(/^An improvement doesn't need/);
   });
 
   it("still checks everything else on a bug", () => {

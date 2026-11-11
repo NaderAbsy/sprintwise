@@ -1,6 +1,6 @@
 "use client";
 import { attempt } from "@/lib/safe-action";
-import { GripVertical } from "lucide-react";
+import { ChevronDown, ChevronUp, GripVertical } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
 import { bulkDeleteStories, bulkSetStatus, moveStory } from "@/app/projects/actions";
@@ -10,6 +10,13 @@ import { ConfirmButton } from "@/components/confirm-button";
 import { ScoreRing } from "@/components/score-ring";
 import { useLeaveWarning } from "@/components/use-leave-warning";
 import type { Band } from "@/lib/readiness/rules";
+
+/**
+ * On a phone the table is too narrow for a title beside a status list (titles broke mid-word), so each row
+ * becomes a small grid: tick box and score on the left, the title with its status and move buttons under it.
+ * The roles are written out because a table laid out as blocks otherwise stops being read out as one.
+ */
+const PHONE_ROW = "max-sm:grid max-sm:grid-cols-[2.25rem_3.25rem_minmax(0,1fr)]";
 
 /** The position of the row an event happened in, from its data-index. */
 function rowIndex(target: EventTarget): number | null {
@@ -178,11 +185,11 @@ export function BacklogTable({
       )}
 
       <div className="card overflow-x-auto">
-        <table className="data-table">
+        <table role="table" className="data-table max-sm:block">
           <caption className="sr-only">{caption}</caption>
-          <thead>
-            <tr>
-              <th scope="col" className="w-10 pr-0! sm:pr-4!">
+          <thead role="rowgroup" className="max-sm:block">
+            <tr role="row" className={PHONE_ROW}>
+              <th role="columnheader" scope="col" className="w-10 pr-0! sm:pr-4!">
                 <input
                   type="checkbox"
                   aria-label="Select all stories shown"
@@ -195,19 +202,21 @@ export function BacklogTable({
                 />
               </th>
               {reorderable && (
-                <th scope="col" className="hidden w-10 sm:table-cell">
+                <th role="columnheader" scope="col" className="hidden w-10 sm:table-cell">
                   <span className="sr-only">Priority</span>
                 </th>
               )}
-              <th scope="col" className="w-16 pl-2! pr-2! sm:px-4!">Score</th>
-              <th scope="col">Story</th>
-              {/* On phones the band is written under the title, and points are edited on the story. */}
-              <th scope="col" className="hidden w-32 sm:table-cell">Band</th>
-              <th scope="col" className="w-40 pr-2! sm:pr-4!">Status</th>
-              <th scope="col" className="hidden w-24 sm:table-cell">Points</th>
+              <th role="columnheader" scope="col" className="w-16 pl-2! pr-2! sm:px-4!">Score</th>
+              <th role="columnheader" scope="col">Story</th>
+              {/* On phones the band and points are written under the title (points are edited on the story), and the status sits under them. */}
+              <th role="columnheader" scope="col" className="hidden w-32 sm:table-cell">Band</th>
+              <th role="columnheader" scope="col" className="w-40 pr-2! max-sm:sr-only sm:pr-4!">Status</th>
+              <th role="columnheader" scope="col" className="hidden w-24 sm:table-cell">Points</th>
             </tr>
           </thead>
           <tbody
+            role="rowgroup"
+            className="max-sm:block"
             onDragOver={(event) => {
               if (!dragging.current) return;
               event.preventDefault();
@@ -226,10 +235,11 @@ export function BacklogTable({
             {rows.map((row, i) => (
               <tr
                 key={row.id}
+                role="row"
                 data-index={i}
-                className={dropAt === i && armed && armed !== row.id ? "outline-2 -outline-offset-2 outline-accent" : undefined}
+                className={`${PHONE_ROW}${dropAt === i && armed && armed !== row.id ? " outline-2 -outline-offset-2 outline-accent" : ""}`}
               >
-                <td className="pr-0! sm:pr-4!">
+                <td role="cell" className="pr-0! max-sm:row-span-2 sm:pr-4!">
                   <input
                     type="checkbox"
                     aria-label={`Select ${row.key}`}
@@ -239,7 +249,7 @@ export function BacklogTable({
                   />
                 </td>
                 {reorderable && (
-                  <td className="hidden sm:table-cell">
+                  <td role="cell" className="hidden sm:table-cell">
                     <button
                       type="button"
                       aria-label={`Move ${row.key}, priority ${i + 1} of ${rows.length}`}
@@ -276,8 +286,8 @@ export function BacklogTable({
                     </button>
                   </td>
                 )}
-                <td className="pl-2! pr-2! sm:px-4!">{row.score !== null && row.band && <ScoreRing score={row.score} band={row.band} size="sm" />}</td>
-                <td>
+                <td role="cell" className="pl-2! pr-2! max-sm:row-span-2 sm:px-4!">{row.score !== null && row.band && <ScoreRing score={row.score} band={row.band} size="sm" />}</td>
+                <td role="cell" className="max-sm:col-start-3 max-sm:border-b-0! max-sm:pb-1! max-sm:pl-2!">
                   <Link href={`/projects/${projectId}/stories/${row.id}`} className="group block">
                     <span className="font-mono text-xs text-subtle">{row.key}</span>{" "}
                     <span className="font-medium group-hover:text-accent group-hover:underline">{row.title}</span>
@@ -287,6 +297,7 @@ export function BacklogTable({
                     <span className="mt-0.5 block text-xs text-muted sm:hidden">
                       {row.band}
                       {row.capNote && ` · ${row.capNote}`}
+                      {row.storyPoints !== null && ` · ${row.storyPoints} ${row.storyPoints === 1 ? "pt" : "pts"}`}
                     </span>
                   )}
                   {(row.epic || row.edited || row.secondLook || (row.issueType && row.issueType.toLowerCase() !== "story")) && (
@@ -300,11 +311,11 @@ export function BacklogTable({
                     </span>
                   )}
                 </td>
-                <td className="hidden sm:table-cell">
+                <td role="cell" className="hidden sm:table-cell">
                   {row.band && <BandBadge band={row.band} />}
                   {row.capNote && <span className="mt-1 block text-xs text-subtle">{row.capNote}</span>}
                 </td>
-                <td className="pr-2! sm:pr-4!">
+                <td role="cell" className="pr-2! max-sm:col-start-3 max-sm:flex max-sm:items-center max-sm:gap-2 max-sm:pt-0! max-sm:pl-2! sm:pr-4!">
                   <QuickField
                     projectId={projectId}
                     storyId={row.id}
@@ -313,8 +324,31 @@ export function BacklogTable({
                     value={row.status}
                     options={statusOptions}
                   />
+                  {/* Phones have no drag handle (a touch scrolls the page), so priority moves one step at a time. */}
+                  {reorderable && (
+                    <span className="flex gap-1 sm:hidden">
+                      <button
+                        type="button"
+                        aria-label={`Move ${row.key} up`}
+                        disabled={i === 0}
+                        onClick={() => move(row.id, i - 1)}
+                        className="grid h-8 w-8 place-items-center rounded-md border border-border text-muted hover:bg-surface-2 hover:text-foreground disabled:opacity-40"
+                      >
+                        <ChevronUp aria-hidden="true" className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Move ${row.key} down`}
+                        disabled={i === rows.length - 1}
+                        onClick={() => move(row.id, i + 1)}
+                        className="grid h-8 w-8 place-items-center rounded-md border border-border text-muted hover:bg-surface-2 hover:text-foreground disabled:opacity-40"
+                      >
+                        <ChevronDown aria-hidden="true" className="h-4 w-4" />
+                      </button>
+                    </span>
+                  )}
                 </td>
-                <td className="hidden sm:table-cell">
+                <td role="cell" className="hidden sm:table-cell">
                   <QuickField
                     projectId={projectId}
                     storyId={row.id}
@@ -330,8 +364,9 @@ export function BacklogTable({
         {rows.length === 0 && <p className="p-6 text-center text-sm text-muted">No stories match.</p>}
       </div>
       {reorderable && (
-        <p className="hidden text-xs text-muted sm:block">
-          <span id="reorder-help">
+        <p className="text-xs text-muted">
+          <span className="sm:hidden">Use the arrows under a story to move it up or down in priority.</span>
+          <span id="reorder-help" className="hidden sm:inline">
             Drag a story by its handle to change its priority, or focus the handle and use the arrow keys (Home and End
             move it to the top or bottom).
           </span>{" "}

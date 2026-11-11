@@ -2,7 +2,7 @@ import { secondLook } from "@/lib/readiness/second-look";
 import { criteriaOf, withoutCriteriaSection, type Story } from "@/lib/stories/types";
 
 /** Bump whenever a rule, weight or default changes, so old scores stay explainable. */
-export const RULES_VERSION = 7;
+export const RULES_VERSION = 8;
 
 export const DEFAULT_MAX_POINTS = 8;
 
@@ -172,9 +172,13 @@ function phrasePattern(phrase: string, flags = "i"): RegExp {
   return new RegExp(`(?<![\\p{L}\\p{N}_-])${body}(?![\\p{L}\\p{N}_-])`, `${flags}u`);
 }
 
-/** The distinct vague words found in `text`, in list order. */
+/** Web addresses, bare or as the target of a Jira "[label|address]" link: "fast" in fast.example.com isn't the story's wording. */
+const WEB_ADDRESS = /\|?\s*(?:https?:\/\/|www\.)[^\s\]|)>"']+/gi;
+
+/** The distinct vague words found in `text`, in list order. Rules v8: words inside a web address don't count. */
 export function findVagueWords(text: string, vagueWords: string[]): string[] {
-  return vagueWords.filter((word) => word.trim() !== "" && phrasePattern(word).test(text));
+  const words = text.replace(WEB_ADDRESS, " ");
+  return vagueWords.filter((word) => word.trim() !== "" && phrasePattern(word).test(words));
 }
 
 function countPhrase(text: string, phrase: string): number {
@@ -271,7 +275,9 @@ export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTIN
   const estimated = story.storyPoints !== null;
   const smallEnough = estimated && (story.storyPoints as number) <= settings.maxPoints;
 
-  const iWantCount = countPhrase(storyText, "i want");
+  // Rules v8: counted in the title and the description apiece. A Jira summary often repeats the story sentence
+  // that opens the description, which is one want said twice, not two stories.
+  const iWantCount = Math.max(countPhrase(story.title, "i want"), countPhrase(description, "i want"));
   const andAlso = countPhrase(storyText, "and also") > 0;
   const singleStory = iWantCount <= 1 && !andAlso;
 
@@ -362,7 +368,7 @@ export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTIN
   const scoreBand = bandFor(score);
   const typeNote = userStory
     ? undefined
-    : `A ${story.issueType!.trim()} doesn't need the "As a … I want … so that …" format, so those checks count as passed.`;
+    : `${/^[aeiou]/i.test(story.issueType!.trim()) ? "An" : "A"} ${story.issueType!.trim()} doesn't need the "As a … I want … so that …" format, so those checks count as passed.`;
   if (cap && scoreBand === "Ready") {
     return { score, band: "Needs work", bandCap: cap, rules, findings, custom, rulesVersion: RULES_VERSION, ...(typeNote && { typeNote }) };
   }

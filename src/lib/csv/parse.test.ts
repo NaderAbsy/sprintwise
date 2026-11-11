@@ -99,10 +99,18 @@ describe("parseStoriesCsv", () => {
 describe("parseStoriesCsv field limits", () => {
   const header = "key,title,description,acceptance_criteria,story_points,status";
 
-  it("rejects a row whose description is too long", () => {
-    const result = parseStoriesCsv(`${header}\nA-1,Title,"${"x".repeat(5001)}",,3,`);
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.errors).toContainEqual({ row: 1, message: "The description is longer than 5000 characters." });
+  it("cuts a too-long description short with a note, and keeps its criteria (v2.31)", () => {
+    const long = `As a shopper I want a thing so that I am happy. ${"x".repeat(5200)}\n\nAC:\n- The cart is kept for 30 days`;
+    const result = parseStoriesCsv(`${header}\nA-1,Title,"${long}",,3,`);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const [story] = result.stories;
+    expect(story.description).toHaveLength(5000);
+    expect(story.description.endsWith("… [cut short here; the full text is in your file]")).toBe(true);
+    expect(story.acceptanceCriteria).toBe("- The cart is kept for 30 days");
+    expect(result.warnings).toEqual([
+      { row: 1, message: "The description is longer than 5,000 characters, so it's cut short here. Its acceptance criteria are kept in their own field." },
+    ]);
   });
 
   it("rejects absurd story points", () => {
@@ -117,6 +125,12 @@ describe("readCsvFile", () => {
   it("reads UTF-8, with or without a byte-order mark", async () => {
     expect(await readCsvFile(new Blob([text]))).toEqual({ ok: true, text });
     expect(await readCsvFile(new Blob([new Uint8Array([0xef, 0xbb, 0xbf]), text]))).toEqual({ ok: true, text });
+  });
+
+  it("reads Excel's plain CSV (Windows Western European) instead of garbling accents (v2.31)", async () => {
+    // "Café – it’s" as Excel on Windows saves it: é = E9, en dash = 96, curly apostrophe = 92.
+    const bytes = new Uint8Array([...Buffer.from("key,title\nA-1,Caf"), 0xe9, 0x20, 0x96, 0x20, ...Buffer.from("it"), 0x92, ...Buffer.from("s")]);
+    expect(await readCsvFile(new Blob([bytes]))).toEqual({ ok: true, text: "key,title\nA-1,Café – it’s" });
   });
 
   it("reads the UTF-16 files Excel saves as Unicode text", async () => {
@@ -230,6 +244,15 @@ describe("Jira export quirks (v2.23)", () => {
     const csv = ["Issue key,Summary,Story Points,Story point estimate", "A-1,One,,5", "A-2,Two,,3"].join("\n");
     const table = readCsvTable(csv, { maxBytes: 1e6, maxRows: 10 });
     expect(table.ok && table.rows.map((r) => r.story.storyPoints)).toEqual([5, 3]);
+  });
+
+  it("reads a row's points from the other Jira points column when the fuller one is empty for it (v2.31)", () => {
+    const csv = ["Issue key,Summary,Custom field (Story Points),Custom field (Story point estimate)", "A-1,One,3.0,", "A-2,Two,2,", "A-3,Three,,5", "A-4,Four,,"].join("\n");
+    const table = readCsvTable(csv, { maxBytes: 1e6, maxRows: 10 });
+    expect(table.ok && table.rows.map((r) => r.story.storyPoints)).toEqual([3, 2, 5, null]);
+    // A column the person picked is used as it is.
+    const picked = readCsvTable(csv, { mapping: { story_points: "Custom field (Story Points)" }, maxBytes: 1e6, maxRows: 10 });
+    expect(picked.ok && picked.rows.map((r) => r.story.storyPoints)).toEqual([3, 2, null, null]);
   });
   it("warns about a row with more cells than columns", () => {
     const table = readCsvTable(["key,title,story_points", "A-1,One,1,5"].join("\n"), { maxBytes: 1e6, maxRows: 10 });
