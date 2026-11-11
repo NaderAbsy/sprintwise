@@ -10,7 +10,7 @@ import { BacklogToolbar, NO_STATUS } from "@/app/projects/_components/backlog-to
 import { StatusOptions } from "@/app/projects/_components/quick-field";
 import { EmptyState } from "@/components/empty-state";
 import { SectionHeader } from "@/components/section-header";
-import { capNote, type Band } from "@/lib/readiness/rules";
+import { byWeakest, capNote, type Band } from "@/lib/readiness/rules";
 import { db } from "@/lib/server/db";
 import { requireProject, requireUser } from "@/lib/server/dal";
 import { jiraAccount, jiraConfigured } from "@/lib/server/jira";
@@ -103,7 +103,7 @@ export default async function BacklogPage({ params, searchParams }: PageProps<"/
   const editedInView = inView.filter((s) => s.editedAt).length;
   const lookInView = inView.filter((s) => needsLook.has(s.id)).length;
   const shown = inView.filter((s) => !editedOnly || s.editedAt).filter((s) => !lookOnly || needsLook.has(s.id));
-  if (sort === "weakest") shown.sort((a, b) => (a.readiness?.score ?? 0) - (b.readiness?.score ?? 0) || a.rank - b.rank);
+  if (sort === "weakest") shown.sort((a, b) => byWeakest(a.readiness, b.readiness) || a.rank - b.rank);
   const filtered = Boolean(filter || q || statusFilter || epicFilter || typeFilter || editedOnly || lookOnly);
   const statuses = [
     ...new Set(stories.map((s) => s.status.trim()).filter(Boolean)),

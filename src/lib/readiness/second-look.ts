@@ -35,7 +35,30 @@ function markdownHeading(text: string): RegExpExecArray | null {
   return i < 0 ? null : /^\s{0,3}#{1,6}\s+\S[^\n]{0,40}/.exec(lines[i]);
 }
 
-const PLACEHOLDERS = /\[(?:insert|add|your|placeholder|tbd|todo)\b[^\]\n]{0,40}\]|<[a-z]+(?: [a-z]+){1,4}>|\bTBD\b|\bTODO\b|\blorem ipsum\b/;
+/**
+ * Square brackets nobody filled in, in any case: "[add criteria here]", "[Add criteria here]", "[INSERT USER
+ * TYPE]". A draft's placeholders usually start with a capital, which the first version missed. No "|" inside:
+ * that's a Jira link, "[Add a card|https://…]".
+ */
+const BRACKET_PLACEHOLDER = /\[(?:insert|add|your|placeholder|tbd|todo)\b[^\]\n|]{0,40}\]/gi;
+/** The same words in brackets also name things on screen: "click [Add to basket]", "the [Your orders] tab". */
+const ACTION_BEFORE = /\b(?:click|tap|press|select|choos|hit|open)\w*\s+(?:on\s+)?(?:the\s+)?$/i;
+const CONTROL_AFTER = /^\s*(?:button|link|tab|menu|option|icon|field|box|page|screen|dialog|section|item)s?\b/i;
+/** "<payment method name>": small letters only, so a key press like "<Shift Tab>" isn't taken for one. */
+const ANGLE_PLACEHOLDER = /<[a-z]+(?: [a-z]+){1,4}>/;
+/** On their own these count only in capitals: "todo" is also a plain word, as in a story about a to-do list. */
+const PLACEHOLDER_WORDS = /\bTBD\b|\bTODO\b|\b[Ll]orem ipsum\b/;
+
+/** The first unfilled placeholder in `text`, or null. A placeholder keeps a story from being Ready, so it errs on the side of not finding one. */
+function findPlaceholder(text: string): string | null {
+  for (const match of text.matchAll(BRACKET_PLACEHOLDER)) {
+    const after = text.slice(match.index + match[0].length);
+    // A Markdown link "[Your account](https://…)", or a button, tab or page named in brackets.
+    if (after.startsWith("(") || CONTROL_AFTER.test(after) || ACTION_BEFORE.test(text.slice(0, match.index))) continue;
+    return match[0];
+  }
+  return ANGLE_PLACEHOLDER.exec(text)?.[0] ?? PLACEHOLDER_WORDS.exec(text)?.[0] ?? null;
+}
 
 /** Criteria that would fit any story: they belong in the team's Definition of Done. */
 const BOILERPLATE = [
@@ -122,9 +145,9 @@ export function secondLook(story: Pick<Story, "title" | "description" | "accepta
     }
   }
 
-  const placeholder = PLACEHOLDERS.exec(all);
+  const placeholder = findPlaceholder(all);
   if (placeholder) {
-    out.push({ kind: "placeholder", found: placeholder[0], message: `${quote(placeholder[0])} looks like a placeholder that was never filled in.` });
+    out.push({ kind: "placeholder", found: placeholder, message: `${quote(placeholder)} looks like a placeholder that was never filled in.` });
   } else if (hasPlaceholders(all)) {
     out.push({ kind: "placeholder", found: "[…]", message: "A [placeholder] from a template looks like it was never filled in." });
   }

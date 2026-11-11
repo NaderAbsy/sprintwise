@@ -11,7 +11,7 @@ import { demoTrendRows } from "@/demo/history";
 import { demoLog, demoSprint } from "@/demo/sprint";
 import { Trends } from "@/components/trends";
 import { summarizeTrends } from "@/lib/sprint/trends";
-import { DEFAULT_SETTINGS, readySummary, scoreStory } from "@/lib/readiness/rules";
+import { byWeakest, DEFAULT_SETTINGS, readySummary, scoreStory } from "@/lib/readiness/rules";
 import { formatDay } from "@/lib/sprint/dates";
 import { computeMetrics } from "@/lib/sprint/metrics";
 import { compareReadiness, readinessFinding } from "@/lib/sprint/report";
@@ -25,7 +25,7 @@ export const metadata: Metadata = pageMeta("/demo", "Demo: score a sample backlo
 export default function DemoPage() {
   const scored = demoBacklog
     .map((story) => ({ story, readiness: scoreStory(story) }))
-    .sort((a, b) => a.readiness.score - b.readiness.score || a.story.key.localeCompare(b.story.key));
+    .sort((a, b) => byWeakest(a.readiness, b.readiness) || a.story.key.localeCompare(b.story.key));
 
   const snapshots = demoSprint.snapshots;
   const baseline = snapshots[0].stories;

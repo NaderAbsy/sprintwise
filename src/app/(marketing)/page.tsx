@@ -12,8 +12,9 @@ import { ScoreRing } from "@/components/score-ring";
 import { demoBacklog } from "@/demo/backlog";
 import { demoSprint } from "@/demo/sprint";
 import videoLines from "@/demo/video-lines.json";
-import { DEFAULT_SETTINGS, RULES, scoreStory } from "@/lib/readiness/rules";
+import { byWeakest, DEFAULT_SETTINGS, RULES, scoreStory } from "@/lib/readiness/rules";
 import { secondLook } from "@/lib/readiness/second-look";
+import { formatDay } from "@/lib/sprint/dates";
 import { computeMetrics, formatPercent } from "@/lib/sprint/metrics";
 import { compareReadiness, readinessFinding } from "@/lib/sprint/report";
 import { AUTHOR, GITHUB_URL, RELEASES, SITE_URL } from "@/lib/site";
@@ -96,15 +97,16 @@ const AI_DRAFT = {
 
 export default function Home() {
   // Every preview below uses the same invented demo data and the same rules as the app.
-  const scored = demoBacklog.map((story) => ({ story, r: scoreStory(story) })).sort((a, b) => a.r.score - b.r.score);
+  const scored = demoBacklog.map((story) => ({ story, r: scoreStory(story) })).sort((a, b) => byWeakest(a.r, b.r));
   const ready = scored.filter((s) => s.r.band === "Ready").length;
   const baseline = demoSprint.snapshots[0].stories;
   const latest = demoSprint.snapshots.at(-1)!.stories;
   const metrics = computeMetrics(baseline, latest);
   const finding = readinessFinding(compareReadiness(baseline, latest, DEFAULT_SETTINGS));
   const transcript = Object.values(videoLines).map((line) => line.caption);
-  // The newest release that adds something, so the badge never just announces fixes.
-  const latestRelease = RELEASES.find((r) => r.feature) ?? RELEASES[0];
+  // Always the newest changelog entry, so the badge can't fall behind: it used to name the last release
+  // marked as a feature, and stayed on v2.26 for six releases.
+  const latestRelease = RELEASES[0];
   const draftScore = scoreStory(AI_DRAFT);
   const draftLooks = secondLook(AI_DRAFT);
 
@@ -276,7 +278,8 @@ export default function Home() {
               className="group inline-flex items-center gap-2 rounded-full border border-border bg-surface/80 py-1 pr-3 pl-1 text-xs font-medium text-muted backdrop-blur transition-colors hover:border-accent hover:text-foreground"
             >
               <span className="rounded-full bg-accent px-2 py-0.5 text-accent-foreground">{latestRelease.version}</span>
-              New: {latestRelease.title.charAt(0).toLowerCase() + latestRelease.title.slice(1)}
+              Updated <time dateTime={latestRelease.date}>{formatDay(new Date(`${latestRelease.date}T00:00:00Z`))}</time>: see
+              what&apos;s new
               <ArrowRight aria-hidden="true" className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <p className="eyebrow mt-6">For Product Owners and Scrum teams</p>

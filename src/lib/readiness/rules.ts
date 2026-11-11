@@ -2,7 +2,7 @@ import { secondLook } from "@/lib/readiness/second-look";
 import { criteriaOf, withoutCriteriaSection, type Story } from "@/lib/stories/types";
 
 /** Bump whenever a rule, weight or default changes, so old scores stay explainable. */
-export const RULES_VERSION = 9;
+export const RULES_VERSION = 10;
 
 export const DEFAULT_MAX_POINTS = 8;
 
@@ -373,6 +373,21 @@ export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTIN
     return { score, band: "Needs work", bandCap: cap, rules, findings, custom, rulesVersion: RULES_VERSION, ...(typeNote && { typeNote }) };
   }
   return { score, band: scoreBand, rules, findings, custom, rulesVersion: RULES_VERSION, ...(typeNote && { typeNote }) };
+}
+
+const BAND_ORDER: Record<string, number> = { "Not ready": 0, "Needs work": 1, Ready: 2 };
+
+/**
+ * The order of "weakest first": by band, then by score within a band. A story held at Needs work with a
+ * high score (not estimated, too big, an AI chat's leftovers) still needs attention before planning, so it
+ * comes before every Ready story instead of hiding among them. A story with no score yet comes first of all.
+ */
+export function byWeakest(
+  a: { score: number; band: string } | null | undefined,
+  b: { score: number; band: string } | null | undefined,
+): number {
+  const rank = (r: { score: number; band: string } | null | undefined) => (r ? (BAND_ORDER[r.band] ?? 0) : -1);
+  return rank(a) - rank(b) || (a?.score ?? 0) - (b?.score ?? 0);
 }
 
 /** "7 of 12 stories ready" */

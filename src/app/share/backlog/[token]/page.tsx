@@ -7,7 +7,7 @@ import { Logo } from "@/components/logo";
 import { SharedFooter } from "@/components/shared-footer";
 import { ScoreRing } from "@/components/score-ring";
 import { SecondLookList } from "@/components/second-look";
-import { bandFor, scoreStory } from "@/lib/readiness/rules";
+import { bandFor, byWeakest, scoreStory } from "@/lib/readiness/rules";
 import { secondLook } from "@/lib/readiness/second-look";
 import { db } from "@/lib/server/db";
 import { settingsOf, toStory } from "@/lib/server/readiness";
@@ -39,7 +39,7 @@ export default async function SharedBacklogPage({ params, searchParams }: PagePr
     const story = toStory(row);
     return { row, story, readiness: scoreStory(story, settings), looks: secondLook(story) };
   });
-  if (weakest) stories.sort((a, b) => a.readiness.score - b.readiness.score || a.row.rank - b.row.rank);
+  if (weakest) stories.sort((a, b) => byWeakest(a.readiness, b.readiness) || a.row.rank - b.row.rank);
   const ready = stories.filter((s) => s.readiness.band === "Ready").length;
   const finished = rows.length - open.length;
   const base = `/share/backlog/${token}`;
