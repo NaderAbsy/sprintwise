@@ -2,6 +2,18 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-11-11 — v2.31.1: a review of v2.31 found a regression in it (rules v9)
+
+A code review of v2.31 on the day it shipped, and a first check against two real exports from the personal Jira test site, found:
+
+- **A regression (fixed).** v2.31 read "Background", "Examples", "Rules", "Test cases" and "Cases" as labels inside the criteria, like "Scenario 1:". Those are also the names of whole sections that follow the criteria, so a "h3. Background" after the criteria no longer ended them: its text was counted as criteria (a score fell from 100 to 85 on a vague word there, against the release note's "scores can only go up"), and because sending criteria to Jira rewrites exactly what was read as criteria, a Send would have replaced that section in the Jira issue. Now only "Scenario" / "Scenario Outline" lines are read through. Rules v9, so anything scored in the hours v8 was live is scored again. Lesson recorded: a change to what counts as the criteria section is also a change to what a Send overwrites; test both.
+- **Short headings stay strict.** v2.31 also let "- AC", "(AC)" and "A/C:" start the section. A bullet "- AC" is more likely a list item, and the first heading wins, so a false one hides the real one. "AC" and "ACs" count only as a line of their own (with bold or a colon); the written-out forms keep the looser match ("Acceptance Criteria (AC):", "+Acceptance Criteria+", "- Acceptance criteria").
+- **Export steps.** Checked on the real site: the export is under the ⋯ menu of Filters → Search work items, and the option is "CSV - all fields". "CSV - my defaults" has no Description or story points column (both of v2.31's warnings fire on it, as intended). The page and guide now say so.
+- **Smaller.** A file that isn't clean UTF-8 is read as Windows Western European only when nothing in it decoded as UTF-8 beyond plain ASCII; one damaged character no longer garbles every accent. "A User task", "A UX review" (not "An"). The phone move arrows use aria-disabled so focus isn't dropped at the ends of the list. One `fitText` helper instead of two copies.
+- **Left as they are:** a second, different want split between title and description passes C8 (the v2.31 trade-off); a cut-short description can end inside a code block (the Jira connection has always done the same).
+
+What held up against the real exports (12 invented issues, 51 columns): columns matched, points read from "Custom field (Story point estimate)", epic from Parent summary, a 5,000+ character description cut short with its criteria kept, Arabic and emoji titles, epic and sub-task left unticked. Re-scoring from v7 was checked on 6,085 local test stories: none changed, so none fell (they don't contain the patterns v8 reads differently).
+
 ## 2026-11-11 — v2.31: a brand-new user's own Jira export, also on a phone (rules v8)
 
 A fifth QA round took the one path the product-owner review couldn't test: a new account importing a real-shaped Jira export (100-odd columns in spirit: repeated headers, wiki markup, two points columns, epics and sub-tasks mixed in), then using the backlog on a phone. A read-only code review ran alongside; every finding was reproduced by hand before it was reported, and the ones only suspected (older Jira Server epic columns, bold markup around the role) were left out. The user said "do the recommendation": all eight bugs and four tweaks as one release.

@@ -2,7 +2,7 @@ import { secondLook } from "@/lib/readiness/second-look";
 import { criteriaOf, withoutCriteriaSection, type Story } from "@/lib/stories/types";
 
 /** Bump whenever a rule, weight or default changes, so old scores stay explainable. */
-export const RULES_VERSION = 8;
+export const RULES_VERSION = 9;
 
 export const DEFAULT_MAX_POINTS = 8;
 
@@ -368,7 +368,7 @@ export function scoreStory(story: Story, settings: RuleSettings = DEFAULT_SETTIN
   const scoreBand = bandFor(score);
   const typeNote = userStory
     ? undefined
-    : `${/^[aeiou]/i.test(story.issueType!.trim()) ? "An" : "A"} ${story.issueType!.trim()} doesn't need the "As a … I want … so that …" format, so those checks count as passed.`;
+    : `${/^(?:[aeio]|u(?![sx]|ni|ti))/i.test(story.issueType!.trim()) ? "An" : "A"} ${story.issueType!.trim()} doesn't need the "As a … I want … so that …" format, so those checks count as passed.`;
   if (cap && scoreBand === "Ready") {
     return { score, band: "Needs work", bandCap: cap, rules, findings, custom, rulesVersion: RULES_VERSION, ...(typeNote && { typeNote }) };
   }

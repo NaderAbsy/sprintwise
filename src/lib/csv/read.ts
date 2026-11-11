@@ -42,8 +42,12 @@ export async function readCsvFile(file: Blob & { name?: string }): Promise<{ ok:
   try {
     return { ok: true, text: new TextDecoder("utf-8", { fatal: true }).decode(bytes) };
   } catch {
-    // Not UTF-8: Excel's plain "CSV (Comma delimited)" on Windows saves in the Western European code page,
-    // which read as UTF-8 turns "é", "–" and curly quotes into "�".
+    // Not clean UTF-8. If any accented letter or symbol did decode, it is a UTF-8 file with a damaged
+    // character or two: keep it, since reading it as anything else would garble every other one.
+    const lenient = new TextDecoder("utf-8").decode(bytes);
+    if (/[^\u0000-\u007f\ufffd]/.test(lenient)) return { ok: true, text: lenient };
+    // Otherwise it's Excel's plain "CSV (Comma delimited)" on Windows, saved in the Western European code
+    // page, which read as UTF-8 turns "é", "–" and curly quotes into "�".
     return { ok: true, text: new TextDecoder("windows-1252").decode(bytes) };
   }
 }

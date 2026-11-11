@@ -133,6 +133,12 @@ describe("readCsvFile", () => {
     expect(await readCsvFile(new Blob([bytes]))).toEqual({ ok: true, text: "key,title\nA-1,Café – it’s" });
   });
 
+  it("keeps a UTF-8 file with one damaged character as UTF-8 (v2.31.1)", async () => {
+    // A cut-off character (a lone C3) after real UTF-8 text: one "�", and "Café" stays "Café".
+    const bytes = new Uint8Array([...Buffer.from("key,title\nA-1,Café menu "), 0xc3, ...Buffer.from("\nA-2,Tea")]);
+    expect(await readCsvFile(new Blob([bytes]))).toEqual({ ok: true, text: "key,title\nA-1,Café menu \ufffd\nA-2,Tea" });
+  });
+
   it("reads the UTF-16 files Excel saves as Unicode text", async () => {
     const le = new Uint8Array(2 + text.length * 2);
     le.set([0xff, 0xfe]);

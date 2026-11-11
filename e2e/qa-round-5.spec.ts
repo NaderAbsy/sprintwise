@@ -115,3 +115,21 @@ test("an empty backlog's new-sprint page links to where stories come from", asyn
   // And the import page says how to get a file out of Jira.
   await expect(page.getByText(/To get a file from Jira:/)).toBeVisible();
 });
+
+test("a Background section after the criteria isn't read as more criteria (v2.31.1)", async ({ page }) => {
+  await page.goto("/demo");
+  await page.locator("#title").fill("Block refunds above the order total");
+  await page
+    .locator("#description")
+    .fill(
+      "As a support agent I want refunds above the order total blocked so that we never pay out too much.\n\nh3. Acceptance criteria\n* A refund above the order total is refused\n* The agent sees the reason\n\nh3. Background\nThe payments team wants this handled properly.",
+    );
+  await page.locator("#storyPoints").fill("3");
+  await page.getByRole("button", { name: "Score this story" }).click();
+  // The page has two score cards: the sample story's and this checker's.
+  const result = page.locator("#try-it").getByRole("region", { name: "Readiness score" });
+  // "properly" is a vague word in the story's wording, not an untestable criterion.
+  await expect(result).toContainText("No vague words in the story");
+  await expect(result).not.toContainText("Acceptance criteria use vague words");
+});
+

@@ -33,6 +33,17 @@ export type Release = {
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.31.1",
+    date: "2026-11-11",
+    title: "Fix: sections after the acceptance criteria",
+    summary: "A fix for a mistake in v2.31, found by a review the same day, plus corrected Jira export steps.",
+    items: [
+      "A section named Background, Examples, Rules or Test cases that follows the acceptance criteria in a description was read as more criteria. That could lower a score, and sending edited criteria to Jira would have replaced that section. It ends the criteria again; only \"Scenario\" lines are read through. Projects are re-scored once more.",
+      "The Jira export steps on the import page and in the guide now match Jira: Filters → Search work items, the ⋯ menu, Export → CSV - all fields. \"CSV - my defaults\" leaves out the description and story points.",
+      "\"AC\" and \"ACs\" start the criteria only as a line of their own, not as a bullet or in brackets; a CSV with one damaged character is no longer re-read in the wrong encoding; and the phone move arrows keep keyboard focus at the top and bottom of the list.",
+    ],
+  },
+  {
     version: "v2.31",
     date: "2026-11-11",
     title: "Bringing your own Jira export, also on a phone",

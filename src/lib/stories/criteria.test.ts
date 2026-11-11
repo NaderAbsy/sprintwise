@@ -22,7 +22,7 @@ describe("criteria written inside the description", () => {
     expect(criteriaOf(story(description))).toEqual({ lines: ["Slots for 14 days", "Confirms in 5 seconds"], fromDescription: true });
   });
 
-  it.each(["ACs:", "A/C:", "Acceptance Criteria (AC):", "+Acceptance Criteria+", "- Acceptance criteria", "Acceptance criterion:"])(
+  it.each(["ACs:", "*ACs*", "Acceptance Criteria (AC):", "+Acceptance Criteria+", "- Acceptance criteria", "Acceptance criterion:"])(
     "finds them under %s (rules v8)",
     (heading) => {
       const description = `As a parent I want to book a slot so that it fits my day.\n\n${heading}\n- Slots for 14 days\n- Confirms in 5 seconds`;
@@ -31,7 +31,8 @@ describe("criteria written inside the description", () => {
   );
 
   it("doesn't take other lines for the heading", () => {
-    for (const line of ["AC-12 is blocked", "Accessibility:", "Acceptance testing notes"]) {
+    // The short forms stay strict: "- AC" is a list item and "A/C" is air conditioning as often as a heading.
+    for (const line of ["AC-12 is blocked", "Accessibility:", "Acceptance testing notes", "- AC", "(AC)", "A/C:"]) {
       expect(criteriaOf(story(`As a parent I want to book a slot so that it fits my day.\n${line}\n- Slots for 14 days`)).lines).toEqual([]);
     }
   });
@@ -39,11 +40,28 @@ describe("criteria written inside the description", () => {
   it("reads through scenario labels instead of stopping at them, and doesn't count them (rules v8)", () => {
     const description = "As a shopper I want to pay so that I get my order.\n\nAC:\nScenario 1:\nGiven a cart\nWhen I pay\nThen I get a receipt\n\n*Scenario: card declined*\nGiven a cart\nThen I see why\n\nNotes:\nAsk Sam.";
     expect(criteriaOf(story(description)).lines).toEqual(["Given a cart", "When I pay", "Then I get a receipt", "Given a cart", "Then I see why"]);
-    // A rule or example with text after it is a criterion, not a label.
-    expect(criteriaOf(story("AC:\nRule: customers must be over 18\nExample 2:\n- A 17-year-old is refused")).lines).toEqual([
+    // A rule with text after it is a criterion, not a label.
+    expect(criteriaOf(story("AC:\nRule: customers must be over 18\n- A 17-year-old is refused")).lines).toEqual([
       "Rule: customers must be over 18",
       "A 17-year-old is refused",
     ]);
+  });
+
+  it.each([
+    ["a Jira heading", "h3. Background"],
+    ["a plain heading", "Background:"],
+    ["examples", "Examples:"],
+    ["test cases", "*Test cases*"],
+    ["rules", "Rules:"],
+  ])("ends the criteria at a following section named like a label: %s (v2.31.1)", (_, heading) => {
+    const description = `As a support agent I want refunds blocked so that we never pay out too much.\n\nh3. Acceptance criteria\n* A refund above the total is refused\n* The agent sees the reason\n\n${heading}\nThe payments team works fast.\nSee the finance wiki.`;
+    expect(criteriaOf(story(description)).lines).toEqual(["A refund above the total is refused", "The agent sees the reason"]);
+    // The words after it aren't criteria, so "fast" there counts as the story's wording (C5), not as an untestable criterion (C3).
+    expect(scoreStory(story(description)).findings.map((f) => f.id)).toEqual(["C5"]);
+    // And a send that rewrites the criteria leaves that section in the description.
+    const sent = withCriteriaInDescription(description, "- A refund above the total is refused\n- New one");
+    expect(sent).toContain(`${heading}\nThe payments team works fast.\nSee the finance wiki.`);
+    expect(sent).toContain("* New one");
   });
 
   it("ends a list at a paragraph after a blank line, but not plain criteria with blank lines (rules v6)", () => {

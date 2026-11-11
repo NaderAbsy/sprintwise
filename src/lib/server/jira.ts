@@ -4,7 +4,7 @@ import { db } from "@/lib/server/db";
 import type { Prisma } from "@/generated/prisma/client";
 import { EPIC_MAX_LENGTH } from "@/lib/csv/template";
 import { STORY_LIMITS } from "@/lib/stories/form";
-import { CUT_MARK, cutText } from "@/lib/text";
+import { CUT_MARK, cutText, fitText } from "@/lib/text";
 import { readCsvTable } from "@/lib/csv/parse";
 import { baseOf, JIRA_FIELDS, planSend, type JiraField, type JiraText } from "@/lib/stories/jira-merge";
 import { criteriaFromDescription, withCriteriaInDescription } from "@/lib/stories/types";
@@ -416,7 +416,7 @@ export const JIRA_CUT = `${CUT_MARK}the full text is in Jira]`;
 
 /** Jira allows longer text than Sprintwise keeps: cut it rather than leave the issue out of imports and syncs. */
 function fit(text: string, limit: number): string {
-  return text.length <= limit ? text : cutText(text, limit - JIRA_CUT.length) + JIRA_CUT;
+  return fitText(text, limit, JIRA_CUT);
 }
 
 /**

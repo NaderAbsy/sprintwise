@@ -14,7 +14,7 @@ import {
 } from "@/lib/csv/template";
 import { STORY_LIMITS } from "@/lib/stories/form";
 import { criteriaFromDescription, isSubtask, normalizeKey, parsePoints, type Story } from "@/lib/stories/types";
-import { cutText, FILE_CUT } from "@/lib/text";
+import { cutText, FILE_CUT, fitText } from "@/lib/text";
 
 export type CsvIssue = {
   /** 1-based data row (the header is row 0); absent for file-level problems. */
@@ -106,11 +106,6 @@ export function matchColumns(headers: string[], mapping: ColumnMapping = {}): Re
           : byName(Object.entries(HEADER_ALIASES).filter(([, to]) => to === field).map(([from]) => from));
   }
   return columns;
-}
-
-/** `text` if it fits, or its start with a note that it was cut short. Never longer than `limit`. */
-function fit(text: string, limit: number): string {
-  return text.length <= limit ? text : cutText(text, limit - FILE_CUT.length) + FILE_CUT;
 }
 
 /** The checks a story must pass wherever it comes from: a CSV row, or the browser's pick sent to the server. */
@@ -226,13 +221,13 @@ export function readCsvTable(
       // Its criteria may sit at the end, past the cut: they move to their own field first, so they still count.
       const moved = acceptanceCriteria === "" ? criteriaFromDescription(description) : "";
       if (moved) acceptanceCriteria = moved;
-      description = fit(description, STORY_LIMITS.description);
+      description = fitText(description, STORY_LIMITS.description, FILE_CUT);
       warnings.push(
         `The description is longer than ${STORY_LIMITS.description.toLocaleString("en")} characters, so it's cut short here.${moved ? " Its acceptance criteria are kept in their own field." : ""}`,
       );
     }
     if (acceptanceCriteria.length > STORY_LIMITS.acceptanceCriteria) {
-      acceptanceCriteria = fit(acceptanceCriteria, STORY_LIMITS.acceptanceCriteria);
+      acceptanceCriteria = fitText(acceptanceCriteria, STORY_LIMITS.acceptanceCriteria, FILE_CUT);
       warnings.push(`The acceptance criteria are longer than ${STORY_LIMITS.acceptanceCriteria.toLocaleString("en")} characters, so they're cut short here.`);
     }
 

@@ -29,7 +29,7 @@ const STEPS = [
   },
   {
     title: "Add your stories",
-    text: "Score a story by typing it in; the score updates as you type. Or import a CSV (in Jira: a search under Filters, the list view, then Export → Export CSV), connect Jira and import straight from a search, or load 12 sample stories to practise with. Connected projects can Sync from Jira and Send edits back.",
+    text: "Score a story by typing it in; the score updates as you type. Or import a CSV (in Jira: Filters → Search work items, then the ⋯ menu → Export → CSV - all fields), connect Jira and import straight from a search, or load 12 sample stories to practise with. Connected projects can Sync from Jira and Send edits back.",
   },
   {
     title: "Order the backlog and fix the weakest stories",
