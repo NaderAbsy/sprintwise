@@ -14,7 +14,7 @@ export default function TermsPage() {
         <h1 className="text-3xl font-semibold tracking-tight">Terms of use</h1>
         <p className="text-base text-muted">
           Sprintwise is a free, independent tool. These terms cover the site at sprintwise.app (formerly sprintwise-omega.vercel.app).
-          Last updated 26 October 2026.
+          Last updated 11 November 2026.
         </p>
       </header>
 
@@ -22,6 +22,10 @@ export default function TermsPage() {
         <h2 className="text-base font-semibold text-foreground">Using Sprintwise</h2>
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>It&apos;s free. Signing in needs a GitHub account; the demo needs nothing.</li>
+          <li>
+            You can use it for your work, on your own or with your team at a company. The noncommercial license under
+            &quot;The code&quot; is about the code, not about using this site.
+          </li>
           <li>
             Only add work you&apos;re allowed to put in an outside tool. If your company&apos;s rules don&apos;t allow
             that, use the demo or invented examples.
@@ -77,7 +81,9 @@ export default function TermsPage() {
           <a href={GITHUB_URL} className={link}>
             GitHub
           </a>{" "}
-          under the PolyForm Noncommercial license, which allows reading and noncommercial use of the code; commercial use needs permission. These terms cover using this site.
+          under the PolyForm Noncommercial license, which allows reading and noncommercial use of the code. Commercial use of
+          the code, such as running your own copy in a business or selling it, needs permission. Using this site, at work
+          or not, is covered by these terms instead.
         </p>
       </section>
 

@@ -2,6 +2,11 @@
 
 One entry per decision: date, decision, options considered, reason. Newest first.
 
+## 2026-11-11 — v2.32: using the site at work is fine; the old address redirects with a 301
+
+- **Work use.** The product-owner review (2026-11-03) found that a PO at a company couldn't tell whether using Sprintwise for work was allowed: the Terms said the code is PolyForm Noncommercial and "commercial use needs permission", and the home FAQ said "The code's license allows noncommercial use only". Both are about the code, but read as if they were about the site. Sprintwise is built for other POs and teams (see the 2026-10-10 goal), so the Terms now say plainly that using the free site for work, alone or with a team at a company, is fine, and that the license covers the code: running your own copy in a business, or selling it, needs permission. The FAQ question became "Is it free? Can I use it at work? Can I see the code?". Terms "Last updated" moved to 11 November; this changelog entry is the notice the Terms promise for a big change. Options considered: leave it (keeps the doubt that stops team adoption); change the code license (not needed: the question was about the site, not the code).
+- **301 instead of 308.** Google Search Console's Change of Address tool failed three times with "301-redirect from homepage: Couldn't fetch the page", although URL Inspection's live test fetched the old home page and found the new canonical. The redirect was `"permanent": true` (Vercel sends 308); it is now `"statusCode": 301`. Both are permanent and Google treats them the same in normal crawling; the tool's check is the only reason for the change. It can only be verified on the live old host (preview deployments don't match the host condition). If the tool still fails with a 301, the cause is elsewhere and the redirect stays.
+
 ## 2026-11-11 — v2.31.1: a review of v2.31 found a regression in it (rules v9)
 
 A code review of v2.31 on the day it shipped, and a first check against two real exports from the personal Jira test site, found:

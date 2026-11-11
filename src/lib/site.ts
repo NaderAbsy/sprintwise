@@ -33,6 +33,17 @@ export type Release = {
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.32",
+    date: "2026-11-11",
+    title: "Clear about using Sprintwise at work",
+    summary: "The terms and the home page now say plainly that the site is free to use at work.",
+    items: [
+      "Terms of use: you can use Sprintwise for your work, on your own or with your team at a company. The code's noncommercial license is about the code (running your own copy in a business, or selling it), not about using this site.",
+      "The home page answer \"Is it free? Can I use it at work? Can I see the code?\" says the same.",
+      "The old sprintwise-omega.vercel.app address now redirects with a 301 instead of a 308, so Google's Change of Address tool can recognise the move. Both mean \"moved for good\"; nothing changes for visitors.",
+    ],
+  },
+  {
     version: "v2.31.1",
     date: "2026-11-11",
     title: "Fix: sections after the acceptance criteria",
@@ -138,7 +149,7 @@ export const RELEASES: Release[] = [
     title: "A new license for the code",
     summary: "The code stays public to read, but may no longer be used commercially without permission.",
     items: [
-      "The code is now under the PolyForm Noncommercial license instead of MIT: anyone can read it, learn from it and run it for themselves, but not sell it or use it in a business.",
+      "The code is now under the PolyForm Noncommercial license instead of MIT: anyone can read it, learn from it and run it for themselves, but not sell it or run their own copy in a business. (Using sprintwise.app itself is free, at work too.)",
       "Using Sprintwise itself doesn't change: it's still free for everyone.",
       "The footer says who made Sprintwise.",
       "Search engines get a clear description of Sprintwise (its name, what it does, that it's free), so a search for it can find the site.",

@@ -78,8 +78,8 @@ const FAQ = [
     a: "A Definition of Ready is the checklist a story passes before the team plans it: who it's for, what they want and why, testable acceptance criteria, an estimate, and a size the team can finish in one sprint. Sprintwise turns that checklist into nine fixed rules and scores each story out of 100, so the gaps show up before planning, not during the sprint.",
   },
   {
-    q: "Is it free? Can I see the code?",
-    a: "Yes. Sprintwise is free to use, and the full code, tests and product decisions are on GitHub to read. The code's license allows noncommercial use only.",
+    q: "Is it free? Can I use it at work? Can I see the code?",
+    a: "Yes to all three. Sprintwise is free to use, for your own work or your team's at a company. The full code, tests and product decisions are on GitHub to read. The code's noncommercial license is about the code itself: running your own copy in a business, or selling it, needs permission.",
   },
 ];
 
