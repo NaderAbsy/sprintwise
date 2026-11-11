@@ -33,6 +33,17 @@ export type Release = {
 /** Newest first. Each entry matches a git tag and its GitHub release. */
 export const RELEASES: Release[] = [
   {
+    version: "v2.32",
+    date: "2026-11-11",
+    title: "Clear about using Sprintwise at work",
+    summary: "The terms and the home page now say plainly that the site is free to use at work.",
+    items: [
+      "Terms of use: you can use Sprintwise for your work, on your own or with your team at a company. The code's noncommercial license is about the code (running your own copy in a business, or selling it), not about using this site.",
+      "The home page answer \"Is it free? Can I use it at work? Can I see the code?\" says the same.",
+      "The old sprintwise-omega.vercel.app address now redirects with a 301 instead of a 308, so Google's Change of Address tool can recognise the move. Both mean \"moved for good\"; nothing changes for visitors.",
+    ],
+  },
+  {
     version: "v2.31.1",
     date: "2026-11-11",
     title: "Fix: sections after the acceptance criteria",

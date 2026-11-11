@@ -23,7 +23,7 @@
         }
       ],
       "destination": "https://sprintwise.app/:path",
-      "permanent": true
+      "statusCode": 301
     }
   ]
 }
